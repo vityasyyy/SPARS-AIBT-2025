@@ -194,62 +194,37 @@ class Trainer:
                         else:
                             break
 
-                def agent_action(prev_event_time, total_reward):
-                    state = [env_state['active_nodes'], env_state['idle_nodes'],
-                             env_state['inactive_nodes'], float(len(jobs_queue))]
-                    action = self.agent.choose_action(state)
-                    actions.append(float(action))
-                    nodes_to_on = int(action * TOTAL_NODES)
+                state = [env_state['active_nodes'], env_state['idle_nodes'],
+                         env_state['inactive_nodes'], float(len(jobs_queue))]
+                action = self.agent.choose_action(state)
+                actions.append(float(action))
+                nodes_to_on = int(action * TOTAL_NODES)
 
-                    env_state['idle_nodes'] = max(0, nodes_to_on -
-                                                  env_state['active_nodes'])
+                env_state['idle_nodes'] = max(0, nodes_to_on -
+                                              env_state['active_nodes'])
 
-                    env_state['inactive_nodes'] = TOTAL_NODES - \
-                        env_state['idle_nodes'] - env_state['active_nodes']
+                env_state['inactive_nodes'] = TOTAL_NODES - \
+                    env_state['idle_nodes'] - env_state['active_nodes']
 
-                    wasted_energy = calculate_wasted_energy(
-                        env_state['idle_nodes'], (event_time - prev_event_time))
+                wasted_energy = calculate_wasted_energy(
+                    env_state['idle_nodes'], (event_time - prev_event_time))
 
-                    prev_event_time = event_time
+                prev_event_time = event_time
 
-                    total_waiting_time_transient = 0
+                total_waiting_time_transient = 0
 
-                    for jobs_ in jobs_queue:
-                        total_waiting_time_transient += max(
-                            event_time - jobs_[0], 0)
+                for jobs_ in jobs_queue:
+                    total_waiting_time_transient += max(
+                        event_time - jobs_[0], 0)
 
-                    reward = -self.alpha * wasted_energy - self.beta * total_waiting_time_transient
+                reward = -self.alpha * wasted_energy - self.beta * total_waiting_time_transient
 
-                    total_reward += reward
+                total_reward += reward
 
-                    next_state = [env_state['active_nodes'], env_state['idle_nodes'],
-                                  env_state['inactive_nodes'], float(len(jobs_queue))]
+                next_state = [env_state['active_nodes'], env_state['idle_nodes'],
+                              env_state['inactive_nodes'], float(len(jobs_queue))]
 
-                    self.agent.train(state, action, reward, next_state)
-
-                    return prev_event_time, total_reward
-                prev_event_time, total_reward = agent_action(
-                    prev_event_time, total_reward)
-                while len(jobs_queue) > 0 and len(schedule_queue) == 0:
-                    prev_event_time, total_reward = agent_action(
-                        prev_event_time, total_reward)
-                    prev_event_time += 100
-                    temp_idle = env_state['idle_nodes']
-                    while True:
-                        if len(jobs_queue) != 0 and (jobs_queue[0][1]['nodes'] <= env_state['idle_nodes']):
-                            event_time, job_data = heapq.heappop(jobs_queue)
-                            start_time = event_time
-                            execution_event = {
-                                'nodes': job_data['nodes'],
-                                'actual_execution_time': job_data['actual_execution_time'],
-                                'type': 'execution_start',
-                                'arrival': job_data['arrival']
-                            }
-                            push_schedule_queue(
-                                schedule_queue, out_schedule_queue,  (start_time + job_data['actual_execution_time'], execution_event))
-                            temp_idle -= job_data['nodes']
-                        else:
-                            break
+                self.agent.train(state, action, reward, next_state)
 
             self.episode_rewards.append(total_reward)
             print(
