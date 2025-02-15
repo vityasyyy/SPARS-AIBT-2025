@@ -1,0 +1,76 @@
+{
+    "nb_res": 8,
+    "jobs": [
+        {
+            "id": 1,
+            "res": 4,
+            "subtime": 0.12939998594727012,
+            "walltime": 9.16904920021773,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "id": 2,
+            "res": 5,
+            "subtime": 0.23445938613089304,
+            "walltime": 11.543120046494224,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "id": 3,
+            "res": 5,
+            "subtime": 0.27597915358490954,
+            "walltime": 8.388651474724965,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "id": 4,
+            "res": 6,
+            "subtime": 0.4197155783546313,
+            "walltime": 7.928250945474337,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "id": 5,
+            "res": 5,
+            "subtime": 0.5779340269091664,
+            "walltime": 7.659657866953229,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "id": 6,
+            "res": 4,
+            "subtime": 0.6419059301764969,
+            "walltime": 8.689600766943153,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "id": 7,
+            "res": 4,
+            "subtime": 0.6977288226469189,
+            "walltime": 4.776111772758715,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "id": 8,
+            "res": 6,
+            "subtime": 0.7865340459149346,
+            "walltime": 8.028286799105691,
+            "profile": "100",
+            "user_id": 0
+        }
+    ],
+    "profiles": {
+        "100": {
+            "cpu": 10000000000000000000000,
+            "com": 0,
+            "type": "parallel_homogeneous"
+        }
+    }
+}
