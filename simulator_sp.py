@@ -11,6 +11,7 @@ class MyDict:
             self._dict = _dict
         
     def __lt__(self, other):
+        
         return self._dict['id'] < other._dict['id']
     
     def __getitem__(self, key):
@@ -34,7 +35,7 @@ class SPSimulator:
         for job in self.workload_info['jobs']:
             job['type'] = 'arrival'
             
-            heapq.heappush(self.jobs, (job['subtime'], MyDict(job)))
+            heapq.heappush(self.jobs, (float(job['subtime']), MyDict(job)))
         
         self.sim_monitor = {
             "energy_consumption": [0] * len(self.machines),
@@ -78,6 +79,7 @@ class SPSimulator:
             
             if event['type'] == 'arrival':
                 if len(available_resources) >= event['res']:
+                    
                     if waiting_queue:
                         estimated_finish_time = current_time + event['walltime']
                         estimated_next_job_start_time = 0
@@ -157,11 +159,26 @@ class SPSimulator:
                 available_resources.sort() 
 
                 active_jobs = [active_job for active_job in active_jobs if active_job['id'] != event['id']]
-
-                if waiting_queue and len(available_resources) >= waiting_queue[0]['res']:
-                    next_job = waiting_queue.pop(0)
-                    next_job['type'] = 'execution_start'
-                    heapq.heappush(schedule_queue, (current_time, MyDict(next_job)))
+                
+                temp_available_resource = len(available_resources)
+                
+                while True:
+                    is_pushed = False
+                    sorted(waiting_queue)
+                    # id
+                    # subtime
+                    
+                    for k in range(0, len(waiting_queue)):
+                        job = waiting_queue[k]
+                        if temp_available_resource >= job['res']:
+                            next_job = waiting_queue.pop(k)
+                            next_job['type'] = 'execution_start'
+                            temp_available_resource -= next_job['res']
+                            heapq.heappush(schedule_queue, (current_time, MyDict(next_job)))
+                            is_pushed = True
+                            break
+                    if is_pushed == False:
+                        break
                     
         return monitor_jobs
 
@@ -169,7 +186,7 @@ sp_simulator = SPSimulator()
 jobs_e = sp_simulator.simulate_easy()
 jobs_e = pd.DataFrame(jobs_e)
 jobs_e['allocated_resources'] = jobs_e['allocated_resources'].apply(
-    lambda x: f"{min(x)}-{max(x)}" if isinstance(x, list) and x else x
+    lambda x: f' '.join(map(str, x))
 )
 jobs_e.to_csv('results/sp/easy_jobs.csv', index=False)
 print(jobs_e)
