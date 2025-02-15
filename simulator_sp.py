@@ -81,58 +81,92 @@ class SPSimulator:
         return resources[:count]
         
     def simulate_easy(self):
+        """
+        Simulate job scheduling using the EASY backfilling approach.
+        
+        1) Sort or push all events (arrivals) into a schedule_queue.
+        2) Repeatedly pop events in chronological order.
+        3) If an arrival occurs, see if we can schedule immediately or must wait.
+           - If we can schedule, check if that scheduling is feasible under backfilling (i.e. won't delay the priority job).
+           - If feasible, schedule it; otherwise, push it into the waiting queue.
+        4) If a job finishes, free resources, then attempt to schedule from the waiting queue (including backfill).
+        5) Keep track of energy usage, idle times, waiting times, etc.
+        
+        :return: monitor_jobs (information about each job run in the simulation).
+        """
         current_time = 0
         available_resources = list(range(self.nb_res))
-        schedule_queue = []
-        waiting_queue = []
-        monitor_jobs=[]
+        schedule_queue = []  # Will contain (event_time, event_dict)
+        waiting_queue = []   # Jobs waiting to start
+        monitor_jobs = []
         active_jobs = []
-        for event in self.jobs:
-            event_time, event_detail = event
+        
+        # 1) Push the arrival events into schedule_queue
+        for event_time, event_detail in self.jobs:
             heapq.heappush(schedule_queue, (event_time, MyDict(event_detail)))
         
-        while schedule_queue or waiting_queue:      
+        # Main simulation loop
+        while schedule_queue or waiting_queue:
             if schedule_queue:
                 event_time, event = heapq.heappop(schedule_queue)
             else:
+                # If schedule_queue is empty, we take the next waiting job (though normally you'd wait for a finish)
                 event = waiting_queue.pop(0)
+                event_time = current_time  # we just keep the same time or update it accordingly
             
             current_time = event_time
-            temp_index = 0
-            for start_idle_res in self.sim_monitor['start_idle']:
-                if start_idle_res == -1:
-                    temp_index +=1
-                    continue
-                rate_energy_consumption_idle = self.machines[temp_index]['wattage_per_state'][1]
-                idle_time = current_time - start_idle_res
-                self.sim_monitor['energy_consumption'][temp_index] += (idle_time * rate_energy_consumption_idle)
-                self.sim_monitor['total_idle_time'][temp_index] += (current_time - start_idle_res)
-                
-                
-            for index_available_resource in available_resources:
-                self.sim_monitor['start_idle'][index_available_resource] = current_time
             
-            if event['id'] == 9:
-                print('here')
+            # Update energy consumption for idle nodes from the last time we set them idle
+            for res_id in range(self.nb_res):
+                start_idle_res = self.sim_monitor['start_idle'][res_id]
+                if start_idle_res != -1:
+                    # This resource has been idle since `start_idle_res`
+                    rate_energy_consumption_idle = self.machines[res_id]['wattage_per_state'][1]  # Idle wattage
+                    idle_time = current_time - start_idle_res
+                    if idle_time > 0:
+                        self.sim_monitor['energy_consumption'][res_id] += idle_time * rate_energy_consumption_idle
+                        self.sim_monitor['total_idle_time'][res_id] += idle_time
+                        # Mark resource as idle again from now
+                        self.sim_monitor['start_idle'][res_id] = current_time
+
+            # -------------------------
+            # Handle arrival events
+            # -------------------------
             if event['type'] == 'arrival':
+                # If we have enough free resources for the job
                 if len(available_resources) >= event['res']:
+                    # If there's a waiting queue, we want to ensure we don't violate backfill constraints
                     if waiting_queue:
+                        # Sort active jobs by their finishing time (if you need them in order)
                         active_jobs = sorted(active_jobs, key=lambda x: x['finish_time'])
-                        if self.check_backfilling(current_time, event, len(available_resources), active_jobs):
+                        
+                        can_backfill = self.check_backfilling(
+                            current_time, event, len(available_resources), active_jobs
+                        )
+                        if can_backfill:
+                            # We can schedule it right now
                             event['type'] = 'execution_start'
                             heapq.heappush(schedule_queue, (current_time, MyDict(event)))
                         else:
+                            # Otherwise, it must wait
                             waiting_queue.append(event)
                     else:
+                        # No waiting queue, schedule immediately
                         event['type'] = 'execution_start'
                         heapq.heappush(schedule_queue, (current_time, MyDict(event)))
                 else:
+                    # Not enough free resources -> job must wait
                     waiting_queue.append(event)
-                    
+            
+            # -------------------------
+            # Start execution
+            # -------------------------
             elif event['type'] == 'execution_start':
+                # Allocate resources for the job
                 allocated = self.find_grouped_resources(available_resources, event['res'])
+                # Remove those resources from the free list
                 available_resources = [r for r in available_resources if r not in allocated]
-
+                
                 finish_time = current_time + event['walltime']
                 finish_event = {
                     'id': event['id'],
@@ -141,22 +175,29 @@ class SPSimulator:
                     'type': 'execution_finished',
                     'subtime': event['subtime'],
                     'profile': event['profile'],
-                    'allocated_resources': allocated
+                    'allocated_resources': allocated,
+                    'finish_time': finish_time
                 }
                 
-                
+                # Update waiting time stats (for the job)
                 if finish_event['subtime'] != current_time:
                     self.sim_monitor['avg_waiting_time'] += (current_time - finish_event['subtime'])
                     self.sim_monitor['waiting_event_count'] += 1
+                
+                # Push the finish event
                 heapq.heappush(schedule_queue, (finish_time, MyDict(finish_event)))
                 
-                finish_event['finish_time'] = finish_time
+                # Keep track in active_jobs
                 active_jobs.append(finish_event)
                 
-                for i in allocated:
-                    self.sim_monitor['energy_consumption'][i] += (finish_time - current_time) * self.machines[i]['wattage_per_state'][3]
-                    self.sim_monitor['start_idle'][i] = -1
+                # Update resource energy consumption for busy (execution) time
+                for r_id in allocated:
+                    # wattage_per_state[3] could be "full usage" or "max usage" watt
+                    self.sim_monitor['energy_consumption'][r_id] += (finish_time - current_time) * self.machines[r_id]['wattage_per_state'][3]
+                    # Mark resource as non-idle
+                    self.sim_monitor['start_idle'][r_id] = -1
                 
+                # Collect data for monitor
                 monitor_jobs.append({
                     'job_id': event['id'],
                     'workload_name': 'w0',
@@ -176,25 +217,32 @@ class SPSimulator:
                     'consumed_energy': -1
                 })
             
+            # -------------------------
+            # Finish execution
+            # -------------------------
             elif event['type'] == 'execution_finished':
                 allocated = event['allocated_resources']
+                # Free the resources
                 available_resources.extend(allocated)
-                available_resources.sort() 
-
-                active_jobs = [active_job for active_job in active_jobs if active_job['id'] != event['id']]
+                available_resources.sort()
                 
+                # Remove from active_jobs
+                active_jobs = [aj for aj in active_jobs if aj['id'] != event['id']]
+                
+                # The number of resources currently free
                 temp_available_resource = len(available_resources)
                 
-                events_now = [(t, e) for t, e in schedule_queue if t == current_time]
-
-                for _, event in events_now:
-                    if event['type'] == 'execution_start':
-                        temp_available_resource -= event['res']
-
+                # Check if there are any other events scheduled at the same current_time
+                # that might also start. We want to subtract resources for them too.
+                events_now = [(t, e) for (t, e) in schedule_queue if t == current_time]
+                for _, e_now in events_now:
+                    if e_now['type'] == 'execution_start':
+                        temp_available_resource -= e_now['res']
                 
-                waiting_queue = sorted(waiting_queue)
-                # tambahin perulangan gas gas insert job berdasarkan id atau submit time
-   
+               
+                    
+                # First, try to schedule waiting jobs in order (FCFS)
+                waiting_queue = sorted(waiting_queue, key=lambda x: x['id'])  # or subtime if you prefer
                 for _ in range(len(waiting_queue)):
                     job = waiting_queue[0]  # Selalu cek job pertama
                     if temp_available_resource >= job['res']:
@@ -204,29 +252,53 @@ class SPSimulator:
                         heapq.heappush(schedule_queue, (current_time, MyDict(popped_job)))
                     else:
                         break
-
-
-
                     
+                # Try to start as many from the front of waiting queue as possible
+                for _ in range(len(waiting_queue)):
+                    if not waiting_queue:
+                        break
+                    job = waiting_queue[0]
+                    if temp_available_resource >= job['res']:
+                        # Attempt to schedule
+                        job_can_backfill = self.check_backfilling(current_time, job, temp_available_resource, active_jobs)
+                        if job_can_backfill:
+                            waiting_queue.pop(0)
+                            job['type'] = 'execution_start'
+                            heapq.heappush(schedule_queue, (current_time, MyDict(job)))
+                            temp_available_resource -= job['res']
+                        else:
+                            # If we fail backfilling check, we skip this job for now
+                            # (We do not pop it out, might break or continue)
+                            break
+                    else:
+                        break
+                
+                # Now, do a second pass to see if any smaller jobs behind can backfill 
+                # if the first waiting job can’t start. (Classic EASY tries to fill with smaller jobs behind.)
+                # This is the typical "backfill pass"
                 active_jobs = sorted(active_jobs, key=lambda x: x['finish_time'])
+                
                 while True:
                     is_pushed = False
-                    for k in range(0, len(waiting_queue)):
-                        job = waiting_queue[k]
+                    for idx, job in enumerate(waiting_queue):
                         if temp_available_resource >= job['res']:
-                            if job['id'] == 9:
-                                print('here')
-                            if not self.check_backfilling(current_time, job, temp_available_resource, active_jobs):
-                                continue
-                            next_job = waiting_queue.pop(k)
-                            next_job['type'] = 'execution_start'
-                            temp_available_resource -= next_job['res']
-                            heapq.heappush(schedule_queue, (current_time, MyDict(next_job)))
-                            is_pushed = True
-                            break
-                    if is_pushed == False:
+                            # Try backfill
+                            job_can_backfill = self.check_backfilling(current_time, job, temp_available_resource, active_jobs)
+                            if job_can_backfill:
+                                # This job can start
+                                job = waiting_queue.pop(idx)
+                                job['type'] = 'execution_start'
+                                heapq.heappush(schedule_queue, (current_time, MyDict(job)))
+                                temp_available_resource -= job['res']
+                                
+                                is_pushed = True
+                                break
+                            # else can't backfill -> skip it, check next job
+                        # else not enough resources -> check next
+                    if not is_pushed:
+                        # No job was scheduled in this pass, so end loop
                         break
-                    
+        
         return monitor_jobs
 
 sp_simulator = SPSimulator()
