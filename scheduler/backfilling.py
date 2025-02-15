@@ -13,7 +13,7 @@ class EASYScheduler(FCFSScheduler):
 
     def backfill(self) -> None:
         assert len(self.simulator.queue) >= 2
-        print()
+        
         # The priority job is the first job in the queue.
         p_job = self.simulator.queue[0]
 
@@ -22,7 +22,7 @@ class EASYScheduler(FCFSScheduler):
 
         # Get the next expected releases
         next_releases = sorted(self.simulator.agenda, key=lambda a: a.release_time)
-
+        #next rilis = [{rilis: 1}, {rilis: 2}, {host: adk, rilis: 3}, {rilis: 4}, {rilis: 5},  ]
         # Get the last required host for p_job.
         last_host = next_releases[p_job.res - 1]
 
