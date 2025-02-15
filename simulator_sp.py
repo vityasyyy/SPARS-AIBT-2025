@@ -1,6 +1,23 @@
 import json
 import heapq
 import pandas as pd
+import copy
+
+class MyDict:
+    def __init__(self, _dict: dict):
+        if isinstance(_dict, MyDict):
+            self._dict = copy.deepcopy(_dict._dict)
+        else:
+            self._dict = _dict
+        
+    def __lt__(self, other):
+        return self._dict['id'] < other._dict['id']
+    
+    def __getitem__(self, key):
+        return self._dict[key]
+    
+    def __setitem__(self, key, value):
+        self._dict[key] = value
 
 class SPSimulator:
     def __init__(self, platform_path="platforms/spsim/platform.json", workload_path="workloads/simple_data.json"):        
@@ -16,7 +33,8 @@ class SPSimulator:
         self.jobs = []
         for job in self.workload_info['jobs']:
             job['type'] = 'arrival'
-            heapq.heappush(self.jobs, (job['subtime'], job))
+            
+            heapq.heappush(self.jobs, (job['subtime'], MyDict(job)))
         
         self.sim_monitor = {
             "energy_consumption": [0] * len(self.machines),
@@ -33,7 +51,8 @@ class SPSimulator:
         monitor_jobs=[]
         active_jobs = []
         for event in self.jobs:
-            heapq.heappush(schedule_queue, event)
+            event_time, event_detail = event
+            heapq.heappush(schedule_queue, (event_time, MyDict(event_detail)))
         
         while schedule_queue or waiting_queue:      
             if schedule_queue:
@@ -76,12 +95,12 @@ class SPSimulator:
                         
                         if estimated_finish_time < estimated_next_job_start_time:
                             event['type'] = 'execution_start'
-                            heapq.heappush(schedule_queue, (current_time, event))
+                            heapq.heappush(schedule_queue, (current_time, MyDict(event)))
                         else:
                             waiting_queue.append(event)
                     else:
                         event['type'] = 'execution_start'
-                        heapq.heappush(schedule_queue, (current_time, event))
+                        heapq.heappush(schedule_queue, (current_time, MyDict(event)))
                 else:
                     waiting_queue.append(event)
                     
@@ -96,11 +115,13 @@ class SPSimulator:
                     'walltime': event['walltime'],
                     'type': 'execution_finished',
                     'subtime': event['subtime'],
-                    'profile': event.get('profile', None),
+                    'profile': event['profile'],
                     'allocated_resources': allocated
                 }
                 
-                heapq.heappush(schedule_queue, (finish_time, finish_event))
+                
+                
+                heapq.heappush(schedule_queue, (finish_time, MyDict(finish_event)))
                 
                 finish_event['finish_time'] = finish_time
                 active_jobs.append(finish_event)
@@ -114,7 +135,7 @@ class SPSimulator:
                 monitor_jobs.append({
                     'job_id': event['id'],
                     'workload_name': 'w0',
-                    'profile': event.get('profile', None),
+                    'profile': event['profile'],
                     'submission_time': event['subtime'],
                     'requested_number_of_resources': event['res'],
                     'requested_time': event['walltime'],
@@ -131,7 +152,7 @@ class SPSimulator:
                 })
             
             elif event['type'] == 'execution_finished':
-                allocated = event.get('allocated_resources', [])
+                allocated = event['allocated_resources']
                 available_resources.extend(allocated)
                 available_resources.sort() 
 
@@ -140,7 +161,7 @@ class SPSimulator:
                 if waiting_queue and len(available_resources) >= waiting_queue[0]['res']:
                     next_job = waiting_queue.pop(0)
                     next_job['type'] = 'execution_start'
-                    heapq.heappush(schedule_queue, (current_time, next_job))
+                    heapq.heappush(schedule_queue, (current_time, MyDict(next_job)))
                     
         return monitor_jobs
 
