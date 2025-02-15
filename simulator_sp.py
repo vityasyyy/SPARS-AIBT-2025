@@ -2,6 +2,7 @@ import json
 import heapq
 import pandas as pd
 import copy
+import numpy as np
 
 class MyDict:
     def __init__(self, _dict: dict):
@@ -43,6 +44,21 @@ class SPSimulator:
             "total_idle_time": [0] * len(self.machines)
         }
             
+    def check_backfilling(self, current_time, event, temp_available_resources, active_jobs):
+        # Sebelum push ke schedule queue, perlu cek dulu apakah bakal meningkatkan waiting time job ke-0 pada waiting_queue
+        # Meningkatkan waiting time apabila current_time + event['walltime'] < estimasi start time job ke-0 pada waiting_queue
+        # estimasi start time perlu mencatat active jobs, di mana setiap active jobs punya properti res dan finish time
+        # Start job ke-0 pada waiting queue adalah ketika job yang aktif, selesai satu per satu hingga available nodes > res job ke-0 pada waiting queue
+        estimated_finish_time = current_time + event['walltime']
+        estimated_next_job_start_time = np.inf
+        print(active_jobs)
+        for active_job in active_jobs:
+            temp_available_resources += active_job['res']
+            if temp_available_resources >= event['res']:
+                estimated_next_job_start_time = active_job['finish_time']
+                
+        return estimated_finish_time < estimated_next_job_start_time
+
         
     def simulate_easy(self):
         current_time = 0
@@ -79,23 +95,9 @@ class SPSimulator:
             
             if event['type'] == 'arrival':
                 if len(available_resources) >= event['res']:
-                    
                     if waiting_queue:
-                        estimated_finish_time = current_time + event['walltime']
-                        estimated_next_job_start_time = 0
-                        temp_available_resources = len(available_resources)
                         active_jobs = sorted(active_jobs, key=lambda x: x['finish_time'], reverse=True)
-                        
-                        for active_job in active_jobs:
-                            temp_available_resources += active_job['res']
-                            if temp_available_resources >= event['res']:
-                                estimated_next_job_start_time = active_job['finish_time']
-                        # Sebelum push ke schedule queue, perlu cek dulu apakah bakal meningkatkan waiting time job ke-0 pada waiting_queue
-                        # Meningkatkan waiting time apabila current_time + event['walltime'] < estimasi start time job ke-0 pada waiting_queue
-                        # estimasi start time perlu mencatat active jobs, di mana setiap active jobs punya properti res dan finish time
-                        # Start job ke-0 pada waiting queue adalah ketika job yang aktif, selesai satu per satu hingga available nodes > res job ke-0 pada waiting queue
-                        
-                        if estimated_finish_time < estimated_next_job_start_time:
+                        if self.check_backfilling(current_time, event, len(available_resources), active_jobs):
                             event['type'] = 'execution_start'
                             heapq.heappush(schedule_queue, (current_time, MyDict(event)))
                         else:
@@ -162,15 +164,17 @@ class SPSimulator:
                 
                 temp_available_resource = len(available_resources)
                 
+                sorted(waiting_queue)
+                active_jobs = sorted(active_jobs, key=lambda x: x['finish_time'], reverse=True)
                 while True:
+                    print('im stuck')
                     is_pushed = False
-                    sorted(waiting_queue)
-                    # id
-                    # subtime
-                    
                     for k in range(0, len(waiting_queue)):
                         job = waiting_queue[k]
                         if temp_available_resource >= job['res']:
+                            
+                            if not self.check_backfilling(current_time, job, temp_available_resource, active_jobs):
+                                continue
                             next_job = waiting_queue.pop(k)
                             next_job['type'] = 'execution_start'
                             temp_available_resource -= next_job['res']
@@ -188,6 +192,9 @@ jobs_e = pd.DataFrame(jobs_e)
 jobs_e['allocated_resources'] = jobs_e['allocated_resources'].apply(
     lambda x: f' '.join(map(str, x))
 )
+
 jobs_e.to_csv('results/sp/easy_jobs.csv', index=False)
 print(jobs_e)
 print(sp_simulator.sim_monitor)
+print(sum(sp_simulator.sim_monitor['energy_consumption']))
+print(sum(sp_simulator.sim_monitor['total_idle_time']))

@@ -28,6 +28,10 @@ def run_simulation(scheduler):
 jobs_f, sim_f = run_simulation(FCFSScheduler)
 jobs_e, sim_e = run_simulation(EASYScheduler)
 
+print(sim_e.info['consumed_joules'])
+print(sum(jobs_e.info['waiting_time']))
+print(max(jobs_e.info['finish_time']))
+
 fcfs, easy = jobs_f.to_dataframe(), jobs_e.to_dataframe()
 print(JobSet(fcfs))
 # fcfs['allocated_resources'] = fcfs['allocated_resources'].apply(lambda x: ','.join(map(str, x)))
