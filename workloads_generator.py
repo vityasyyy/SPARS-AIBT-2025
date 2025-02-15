@@ -1,5 +1,6 @@
 import numpy as np
 import json
+import math
 
 class ProblemGenerator:
     def __init__(self, lambda_arrival=0.5, mu_execution=150, sigma_execution=2, mu_noise=0, sigma_noise=1, num_jobs=None, max_node=8):
@@ -31,8 +32,8 @@ class ProblemGenerator:
             workloads.append({
                 "id": i+1,
                 'res': int(num_nodes_required[i]),
-                'subtime': float(arrival_times[i]),
-                'walltime': float(requested_execution_times[i]),
+                'subtime': round(float(arrival_times[i])),
+                'walltime': round(float(requested_execution_times[i])),
                 'profile': '100',
                 'user_id': 0
                 # 'actual_execution_time': float(min(actual_execution_times[i], expected_execution_times[i])),
@@ -41,9 +42,9 @@ class ProblemGenerator:
 
         return workloads
 
-num_jobs=10
+num_jobs=500
 max_node=8
-problem_generator = ProblemGenerator(num_jobs, max_node)
+problem_generator = ProblemGenerator(num_jobs=500, max_node=8)
 
 workload_filepath = "workloads/simple_data.json"
 workloads = problem_generator.generate()

@@ -13,7 +13,7 @@ class EASYScheduler(FCFSScheduler):
 
     def backfill(self) -> None:
         assert len(self.simulator.queue) >= 2
-
+        print()
         # The priority job is the first job in the queue.
         p_job = self.simulator.queue[0]
 

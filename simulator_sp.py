@@ -19,7 +19,9 @@ class SPSimulator:
             heapq.heappush(self.jobs, (job['subtime'], job))
         
         self.sim_monitor = {
-            "energy_consumption": [0] * len(self.machines)
+            "energy_consumption": [0] * len(self.machines),
+            "start_idle": [0] * len(self.machines),
+            "total_idle_time": [0] * len(self.machines)
         }
             
         
@@ -33,14 +35,27 @@ class SPSimulator:
         for event in self.jobs:
             heapq.heappush(schedule_queue, event)
         
-        while schedule_queue or waiting_queue:
-
+        while schedule_queue or waiting_queue:      
             if schedule_queue:
                 event_time, event = heapq.heappop(schedule_queue)
             else:
                 event = waiting_queue.pop(0)
             
             current_time = event_time
+            # calculated wasted time idle
+            temp_index = 0
+            for start_idle_res in self.sim_monitor['start_idle']:
+                if start_idle_res == -1:
+                    temp_index +=1
+                    continue
+                rate_energy_consumption_idle = self.machines[temp_index]['wattage_per_state'][1]
+                idle_time = current_time - start_idle_res
+                self.sim_monitor['energy_consumption'][temp_index] += (idle_time * rate_energy_consumption_idle)
+                self.sim_monitor['total_idle_time'][temp_index] += (current_time - start_idle_res)
+                
+                
+            for index_available_resource in available_resources:
+                self.sim_monitor['start_idle'][index_available_resource] = current_time
             
             if event['type'] == 'arrival':
                 if len(available_resources) >= event['res']:
@@ -90,6 +105,12 @@ class SPSimulator:
                 finish_event['finish_time'] = finish_time
                 active_jobs.append(finish_event)
                 
+                for i in allocated:
+                    self.sim_monitor['energy_consumption'][i] += (finish_time - current_time) * self.machines[i]['wattage_per_state'][3]
+                    self.sim_monitor['start_idle'][i] = -1
+                
+                    
+                    
                 monitor_jobs.append({
                     'job_id': event['id'],
                     'workload_name': 'w0',
@@ -131,3 +152,4 @@ jobs_e['allocated_resources'] = jobs_e['allocated_resources'].apply(
 )
 jobs_e.to_csv('results/sp/easy_jobs.csv', index=False)
 print(jobs_e)
+print(sp_simulator.sim_monitor)
