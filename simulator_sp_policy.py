@@ -58,7 +58,6 @@ class SPSimulator:
             'avg_waiting_time': 0,
             'waiting_event_count': 0,
             'finish_time': 0,
-            'nb_res': pd.DataFrame([{'current_time': 0, 'sleeping': 0, 'switching_on': 0, 'switching_off': 0, 'idle': 16, 'computing': 0, 'unavailable': 0}])
         }
             
     def check_backfilling(self, current_time, event, temp_available_resources, active_jobs, next_job, backfilled_node_count):
@@ -141,7 +140,6 @@ class SPSimulator:
                 
             for index_available_resource in available_resources:
                 self.sim_monitor['start_idle'][index_available_resource] = current_time
-                
             
        
             if event['type'] == 'arrival':
@@ -167,23 +165,6 @@ class SPSimulator:
                 # available_resources = [r for r in available_resources if r not in allocated]
                 allocated = available_resources[:event['res']]
                 available_resources = available_resources[event['res']:]
-                mask = self.sim_monitor['nb_res']['current_time'] == current_time
-                
-                if self.sim_monitor['nb_res'].loc[mask].empty:
-                    last_row = self.sim_monitor['nb_res'].iloc[-1].copy()
-
-                    # Update the time
-                    last_row['current_time'] = current_time
-                    
-                    # Add as a new row
-                    self.sim_monitor['nb_res'].loc[len(self.sim_monitor['nb_res'])] = last_row
-
-                    
-                self.sim_monitor['nb_res'].loc[
-                    self.sim_monitor['nb_res']['current_time'] == current_time, 
-                    ['computing', 'idle']
-                ] += [len(allocated), -len(allocated)]
-
                 finish_time = current_time + event['walltime']
                 finish_event = {
                     'id': event['id'],
@@ -194,6 +175,7 @@ class SPSimulator:
                     'profile': event['profile'],
                     'allocated_resources': allocated
                 }
+                
                 
                 if finish_event['subtime'] != current_time:
                     self.sim_monitor['avg_waiting_time'] += (current_time - finish_event['subtime'])
@@ -239,23 +221,6 @@ class SPSimulator:
                 
                 temp_available_resource = len(available_resources)
                 
-                mask = self.sim_monitor['nb_res']['current_time'] == current_time
-                
-                if self.sim_monitor['nb_res'].loc[mask].empty:
-                    last_row = self.sim_monitor['nb_res'].iloc[-1].copy()
-
-                    # Update the time
-                    last_row['current_time'] = current_time
-                    
-                    # Add as a new row
-                    self.sim_monitor['nb_res'].loc[len(self.sim_monitor['nb_res'])] = last_row
-                    
-                self.sim_monitor['nb_res'].loc[
-                    self.sim_monitor['nb_res']['current_time'] == current_time, 
-                    ['computing', 'idle']
-                ] += [-len(allocated), len(allocated)]
-              
-                
                 events_now = [(t, e) for t, e in schedule_queue if t == current_time]
                 skipbf = False
                 for aj in active_jobs:
@@ -272,7 +237,6 @@ class SPSimulator:
                 
                 waiting_queue = sorted(waiting_queue)
                 # tambahin perulangan gas gas insert job berdasarkan id atau submit time
-
                     
                 for _ in range(len(waiting_queue)):
                     job = waiting_queue[0]  # Selalu cek job pertama
@@ -280,8 +244,7 @@ class SPSimulator:
                         popped_job = waiting_queue.pop(0)
                         popped_job['type'] = 'execution_start'
                         temp_available_resource -= popped_job['res']
-                        if popped_job['id'] == 256:
-                            print('here')
+            
                         heapq.heappush(schedule_queue, (current_time, MyDict(popped_job)))
                     else:
                         break
@@ -306,8 +269,7 @@ class SPSimulator:
                             break
                     if is_pushed == False:
                         break
-        
-             
+                    
         return monitor_jobs
 
 sp_simulator = SPSimulator()
@@ -320,10 +282,9 @@ jobs_e['allocated_resources'] = jobs_e['allocated_resources'].apply(
 
 jobs_e.to_csv('results/sp/easy_jobs.csv', index=False)
 
-print('joule: ',sum(sp_simulator.sim_monitor['energy_consumption']))
+print('jul: ',sum(sp_simulator.sim_monitor['energy_consumption']))
 print('idle_time: ',sum(sp_simulator.sim_monitor['total_idle_time']))
 print('mean_waiting_time: ',sp_simulator.sim_monitor['avg_waiting_time'])
 print('mean_waiting_time: ',sp_simulator.sim_monitor['avg_waiting_time']/500)
-print('finish_time: ', max_finish_time)
+print('finish_time', max_finish_time)
 
-sp_simulator.sim_monitor['nb_res'].to_csv('results/sp/easy_host.csv', index=False)
