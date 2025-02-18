@@ -48,6 +48,9 @@ class MyDict:
     
     def __setitem__(self, key, value):
         self._dict[key] = value
+        
+    def has_key(self, key):
+        return key in self._dict
 
 class SPSimulator:
     def __init__(self, platform_path="platforms/spsim/platform.json", workload_path="workloads/simple_data_100.json"):        
@@ -263,10 +266,13 @@ class SPSimulator:
         current_time = 0
         available_resources = list(range(self.nb_res))
         inactive_resources = []
+        on_off_resources = []
+        off_on_resources = []
         schedule_queue = []
         waiting_queue = []
         monitor_jobs=[]
         active_jobs = []
+        reserved_count = 0
     
         for event in self.jobs:
             event_time, event_detail = event
@@ -282,7 +288,7 @@ class SPSimulator:
                 event = waiting_queue.pop(0)
             
             current_time = event_time
-            
+
             temp_index = 0
             for start_idle_res in self.sim_monitor['start_idle']:
                 if start_idle_res == -1:
@@ -296,15 +302,16 @@ class SPSimulator:
 
             for index_available_resource in available_resources:
                 self.sim_monitor['start_idle'][index_available_resource] = current_time
-                
-
+            
             if event['type'] == 'switch_off':
                 valid_switch_off = [item for item in event['node'] if item in available_resources]
+                
                 if len(valid_switch_off) == 0:
                     continue
                 
                 available_resources = [item for item in available_resources if item not in valid_switch_off]
-                
+                on_off_resources.extend(valid_switch_off)
+                on_off_resources = sorted(on_off_resources)
                 self.update_nb_res(current_time, event, event['type'], valid_switch_off)
                 
                 heapq.heappush(schedule_queue, (current_time + self.transition_time[0], MyDict({'node': copy.deepcopy(valid_switch_off), 'type': 'turn_off' })))
@@ -313,12 +320,15 @@ class SPSimulator:
                 inactive_resources.extend(event['node'])
                 inactive_resources = sorted(inactive_resources)
                 
+                on_off_resources = [item for item in on_off_resources if item not in event['node']]
+                on_off_resources = sorted(on_off_resources)
                 self.update_nb_res(current_time, event, event['type'], event['node'])
                 
             elif event['type'] == 'switch_on':
                 # kayaknya perlu nambahin valid switch on
                 inactive_resources = [item for item in inactive_resources if item not in event['node']]
-                
+                off_on_resources.extend(event['node'])
+                off_on_resources = sorted(off_on_resources)
                 self.update_nb_res(current_time, event, event['type'], event['node'])
                 
                 heapq.heappush(schedule_queue, (current_time + self.transition_time[1], MyDict({'node': copy.deepcopy(event['node']), 'type': 'turn_on' })))
@@ -326,7 +336,8 @@ class SPSimulator:
             elif event['type'] == 'turn_on':
                 available_resources.extend(event['node'])
                 available_resources = sorted(available_resources)
-
+                off_on_resources = [item for item in off_on_resources if item not in event['node']]
+                off_on_resources = sorted(off_on_resources)
                 self.update_nb_res(current_time, event, event['type'], event['node'])
                 
             elif event['type'] == 'arrival':
@@ -352,6 +363,9 @@ class SPSimulator:
                     
             elif event['type'] == 'execution_start':
                 if event['res'] > len(available_resources):
+                    if event.has_key('reserve') == False:
+                        reserved_count += event['res']
+                        event['reserve'] = True
                     heapq.heappush(schedule_queue, (current_time + self.transition_time[1], MyDict(event)))
                     continue
                 
@@ -369,13 +383,17 @@ class SPSimulator:
                     
                     intersection = list(set(inactive_resources) & set(activated_nodes))
                     
-
-                            
                     heapq.heappush(schedule_queue, (current_time, MyDict({'type': 'switch_on', 'node': copy.deepcopy(intersection)})))
+                    
+                    if event.has_key('reserve') == False:
+                        reserved_count += event['res']
+                        event['reserve'] = True
                     heapq.heappush(schedule_queue, (current_time + self.transition_time[1], MyDict(event)))
                     continue
                 
-                
+                if event.has_key('reserve') and event['reserve'] == True:
+                    reserved_count -= event['res']
+                    
                 allocated = available_resources[:event['res']]
                 available_resources = available_resources[event['res']:]
                 
@@ -435,12 +453,13 @@ class SPSimulator:
                 active_jobs = [active_job for active_job in active_jobs if active_job['id'] != event['id']]
                 
                 temp_available_resource_2 = len(available_resources)
-                temp_available_resource = len(available_resources) + len(inactive_resources)
+                temp_available_resource = len(available_resources) + len(inactive_resources) + len(off_on_resources) - reserved_count
                 check_if_need_activation = temp_available_resource - temp_available_resource_2
                 
                 self.update_nb_res(current_time, event, 'release', allocated)
               
-                
+                if current_time == 1359:
+                    print('here')
                 events_now = [(t, e) for t, e in schedule_queue if t == current_time]
                 skipbf = False
                 for aj in active_jobs:
@@ -450,21 +469,22 @@ class SPSimulator:
                 if skipbf == True:
                     continue
                     
-                for _, _event in events_now:
-                    if _event['type'] == 'execution_start':
-                        temp_available_resource -= _event['res']
+                # for _, _event in events_now:
+                #     if _event['type'] == 'execution_start':
+                #         temp_available_resource -= _event['res']
 
                 
                 waiting_queue = sorted(waiting_queue)
                 # tambahin perulangan gas gas insert job berdasarkan id atau submit time
-
-                    
+                
                 for _ in range(len(waiting_queue)):
                     job = waiting_queue[0]  # Selalu cek job pertama
                     if temp_available_resource >= job['res']:
                         popped_job = waiting_queue.pop(0)
                         popped_job['type'] = 'execution_start'
                         temp_available_resource -= popped_job['res']
+                        reserved_count += popped_job['res']
+                        popped_job['reserve'] = True
                         heapq.heappush(schedule_queue, (current_time, MyDict(popped_job)))
                     else:
                         break
@@ -491,7 +511,8 @@ class SPSimulator:
                         break
             
                 if temp_available_resource < check_if_need_activation:
-                    heapq.heappush(schedule_queue, (current_time, MyDict({'type':'switch_on', 'node': inactive_resources[:check_if_need_activation - temp_available_resource]})))
+                    
+                    heapq.heappush(schedule_queue, (current_time, MyDict({'type':'switch_on', 'node': inactive_resources[:check_if_need_activation - temp_available_resource - len(off_on_resources)]})))
 
     
 
@@ -568,8 +589,8 @@ df['job_id'] = df.apply(set_job_id, axis=1)
 grouped_df = df.groupby(['type', 'starting_time', 'finish_time']).agg({'allocated_resources': lambda x: ' '.join(map(str, x)), 'job_id': 'first'}).reset_index()
 
 grouped_df = grouped_df.sort_values(by=['starting_time', 'finish_time'])
-
-jobs_e = jobs_e[['job_id', 'allocated_resources', 'starting_time', 'finish_time']]
+grouped_df['submission_time'] = grouped_df['starting_time']
+jobs_e = jobs_e[['job_id', 'allocated_resources', 'starting_time', 'finish_time', 'submission_time']]
 jobs_e['type'] = 'computing'
 
 final_df = pd.concat([grouped_df, jobs_e], ignore_index=True)
