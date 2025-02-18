@@ -58,7 +58,18 @@ class SPSimulator:
             'avg_waiting_time': 0,
             'waiting_event_count': 0,
             'finish_time': 0,
-            'nb_res': pd.DataFrame([{'current_time': 0, 'sleeping': 0, 'switching_on': 0, 'switching_off': 0, 'idle': 16, 'computing': 0, 'unavailable': 0}])
+            'nb_res': pd.DataFrame([{'current_time': 0, 
+                                     'sleeping': 0, 
+                                     'sleeping_node': [], 
+                                     'switching_on': 0, 
+                                     'switching_on_node':[], 
+                                     'switching_off': 0,
+                                     'switching_off_node': [],  
+                                     'idle': 16,
+                                     'idle_node': list(range(self.nb_res)),
+                                     'computing': 0, 
+                                     'computing_node': [],
+                                     'unavailable': 0}])
         }
             
     def check_backfilling(self, current_time, event, temp_available_resources, active_jobs, next_job, backfilled_node_count):
@@ -167,22 +178,22 @@ class SPSimulator:
                 # available_resources = [r for r in available_resources if r not in allocated]
                 allocated = available_resources[:event['res']]
                 available_resources = available_resources[event['res']:]
-                mask = self.sim_monitor['nb_res']['current_time'] == current_time
                 
-                if self.sim_monitor['nb_res'].loc[mask].empty:
+                # Compute mask once
+                mask = self.sim_monitor['nb_res']['current_time'] == current_time
+                allocated_len = len(allocated)
+
+                # Add new row if it doesn't exist
+                if mask.sum() == 0:
                     last_row = self.sim_monitor['nb_res'].iloc[-1].copy()
-
-                    # Update the time
                     last_row['current_time'] = current_time
-                    
-                    # Add as a new row
-                    self.sim_monitor['nb_res'].loc[len(self.sim_monitor['nb_res'])] = last_row
+                    self.sim_monitor['nb_res'] = pd.concat([self.sim_monitor['nb_res'], last_row.to_frame().T], ignore_index=True)
 
-                    
-                self.sim_monitor['nb_res'].loc[
-                    self.sim_monitor['nb_res']['current_time'] == current_time, 
-                    ['computing', 'idle']
-                ] += [len(allocated), -len(allocated)]
+                # Update computing and idle in one go
+                row_idx = self.sim_monitor['nb_res'].index[mask].tolist()[0]
+                self.sim_monitor['nb_res'].at[row_idx, 'computing'] += allocated_len
+                self.sim_monitor['nb_res'].at[row_idx, 'idle'] -= allocated_len
+
 
                 finish_time = current_time + event['walltime']
                 finish_event = {

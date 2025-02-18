@@ -73,8 +73,142 @@ class SPSimulator:
             'avg_waiting_time': 0,
             'waiting_event_count': 0,
             'finish_time': 0,
-            'nb_res': pd.DataFrame([{'time': 0, 'sleeping': 0, 'switching_on': 0, 'switching_off': 0, 'idle': self.nb_res, 'computing': 0, 'unavailable': 0}])
+            'nb_res': pd.DataFrame([{'time': 0, 
+                                'sleeping': 0, 
+                                'sleeping_nodes': [], 
+                                'switching_on': 0, 
+                                'switching_on_nodes':[], 
+                                'switching_off': 0,
+                                'switching_off_nodes': [],  
+                                'idle': 16,
+                                'idle_nodes': list(range(self.nb_res)),
+                                'computing': 0, 
+                                'computing_nodes': [],
+                                'unavailable': 0}]),
+            'nodes': [
+                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
+                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
+                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
+                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
+                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
+                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
+                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
+                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
+                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
+                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
+                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
+                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
+                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
+                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
+                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
+                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}]
+                    ]
         }
+    
+    def update_nb_res(self, current_time, event, _type, nodes):
+        mask = self.sim_monitor['nb_res']['time'] == current_time
+        
+        for node_index in nodes:
+            node_history = self.sim_monitor['nodes'][node_index]
+            if node_history[len(node_history)-1]['type'] != _type:
+                node_history[len(node_history)-1]['finish_time'] = current_time
+                if _type == 'release':
+                    node_history.append({'type': 'idle', 'starting_time': current_time, 'finish_time': current_time})
+                elif _type == 'allocate':
+                    node_history.append({'type': 'computing', 'starting_time': current_time, 'finish_time': event['walltime'] + current_time})
+                elif _type == 'switch_off':
+                    node_history.append({'type': 'switching_off', 'starting_time': current_time, 'finish_time': 1 + current_time})
+                elif _type == 'switch_on':
+                    node_history.append({'type': 'switching_on', 'starting_time': current_time, 'finish_time': 1 + current_time})
+                elif _type == 'turn_off':
+                    node_history.append({'type': 'sleeping', 'starting_time': current_time, 'finish_time': current_time})
+                elif _type == 'turn_on':
+                    node_history.append({'type': 'idle', 'starting_time': current_time, 'finish_time': current_time})
+                
+        if mask.sum() == 0:
+            last_row = self.sim_monitor['nb_res'].iloc[-1].copy()
+            last_row['time'] = current_time
+            self.sim_monitor['nb_res'] = pd.concat([self.sim_monitor['nb_res'], last_row.to_frame().T], ignore_index=True)
+            mask = self.sim_monitor['nb_res']['time'] == current_time
+        
+        row_idx = self.sim_monitor['nb_res'].index[mask].tolist()[0]
+        nodes_len = len(nodes)
+        
+        if _type == 'release':
+            # pass the nodes that want to be released
+            self.sim_monitor['nb_res'].at[row_idx, 'idle'] += nodes_len
+            self.sim_monitor['nb_res'].at[row_idx, 'computing'] -= nodes_len
+            
+            _nodes = self.sim_monitor['nb_res'].at[row_idx, 'idle_nodes'] + nodes
+            _nodes = _nodes
+            _nodes = sorted(_nodes)
+            self.sim_monitor['nb_res'].at[row_idx, 'idle_nodes'] = _nodes
+            
+            self.sim_monitor['nb_res'].at[row_idx, 'computing_nodes'] = [
+                item for item in self.sim_monitor['nb_res'].at[row_idx, 'computing_nodes']
+                if item.get('job_id') != event['id']
+            ]
+        
+        elif _type == 'allocate':
+            self.sim_monitor['nb_res'].at[row_idx, 'computing'] += nodes_len
+            self.sim_monitor['nb_res'].at[row_idx, 'idle'] -= nodes_len
+            
+            self.sim_monitor['nb_res'].at[row_idx, 'computing_nodes'] += [{'job_id': event['id'], 'nodes': nodes,'starting_time': current_time, 'finish_time': current_time+event['walltime']}]
+            
+            self.sim_monitor['nb_res'].at[row_idx, 'idle_nodes'] = [item for item in self.sim_monitor['nb_res'].at[row_idx, 'idle_nodes'] if item not in nodes]
+            self.sim_monitor['nb_res'].at[row_idx, 'idle_nodes'] = sorted(self.sim_monitor['nb_res'].at[row_idx, 'idle_nodes'])
+            
+        elif _type == 'switch_off':
+            # pass the nodes that want to be switched off
+            self.sim_monitor['nb_res'].at[row_idx, 'switching_off'] += nodes_len
+            self.sim_monitor['nb_res'].at[row_idx, 'idle'] -= nodes_len
+            
+            _nodes = self.sim_monitor['nb_res'].at[row_idx, 'switching_off_nodes'] + nodes
+            _nodes = _nodes
+            _nodes = sorted(_nodes)
+            self.sim_monitor['nb_res'].at[row_idx, 'switching_off_nodes'] = _nodes
+            
+            self.sim_monitor['nb_res'].at[row_idx, 'idle_nodes'] = [item for item in self.sim_monitor['nb_res'].at[row_idx, 'idle_nodes'] if item not in nodes]
+            self.sim_monitor['nb_res'].at[row_idx, 'idle_nodes'] = sorted(self.sim_monitor['nb_res'].at[row_idx, 'idle_nodes'])
+            
+        elif _type == 'turn_off':
+            # pass the nodes that finally turned off
+            self.sim_monitor['nb_res'].at[row_idx, 'sleeping'] += nodes_len
+            self.sim_monitor['nb_res'].at[row_idx, 'switching_off'] -= nodes_len
+            
+            _nodes = self.sim_monitor['nb_res'].at[row_idx, 'sleeping_nodes'] + nodes
+            _nodes = _nodes
+            _nodes = sorted(_nodes)
+            self.sim_monitor['nb_res'].at[row_idx, 'sleeping_nodes'] = _nodes
+               
+            self.sim_monitor['nb_res'].at[row_idx, 'switching_off_nodes'] = [item for item in self.sim_monitor['nb_res'].at[row_idx, 'switching_off_nodes'] if item not in nodes]
+            self.sim_monitor['nb_res'].at[row_idx, 'switching_off_nodes'] = sorted(self.sim_monitor['nb_res'].at[row_idx, 'switching_off_nodes'])
+            
+        elif _type == 'switch_on':
+              # pass the nodes that want to be switched off
+            self.sim_monitor['nb_res'].at[row_idx, 'switching_on'] += nodes_len
+            self.sim_monitor['nb_res'].at[row_idx, 'sleeping'] -= nodes_len
+            
+            _nodes = self.sim_monitor['nb_res'].at[row_idx, 'switching_on_nodes'] + nodes
+            _nodes = _nodes
+            _nodes = sorted(_nodes)
+            self.sim_monitor['nb_res'].at[row_idx, 'switching_on_nodes'] = _nodes
+            
+            self.sim_monitor['nb_res'].at[row_idx, 'sleeping_nodes'] = [item for item in self.sim_monitor['nb_res'].at[row_idx, 'sleeping_nodes'] if item not in nodes]
+            self.sim_monitor['nb_res'].at[row_idx, 'sleeping_nodes'] = sorted(self.sim_monitor['nb_res'].at[row_idx, 'sleeping_nodes'])
+
+        elif _type == 'turn_on':
+                # pass the nodes that finally turned off
+            self.sim_monitor['nb_res'].at[row_idx, 'idle'] += nodes_len
+            self.sim_monitor['nb_res'].at[row_idx, 'switching_on'] -= nodes_len
+            
+            _nodes = self.sim_monitor['nb_res'].at[row_idx, 'idle_nodes'] + nodes
+            _nodes = _nodes
+            _nodes = sorted(_nodes)
+            self.sim_monitor['nb_res'].at[row_idx, 'idle_nodes'] = _nodes 
+            
+            self.sim_monitor['nb_res'].at[row_idx, 'switching_on_nodes'] = [item for item in self.sim_monitor['nb_res'].at[row_idx, 'switching_on_nodes'] if item not in nodes]
+            self.sim_monitor['nb_res'].at[row_idx, 'switching_on_nodes'] = sorted(self.sim_monitor['nb_res'].at[row_idx, 'switching_on_nodes'])
             
     def check_backfilling(self, current_time, event, temp_available_resources, active_jobs, next_job, backfilled_node_count):
         # Sebelum push ke schedule queue, perlu cek dulu apakah bakal meningkatkan waiting time job ke-0 pada waiting_queue
@@ -171,70 +305,29 @@ class SPSimulator:
                 
                 available_resources = [item for item in available_resources if item not in valid_switch_off]
                 
-                mask = self.sim_monitor['nb_res']['time'] == current_time
-                
-                if self.sim_monitor['nb_res'].loc[mask].empty:
-                    last_row = self.sim_monitor['nb_res'].iloc[-1].copy()
-                    last_row['time'] = current_time
-                    self.sim_monitor['nb_res'].loc[len(self.sim_monitor['nb_res'])] = last_row
-
-                    
-                self.sim_monitor['nb_res'].loc[
-                    self.sim_monitor['nb_res']['time'] == current_time, 
-                    ['switching_off', 'idle']
-                ] += [len(valid_switch_off), -len(valid_switch_off)]
+                self.update_nb_res(current_time, event, event['type'], valid_switch_off)
                 
                 heapq.heappush(schedule_queue, (current_time + self.transition_time[0], MyDict({'node': copy.deepcopy(valid_switch_off), 'type': 'turn_off' })))
                 
             elif event['type'] == 'turn_off':
                 inactive_resources.extend(event['node'])
                 inactive_resources = sorted(inactive_resources)
-                mask = self.sim_monitor['nb_res']['time'] == current_time
                 
-                if self.sim_monitor['nb_res'].loc[mask].empty:
-                    last_row = self.sim_monitor['nb_res'].iloc[-1].copy()
-                    last_row['time'] = current_time
-                    self.sim_monitor['nb_res'].loc[len(self.sim_monitor['nb_res'])] = last_row
-
-                    
-                self.sim_monitor['nb_res'].loc[
-                    self.sim_monitor['nb_res']['time'] == current_time, 
-                    ['sleeping', 'switching_off']
-                ] += [len(event['node']), -len(event['node'])]
+                self.update_nb_res(current_time, event, event['type'], event['node'])
                 
             elif event['type'] == 'switch_on':
                 # kayaknya perlu nambahin valid switch on
                 inactive_resources = [item for item in inactive_resources if item not in event['node']]
-                mask = self.sim_monitor['nb_res']['time'] == current_time
                 
-                if self.sim_monitor['nb_res'].loc[mask].empty:
-                    last_row = self.sim_monitor['nb_res'].iloc[-1].copy()
-                    last_row['time'] = current_time
-                    self.sim_monitor['nb_res'].loc[len(self.sim_monitor['nb_res'])] = last_row
-
-                    
-                self.sim_monitor['nb_res'].loc[
-                    self.sim_monitor['nb_res']['time'] == current_time, 
-                    ['sleeping', 'switching_on']
-                ] += [-len(event['node']), len(event['node'])]
+                self.update_nb_res(current_time, event, event['type'], event['node'])
                 
                 heapq.heappush(schedule_queue, (current_time + self.transition_time[1], MyDict({'node': copy.deepcopy(event['node']), 'type': 'turn_on' })))
                 
             elif event['type'] == 'turn_on':
                 available_resources.extend(event['node'])
                 available_resources = sorted(available_resources)
-                mask = self.sim_monitor['nb_res']['time'] == current_time
-                
-                if self.sim_monitor['nb_res'].loc[mask].empty:
-                    last_row = self.sim_monitor['nb_res'].iloc[-1].copy()
-                    last_row['time'] = current_time
-                    self.sim_monitor['nb_res'].loc[len(self.sim_monitor['nb_res'])] = last_row
 
-                    
-                self.sim_monitor['nb_res'].loc[
-                    self.sim_monitor['nb_res']['time'] == current_time, 
-                    ['switching_on', 'idle']
-                ] += [-len(event['node']), len(event['node'])]
+                self.update_nb_res(current_time, event, event['type'], event['node'])
                 
             elif event['type'] == 'arrival':
                 if len(available_resources) + len(inactive_resources) >= event['res']:
@@ -285,18 +378,8 @@ class SPSimulator:
                 
                 allocated = available_resources[:event['res']]
                 available_resources = available_resources[event['res']:]
-                mask = self.sim_monitor['nb_res']['time'] == current_time
                 
-                if self.sim_monitor['nb_res'].loc[mask].empty:
-                    last_row = self.sim_monitor['nb_res'].iloc[-1].copy()
-                    last_row['time'] = current_time
-                    self.sim_monitor['nb_res'].loc[len(self.sim_monitor['nb_res'])] = last_row
-
-                    
-                self.sim_monitor['nb_res'].loc[
-                    self.sim_monitor['nb_res']['time'] == current_time, 
-                    ['computing', 'idle']
-                ] += [len(allocated), -len(allocated)]
+                self.update_nb_res(current_time, event, 'allocate', allocated)
 
                 finish_time = current_time + event['walltime']
                 finish_event = {
@@ -355,21 +438,7 @@ class SPSimulator:
                 temp_available_resource = len(available_resources) + len(inactive_resources)
                 check_if_need_activation = temp_available_resource - temp_available_resource_2
                 
-                mask = self.sim_monitor['nb_res']['time'] == current_time
-                
-                if self.sim_monitor['nb_res'].loc[mask].empty:
-                    last_row = self.sim_monitor['nb_res'].iloc[-1].copy()
-
-                    # Update the time
-                    last_row['time'] = current_time
-                    
-                    # Add as a new row
-                    self.sim_monitor['nb_res'].loc[len(self.sim_monitor['nb_res'])] = last_row
-                    
-                self.sim_monitor['nb_res'].loc[
-                    self.sim_monitor['nb_res']['time'] == current_time, 
-                    ['computing', 'idle']
-                ] += [-len(allocated), len(allocated)]
+                self.update_nb_res(current_time, event, 'release', allocated)
               
                 
                 events_now = [(t, e) for t, e in schedule_queue if t == current_time]
@@ -429,7 +498,6 @@ class SPSimulator:
 
             # Filter nodes and remove empty dictionaries
 
-                
             mask = self.sim_monitor['nb_res']['time'] == current_time
             has_idle = (self.sim_monitor['nb_res'].loc[mask, 'idle'] > 0).any()
             if has_idle:
@@ -471,8 +539,42 @@ jobs_e['allocated_resources'] = jobs_e['allocated_resources'].apply(
 jobs_e.to_csv('results/sp/easy_jobs_t30.csv', index=False)
 sp_simulator.sim_monitor['nb_res'].to_csv('results/sp/easy_host_t30.csv', index=False)
 
-# print('joule: ',sum(sp_simulator.sim_monitor['energy_consumption']))
-# print('idle_time: ',sum(sp_simulator.sim_monitor['total_idle_time']))
-# print('mean_waiting_time: ',sp_simulator.sim_monitor['avg_waiting_time'])
-# print('mean_waiting_time: ',sp_simulator.sim_monitor['avg_waiting_time']/500)
-# print('finish_time: ', max_finish_time)
+nodes_data = sp_simulator.sim_monitor['nodes']
+
+flattened_data = []
+for idx, sublist in enumerate(nodes_data):
+    for item in sublist:
+        item['allocated_resources'] = idx
+        flattened_data.append(item)
+
+df = pd.DataFrame(flattened_data)
+
+df = df[['allocated_resources', 'type', 'starting_time', 'finish_time']]
+df = df[df['type'] != 'computing']
+
+def set_job_id(row):
+    if row['type'] == 'idle':
+        return -1
+    elif row['type'] == 'switching_off':
+        return -2
+    elif row['type'] == 'switching_on':
+        return -3
+    elif row['type'] == 'sleeping':
+        return -4
+    return 0 
+
+df['job_id'] = df.apply(set_job_id, axis=1)
+
+grouped_df = df.groupby(['type', 'starting_time', 'finish_time']).agg({'allocated_resources': lambda x: ' '.join(map(str, x)), 'job_id': 'first'}).reset_index()
+
+grouped_df = grouped_df.sort_values(by=['starting_time', 'finish_time'])
+
+jobs_e = jobs_e[['job_id', 'allocated_resources', 'starting_time', 'finish_time']]
+jobs_e['type'] = 'computing'
+
+final_df = pd.concat([grouped_df, jobs_e], ignore_index=True)
+
+final_df = final_df.sort_values(by=['starting_time', 'finish_time'])
+
+final_df.to_csv('results/sp/easy_nodes_t30.csv', index=False)
+final_df.to_json('results/sp/easy_nodes_t30.json', orient='records', lines=True)
