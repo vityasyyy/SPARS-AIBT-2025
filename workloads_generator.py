@@ -42,11 +42,11 @@ class ProblemGenerator:
 
         return workloads
 
-num_jobs=500
+num_jobs=10
 max_node=8
-problem_generator = ProblemGenerator(num_jobs=500, max_node=8)
+problem_generator = ProblemGenerator(num_jobs=100, max_node=8)
 
-workload_filepath = "workloads/simple_data.json"
+workload_filepath = "workloads/simple_data_100.json"
 workloads = problem_generator.generate()
 
 workloads = {

@@ -71,7 +71,7 @@ class SPSimulator:
         estimated_finish_time = current_time + event['walltime']
         last_job_active_job_finish_time_that_required_to_be_released = np.inf
  
-        last_job_active_job_finish_time_that_required_to_be_released = active_jobs[0]['finish_time']
+        # last_job_active_job_finish_time_that_required_to_be_released = active_jobs[0]['finish_time']
         
         for active_job in active_jobs:
             temp_available_resources += active_job['res']

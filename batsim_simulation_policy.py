@@ -16,7 +16,7 @@ def run_simulation(scheduler, shutdown_policy):
 
     # 2) Start simulation
     simulator.start(platform="platforms/batsim/platform.xml",
-                    workload="workloads/simple_data.json",
+                    workload="workloads/simple_data_100.json",
                     verbosity="information")
 
     # 3) Schedule all jobs
@@ -32,10 +32,10 @@ def run_simulation(scheduler, shutdown_policy):
     # 4) Return/Dump statistics
     return jobs_mon, sim_mon, host_mon, e_mon
 
+timeout = 30
+jobs_wt, sim_wt, host_wt, e_wt = run_simulation(EASYScheduler, lambda s: TimeoutPolicy(timeout, s))
 
-jobs_t5, sim_t5, host_t5, e_t5 = run_simulation(EASYScheduler, lambda s: TimeoutPolicy(30, s))
-
-jobs_t5 = jobs_t5.to_dataframe()
-host_t5 = host_t5.to_dataframe()
-jobs_t5.to_csv('results/batsim/easy_jobs_t5.csv', index=False)
-host_t5.to_csv('results/batsim/easy_host_t5.csv', index=False)
+jobs_wt = jobs_wt.to_dataframe()
+host_wt = host_wt.to_dataframe()
+jobs_wt.to_csv(f'results/batsim/easy_jobs_t{timeout}.csv', index=False)
+host_wt.to_csv(f'results/batsim/easy_host_t{timeout}.csv', index=False)

@@ -1,5 +1,7 @@
 import json
 import heapq
+from multiprocessing import heap
+from matplotlib.style import available
 import pandas as pd
 import copy
 import numpy as np
@@ -12,11 +14,24 @@ class MyDict:
             self._dict = _dict
         
     def __lt__(self, other):
+        priority_type = {'turn_on', 'turn_off', 'switch_on', 'switch_off'}
+
+        if self._dict['type'] in priority_type:
+            return True
+        elif other._dict['type'] in priority_type:
+            return False
+        elif self._dict['type'] not in priority_type and other._dict['type'] in priority_type:
+            return True
+       
+        
         if 'current_time' in self._dict and 'current_time' in other._dict:
             if self._dict['current_time'] < other._dict['current_time']:
                 return True
             elif self._dict['current_time'] > other._dict['current_time']:
                 return False
+        
+
+        
         if self._dict['type'] != 'execution_finished' and self._dict['type'] != 'execution_start':
             return self._dict['id'] < other._dict['id']
         else:
@@ -35,7 +50,7 @@ class MyDict:
         self._dict[key] = value
 
 class SPSimulator:
-    def __init__(self, platform_path="platforms/spsim/platform.json", workload_path="workloads/simple_data.json"):        
+    def __init__(self, platform_path="platforms/spsim/platform.json", workload_path="workloads/simple_data_100.json"):        
         with open(platform_path, 'r') as file:
             self.platform_info = json.load(file)
         with open(workload_path, 'r') as file:
@@ -44,7 +59,7 @@ class SPSimulator:
         self.nb_res = self.platform_info['nb_res']
         self.machines = self.platform_info['machines']
         self.profiles = self.workload_info['profiles']
-        
+        self.transition_time = [self.platform_info['switch_off_time'], self.platform_info['switch_on_time']]
         self.jobs = []
         for job in self.workload_info['jobs']:
             job['type'] = 'arrival'
@@ -58,6 +73,7 @@ class SPSimulator:
             'avg_waiting_time': 0,
             'waiting_event_count': 0,
             'finish_time': 0,
+            'nb_res': pd.DataFrame([{'time': 0, 'sleeping': 0, 'switching_on': 0, 'switching_off': 0, 'idle': self.nb_res, 'computing': 0, 'unavailable': 0}])
         }
             
     def check_backfilling(self, current_time, event, temp_available_resources, active_jobs, next_job, backfilled_node_count):
@@ -70,7 +86,7 @@ class SPSimulator:
         estimated_finish_time = current_time + event['walltime']
         last_job_active_job_finish_time_that_required_to_be_released = np.inf
  
-        last_job_active_job_finish_time_that_required_to_be_released = active_jobs[0]['finish_time']
+        # last_job_active_job_finish_time_that_required_to_be_released = active_jobs[0]['finish_time']
         
         for active_job in active_jobs:
             temp_available_resources += active_job['res']
@@ -109,17 +125,22 @@ class SPSimulator:
         # Jika tidak ditemukan blok berurutan, ambil blok pertama seperti biasa
         return resources[:count]
         
-    def simulate_easy(self):
+    def simulate_easy(self, timeout):
         current_time = 0
         available_resources = list(range(self.nb_res))
+        inactive_resources = []
         schedule_queue = []
         waiting_queue = []
         monitor_jobs=[]
         active_jobs = []
+    
         for event in self.jobs:
             event_time, event_detail = event
             heapq.heappush(schedule_queue, (event_time, MyDict(event_detail)))
         
+        heapq.heappush(schedule_queue, (timeout, MyDict({'node': copy.deepcopy(available_resources), 'type': 'switch_off'})))
+        
+   
         while schedule_queue or waiting_queue:      
             if schedule_queue:
                 event_time, event = heapq.heappop(schedule_queue)
@@ -127,6 +148,7 @@ class SPSimulator:
                 event = waiting_queue.pop(0)
             
             current_time = event_time
+            
             temp_index = 0
             for start_idle_res in self.sim_monitor['start_idle']:
                 if start_idle_res == -1:
@@ -137,19 +159,94 @@ class SPSimulator:
                 self.sim_monitor['energy_consumption'][temp_index] += (idle_time * rate_energy_consumption_idle)
                 self.sim_monitor['total_idle_time'][temp_index] += (current_time - start_idle_res)
                 
-                
+
             for index_available_resource in available_resources:
                 self.sim_monitor['start_idle'][index_available_resource] = current_time
-            
-       
-            if event['type'] == 'arrival':
-                if len(available_resources) >= event['res']:
+                
+
+            if event['type'] == 'switch_off':
+                valid_switch_off = [item for item in event['node'] if item in available_resources]
+                if len(valid_switch_off) == 0:
+                    continue
+                
+                available_resources = [item for item in available_resources if item not in valid_switch_off]
+                
+                mask = self.sim_monitor['nb_res']['time'] == current_time
+                
+                if self.sim_monitor['nb_res'].loc[mask].empty:
+                    last_row = self.sim_monitor['nb_res'].iloc[-1].copy()
+                    last_row['time'] = current_time
+                    self.sim_monitor['nb_res'].loc[len(self.sim_monitor['nb_res'])] = last_row
+
+                    
+                self.sim_monitor['nb_res'].loc[
+                    self.sim_monitor['nb_res']['time'] == current_time, 
+                    ['switching_off', 'idle']
+                ] += [len(valid_switch_off), -len(valid_switch_off)]
+                
+                heapq.heappush(schedule_queue, (current_time + self.transition_time[0], MyDict({'node': copy.deepcopy(valid_switch_off), 'type': 'turn_off' })))
+                
+            elif event['type'] == 'turn_off':
+                inactive_resources.extend(event['node'])
+                inactive_resources = sorted(inactive_resources)
+                mask = self.sim_monitor['nb_res']['time'] == current_time
+                
+                if self.sim_monitor['nb_res'].loc[mask].empty:
+                    last_row = self.sim_monitor['nb_res'].iloc[-1].copy()
+                    last_row['time'] = current_time
+                    self.sim_monitor['nb_res'].loc[len(self.sim_monitor['nb_res'])] = last_row
+
+                    
+                self.sim_monitor['nb_res'].loc[
+                    self.sim_monitor['nb_res']['time'] == current_time, 
+                    ['sleeping', 'switching_off']
+                ] += [len(event['node']), -len(event['node'])]
+                
+            elif event['type'] == 'switch_on':
+                # kayaknya perlu nambahin valid switch on
+                inactive_resources = [item for item in inactive_resources if item not in event['node']]
+                mask = self.sim_monitor['nb_res']['time'] == current_time
+                
+                if self.sim_monitor['nb_res'].loc[mask].empty:
+                    last_row = self.sim_monitor['nb_res'].iloc[-1].copy()
+                    last_row['time'] = current_time
+                    self.sim_monitor['nb_res'].loc[len(self.sim_monitor['nb_res'])] = last_row
+
+                    
+                self.sim_monitor['nb_res'].loc[
+                    self.sim_monitor['nb_res']['time'] == current_time, 
+                    ['sleeping', 'switching_on']
+                ] += [-len(event['node']), len(event['node'])]
+                
+                heapq.heappush(schedule_queue, (current_time + self.transition_time[1], MyDict({'node': copy.deepcopy(event['node']), 'type': 'turn_on' })))
+                
+            elif event['type'] == 'turn_on':
+                available_resources.extend(event['node'])
+                available_resources = sorted(available_resources)
+                mask = self.sim_monitor['nb_res']['time'] == current_time
+                
+                if self.sim_monitor['nb_res'].loc[mask].empty:
+                    last_row = self.sim_monitor['nb_res'].iloc[-1].copy()
+                    last_row['time'] = current_time
+                    self.sim_monitor['nb_res'].loc[len(self.sim_monitor['nb_res'])] = last_row
+
+                    
+                self.sim_monitor['nb_res'].loc[
+                    self.sim_monitor['nb_res']['time'] == current_time, 
+                    ['switching_on', 'idle']
+                ] += [-len(event['node']), len(event['node'])]
+                
+            elif event['type'] == 'arrival':
+                if len(available_resources) + len(inactive_resources) >= event['res']:
                     if waiting_queue:
                         active_jobs = sorted(active_jobs, key=lambda x: x['finish_time'])
                         backfilled_node_count = 0
-                        if self.check_backfilling(current_time, event, len(available_resources), active_jobs, waiting_queue[0], backfilled_node_count):
+                        if self.check_backfilling(current_time, event, len(available_resources) + len(inactive_resources), active_jobs, waiting_queue[0], backfilled_node_count):
                             event['type'] = 'execution_start'
-                            heapq.heappush(schedule_queue, (current_time, MyDict(event)))
+                            if len(available_resources) < event['res']:
+                                heapq.heappush(schedule_queue, (current_time + self.transition_time[1], MyDict(event)))
+                            else:
+                                heapq.heappush(schedule_queue, (current_time, MyDict(event)))
                         else:
                             event['current_time'] = current_time
                             waiting_queue.append(event)
@@ -161,10 +258,46 @@ class SPSimulator:
                     waiting_queue.append(event)
                     
             elif event['type'] == 'execution_start':
-                # allocated = self.find_grouped_resources(available_resources, event['res'])
-                # available_resources = [r for r in available_resources if r not in allocated]
+                if event['res'] > len(available_resources):
+                    heapq.heappush(schedule_queue, (current_time + self.transition_time[1], MyDict(event)))
+                    continue
+                
+
+                if event['res'] <= len(available_resources) and (inactive_resources and min(inactive_resources) < available_resources[event['res'] - 1]):
+                    inactive_node_sorted = sorted(inactive_resources)
+                    available_node_sorted = sorted(available_resources)
+                    merged = inactive_node_sorted + available_node_sorted
+                    merged = sorted(merged)
+                    activated_nodes = []
+
+                    for node in merged:
+                        if len(activated_nodes) < event['res']:
+                            activated_nodes.append(node)
+                    
+                    intersection = list(set(inactive_resources) & set(activated_nodes))
+                    
+
+                            
+                    heapq.heappush(schedule_queue, (current_time, MyDict({'type': 'switch_on', 'node': copy.deepcopy(intersection)})))
+                    heapq.heappush(schedule_queue, (current_time + self.transition_time[1], MyDict(event)))
+                    continue
+                
+                
                 allocated = available_resources[:event['res']]
                 available_resources = available_resources[event['res']:]
+                mask = self.sim_monitor['nb_res']['time'] == current_time
+                
+                if self.sim_monitor['nb_res'].loc[mask].empty:
+                    last_row = self.sim_monitor['nb_res'].iloc[-1].copy()
+                    last_row['time'] = current_time
+                    self.sim_monitor['nb_res'].loc[len(self.sim_monitor['nb_res'])] = last_row
+
+                    
+                self.sim_monitor['nb_res'].loc[
+                    self.sim_monitor['nb_res']['time'] == current_time, 
+                    ['computing', 'idle']
+                ] += [len(allocated), -len(allocated)]
+
                 finish_time = current_time + event['walltime']
                 finish_event = {
                     'id': event['id'],
@@ -175,7 +308,6 @@ class SPSimulator:
                     'profile': event['profile'],
                     'allocated_resources': allocated
                 }
-                
                 
                 if finish_event['subtime'] != current_time:
                     self.sim_monitor['avg_waiting_time'] += (current_time - finish_event['subtime'])
@@ -219,7 +351,26 @@ class SPSimulator:
 
                 active_jobs = [active_job for active_job in active_jobs if active_job['id'] != event['id']]
                 
-                temp_available_resource = len(available_resources)
+                temp_available_resource_2 = len(available_resources)
+                temp_available_resource = len(available_resources) + len(inactive_resources)
+                check_if_need_activation = temp_available_resource - temp_available_resource_2
+                
+                mask = self.sim_monitor['nb_res']['time'] == current_time
+                
+                if self.sim_monitor['nb_res'].loc[mask].empty:
+                    last_row = self.sim_monitor['nb_res'].iloc[-1].copy()
+
+                    # Update the time
+                    last_row['time'] = current_time
+                    
+                    # Add as a new row
+                    self.sim_monitor['nb_res'].loc[len(self.sim_monitor['nb_res'])] = last_row
+                    
+                self.sim_monitor['nb_res'].loc[
+                    self.sim_monitor['nb_res']['time'] == current_time, 
+                    ['computing', 'idle']
+                ] += [-len(allocated), len(allocated)]
+              
                 
                 events_now = [(t, e) for t, e in schedule_queue if t == current_time]
                 skipbf = False
@@ -237,6 +388,7 @@ class SPSimulator:
                 
                 waiting_queue = sorted(waiting_queue)
                 # tambahin perulangan gas gas insert job berdasarkan id atau submit time
+
                     
                 for _ in range(len(waiting_queue)):
                     job = waiting_queue[0]  # Selalu cek job pertama
@@ -244,7 +396,6 @@ class SPSimulator:
                         popped_job = waiting_queue.pop(0)
                         popped_job['type'] = 'execution_start'
                         temp_available_resource -= popped_job['res']
-            
                         heapq.heappush(schedule_queue, (current_time, MyDict(popped_job)))
                     else:
                         break
@@ -269,22 +420,59 @@ class SPSimulator:
                             break
                     if is_pushed == False:
                         break
-                    
+            
+                if temp_available_resource < check_if_need_activation:
+                    heapq.heappush(schedule_queue, (current_time, MyDict({'type':'switch_on', 'node': inactive_resources[:check_if_need_activation - temp_available_resource]})))
+
+    
+
+
+            # Filter nodes and remove empty dictionaries
+
+                
+            mask = self.sim_monitor['nb_res']['time'] == current_time
+            has_idle = (self.sim_monitor['nb_res'].loc[mask, 'idle'] > 0).any()
+            if has_idle:
+
+                heapq.heappush(schedule_queue, (current_time + timeout, MyDict({'type':'switch_off', 'node': copy.deepcopy(available_resources)})))
+                # masukin trigger type turning off pada waktu current time + timeout
+                # tapi jangan lupa kalau ada ternyata belum lewat timeout ada event baru masuk dan node tersebut digunakan berarti gjd trigger dong
+                # berarti trigger itu adalah list of dict
+                # di mana setiap dict ada time dan list node idle
+                # ketika yang di list node idle itu dialokasikan, brrti di list node idle hapus node yang dialokasikan ke job
+                # ketika list node idle habis, berarti trigger tersebut dihilangkan dari muka bumi
+                
+                # triggerer dipush ke schedule queue saja
+                
+                # ini baru triggerer untuk kalo ada available resource dan trus dimatikan
+                # perlu bikin handler untuk nambahin data ke triggerer ketika node yang di sleeping perlu dihidupkan
+                # temp aval res tinggal ditambah len(sleeping node), trus bikin temp total node needed, ketika temp total node needed > len(idle) brrti kan perlu ngidupin sleeping
+                
+                # berarti perlu bikin variable untuk tracking inactive nodes
+                
+                # kalo perlu ngidupin brrti tambahin triggerer
+                
+                # triggerer dibagi jadi 2, transisi on off, transisi off on, finally off, finally on
+                # atau mungkin pas transisi on off langsung tambahin aja finally off ke monitor nb_res
+                
+
+             
         return monitor_jobs
 
+timeout = 30
 sp_simulator = SPSimulator()
-jobs_e = sp_simulator.simulate_easy()
+jobs_e = sp_simulator.simulate_easy(timeout)
 max_finish_time = max(job.get('finish_time', 0) for job in jobs_e)
 jobs_e = pd.DataFrame(jobs_e)
 jobs_e['allocated_resources'] = jobs_e['allocated_resources'].apply(
     lambda x: f' '.join(map(str, x))
 )
 
-jobs_e.to_csv('results/sp/easy_jobs.csv', index=False)
+jobs_e.to_csv('results/sp/easy_jobs_t30.csv', index=False)
+sp_simulator.sim_monitor['nb_res'].to_csv('results/sp/easy_host_t30.csv', index=False)
 
-print('jul: ',sum(sp_simulator.sim_monitor['energy_consumption']))
-print('idle_time: ',sum(sp_simulator.sim_monitor['total_idle_time']))
-print('mean_waiting_time: ',sp_simulator.sim_monitor['avg_waiting_time'])
-print('mean_waiting_time: ',sp_simulator.sim_monitor['avg_waiting_time']/500)
-print('finish_time', max_finish_time)
-
+# print('joule: ',sum(sp_simulator.sim_monitor['energy_consumption']))
+# print('idle_time: ',sum(sp_simulator.sim_monitor['total_idle_time']))
+# print('mean_waiting_time: ',sp_simulator.sim_monitor['avg_waiting_time'])
+# print('mean_waiting_time: ',sp_simulator.sim_monitor['avg_waiting_time']/500)
+# print('finish_time: ', max_finish_time)
