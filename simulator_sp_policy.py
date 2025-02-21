@@ -458,8 +458,6 @@ class SPSimulator:
                 
                 self.update_nb_res(current_time, event, 'release', allocated)
               
-                if current_time == 1359:
-                    print('here')
                 events_now = [(t, e) for t, e in schedule_queue if t == current_time]
                 skipbf = False
                 for aj in active_jobs:
@@ -584,6 +582,21 @@ def set_job_id(row):
         return -4
     return 0 
 
+
+def calculate_metrics(nodes_monitor):
+    total_joule = nodes_monitor.apply(
+        lambda row: (row['finish_time'] - row['starting_time']) * len(row['allocated_resources'].split()) * (
+            95 if row['type'] == 'idle' else
+            9 if row['type'] == 'sleeping' else
+            190 if row['type'] == 'computing' else
+            9 if row['type'] == 'switching_off' else
+            190 if row['type'] == 'switching_on' else 0
+        ), axis=1
+    ).sum()
+
+    print(total_joule)
+    
+
 df['job_id'] = df.apply(set_job_id, axis=1)
 
 grouped_df = df.groupby(['type', 'starting_time', 'finish_time']).agg({'allocated_resources': lambda x: ' '.join(map(str, x)), 'job_id': 'first'}).reset_index()
@@ -596,6 +609,8 @@ jobs_e['type'] = 'computing'
 final_df = pd.concat([grouped_df, jobs_e], ignore_index=True)
 
 final_df = final_df.sort_values(by=['starting_time', 'finish_time'])
+
+calculate_metrics(final_df)
 
 final_df.to_csv('results/sp/easy_nodes_t30.csv', index=False)
 final_df.to_json('results/sp/easy_nodes_t30.json', orient='records', lines=True)
