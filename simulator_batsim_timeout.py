@@ -37,5 +37,5 @@ jobs_wt, sim_wt, host_wt, e_wt = run_simulation(EASYScheduler, lambda s: Timeout
 
 jobs_wt = jobs_wt.to_dataframe()
 host_wt = host_wt.to_dataframe()
-jobs_wt.to_csv(f'results/batsim/easy_jobs_t{timeout}.csv', index=False)
-host_wt.to_csv(f'results/batsim/easy_host_t{timeout}.csv', index=False)
+jobs_wt.to_csv(f'results/batsim/timeout/easy_jobs_t{timeout}.csv', index=False)
+host_wt.to_csv(f'results/batsim/timeout/easy_host_t{timeout}.csv', index=False)

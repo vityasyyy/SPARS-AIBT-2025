@@ -13,7 +13,7 @@ def run_simulation(scheduler):
 
     # 2) Start simulation
     simulator.start(platform="platforms/batsim/platform.xml",
-                    workload="workloads/simple_data.json",
+                    workload="workloads/simple_data_100.json",
                     verbosity="information")
 
     # 3) Schedule all jobs
@@ -40,9 +40,9 @@ print(JobSet(fcfs))
 # fcfs['allocated_resources'] = fcfs['allocated_resources'].apply(lambda x: ','.join(map(str, x)))
 # easy['allocated_resources'] = easy['allocated_resources'].apply(lambda x: ','.join(map(str, x)))
 
-fcfs.to_csv('results/batsim/fcfs_jobs.csv', index=False)
-easy.to_csv('results/batsim/easy_jobs.csv', index=False)
+fcfs.to_csv('results/batsim/baseline/fcfs_jobs.csv', index=False)
+easy.to_csv('results/batsim/baseline/easy_jobs.csv', index=False)
 
 fcfs, easy = sim_f.to_dataframe(), sim_e.to_dataframe()
-fcfs.to_csv('results/batsim/fcfs_sims.csv', index=False)
-easy.to_csv('results/batsim/easy_sims.csv', index=False)
+fcfs.to_csv('results/batsim/baseline/fcfs_sims.csv', index=False)
+easy.to_csv('results/batsim/baseline/easy_sims.csv', index=False)
