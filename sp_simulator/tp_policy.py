@@ -234,8 +234,6 @@ def simulate_easy(self, timeout):
                 heapq.heappush(schedule_queue, (current_time, MyDict({'type':'switch_on', 'node': inactive_resources[:check_if_need_activation - temp_available_resource - len(off_on_resources)]})))
         
         elif event['type'] == 'pre_switch_on_check':
-            if current_time == 299:
-                print('here')
             temp_available_resource_2 = len(available_resources)
             temp_available_resource = len(available_resources) + len(inactive_resources) - reserved_count + len(off_on_resources)
             check_if_need_activation = temp_available_resource - temp_available_resource_2

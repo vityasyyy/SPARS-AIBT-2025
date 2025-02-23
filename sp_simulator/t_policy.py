@@ -107,6 +107,19 @@ def simulate_easy(sp_simulator, timeout):
                 if event.has_key('reserve') == False:
                     reserved_count += event['res']
                     event['reserve'] = True
+                if len(off_on_resources) < event['res']:
+                    inactive_node_sorted = sorted(inactive_resources)
+                    available_node_sorted = sorted(available_resources)
+                    merged = inactive_node_sorted + available_node_sorted
+                    merged = sorted(merged)
+                    activated_nodes = []
+
+                    for node in merged:
+                        if len(activated_nodes) < event['res']:
+                            activated_nodes.append(node)
+                    
+                    intersection = list(set(inactive_resources) & set(activated_nodes))
+                    heapq.heappush(schedule_queue, (current_time, MyDict({'type': 'switch_on', 'node': copy.deepcopy(intersection)})))
                 heapq.heappush(schedule_queue, (current_time + sp_simulator.transition_time[1], MyDict(event)))
                 continue
             
@@ -250,7 +263,7 @@ def simulate_easy(sp_simulator, timeout):
         mask = sp_simulator.sim_monitor['nb_res']['time'] == current_time
         has_idle = (sp_simulator.sim_monitor['nb_res'].loc[mask, 'idle'] > 0).any()
         if has_idle:
-
             heapq.heappush(schedule_queue, (current_time + timeout, MyDict({'type':'switch_off', 'node': copy.deepcopy(available_resources)})))
+    
             
     return monitor_jobs

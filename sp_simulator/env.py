@@ -111,6 +111,20 @@ class SPSimulator:
                         [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}]
                     ]
         }
+        
+        #EDIT HERE
+        self.current_time = 0
+        self.available_resources = list(range(self.nb_res))
+        self.inactive_resources = []
+        self.on_off_resources = []
+        self.off_on_resources = []
+        self.schedule_queue = []
+        self.waiting_queue = []
+        self.executed_jobs = []
+        self.monitor_jobs=[]
+        self.active_jobs = []
+        self.reserved_count = 0
+        self.step_count = 0
     
     def update_nb_res(self, current_time, event, _type, nodes):
         mask = self.sim_monitor['nb_res']['time'] == current_time
@@ -237,3 +251,5 @@ class SPSimulator:
             if resources[i + count - 1] - resources[i] == count - 1:
                 return resources[i:i + count]
         return resources[:count]
+    
+    
