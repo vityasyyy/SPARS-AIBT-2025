@@ -30,11 +30,6 @@ from .env import MyDict
 
 # J(k, k+1) = jika ada job submission time di antara waktu event ke-k dan event ke-k+1 maka dikali Δt
 
-# ~~~~~
-# EVENT SWITCH OFF DAN SWITCH ON DIHAPUS??
-# SIMULATOR TIDAK BOLEH MENENTUKAN SWITCH ON DAN OFF, HARUS BERASAL DARI AI
-# AI TIDAK BOLEH SWITCH ON LEBIH DARI INACTIVE RESOURCES DAN TIDAK BOLEH SWITCH OFF LEBIH DARI AVAILABLE RESOURCES
-
 def reward1(self):
     count_son = len(self.on_off_resources)
     count_sof = len(self.off_on_resources)
