@@ -30,20 +30,8 @@ def simulate_easy(sp_simulator, timeout):
         
         current_time = event_time
 
-        temp_index = 0
-        for start_idle_res in sp_simulator.sim_monitor['start_idle']:
-            if start_idle_res == -1:
-                temp_index +=1
-                continue
-            rate_energy_consumption_idle = sp_simulator.machines[temp_index]['wattage_per_state'][1]
-            idle_time = current_time - start_idle_res
-            sp_simulator.sim_monitor['energy_consumption'][temp_index] += (idle_time * rate_energy_consumption_idle)
-            sp_simulator.sim_monitor['total_idle_time'][temp_index] += (current_time - start_idle_res)
-            
-
-        for index_available_resource in available_resources:
-            sp_simulator.sim_monitor['start_idle'][index_available_resource] = current_time
-        
+      
+      
         if event['type'] == 'switch_off':
             valid_switch_off = [item for item in event['node'] if item in available_resources]
             
@@ -172,10 +160,6 @@ def simulate_easy(sp_simulator, timeout):
             
             finish_event['finish_time'] = finish_time
             active_jobs.append(finish_event)
-            
-            for i in allocated:
-                sp_simulator.sim_monitor['energy_consumption'][i] += (finish_time - current_time) * sp_simulator.machines[i]['wattage_per_state'][3]
-                sp_simulator.sim_monitor['start_idle'][i] = -1
             
             monitor_jobs.append({
                 'job_id': event['id'],

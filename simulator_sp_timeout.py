@@ -3,7 +3,7 @@ from sp_simulator.env import SPSimulator
 from sp_simulator.t_policy import simulate_easy
 
 timeout = 30
-sp_simulator = SPSimulator()
+sp_simulator = SPSimulator(model = None)
 jobs_e = simulate_easy(sp_simulator, timeout)
 max_finish_time = max(job.get('finish_time', 0) for job in jobs_e)
 jobs_e = pd.DataFrame(jobs_e)

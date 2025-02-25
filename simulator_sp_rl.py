@@ -1,18 +1,23 @@
 import pandas as pd
 from sp_simulator.env import SPSimulator
-from sp_simulator.rl2 import simulate_easy, step, reward1, reward2, max_jwt
+from sp_simulator.rl2 import simulate_easy, step, reward1, reward2, max_jwt, fcfsbf
 from types import MethodType
+import torch
 
-sp_simulator = SPSimulator()
+model = torch.load("untrained/hpc_node_manager.pth", map_location=torch.device('cpu'))
+model.train()
+
+sp_simulator = SPSimulator(model)
+
 sp_simulator.simulate_easy = MethodType(simulate_easy, sp_simulator)
 sp_simulator.step = MethodType(step, sp_simulator)
 sp_simulator.reward1 = MethodType(reward1, sp_simulator)
 sp_simulator.reward2 = MethodType(reward2, sp_simulator)
 sp_simulator.max_jwt = MethodType(max_jwt, sp_simulator)
+sp_simulator.fcfsbf = MethodType(fcfsbf, sp_simulator)
 
-timeout = 30
 
-jobs_e = sp_simulator.simulate_easy(timeout)
+jobs_e = sp_simulator.simulate_easy()
 
 max_finish_time = max(job.get('finish_time', 0) for job in jobs_e)
 jobs_e = pd.DataFrame(jobs_e)
@@ -20,8 +25,8 @@ jobs_e['allocated_resources'] = jobs_e['allocated_resources'].apply(
     lambda x: f' '.join(map(str, x))
 )
 
-jobs_e.to_csv(f'results/sp/timeout/easy_jobs_t{timeout}.csv', index=False)
-sp_simulator.sim_monitor['nb_res'].to_csv(f'results/sp/timeout/easy_host_t{timeout}.csv', index=False)
+jobs_e.to_csv(f'results/sp/rl/easy_jobs.csv', index=False)
+sp_simulator.sim_monitor['nb_res'].to_csv(f'results/sp/rl/easy_host.csv', index=False)
 
 nodes_data = sp_simulator.sim_monitor['nodes']
 
@@ -47,43 +52,6 @@ def set_job_id(row):
         return -4
     return 0 
 
-def calculate_energy(nodes_monitor):
-    total_joule = nodes_monitor.apply(
-        lambda row: (row['finish_time'] - row['starting_time']) * len(row['allocated_resources'].split()) * (
-            95 if row['type'] == 'idle' else
-            9 if row['type'] == 'sleeping' else
-            190 if row['type'] == 'computing' else
-            9 if row['type'] == 'switching_off' else
-            190 if row['type'] == 'switching_on' else 0
-        ), axis=1
-    ).sum()
-
-    print('total joule: ', total_joule)
-
-def calculate_total_time(nodes_monitor):
-    types = ['idle', 'sleeping', 'computing', 'switching_on', 'switching_off']
-    total_times = {}
-
-    for t in types:
-        total_times[t] = nodes_monitor[nodes_monitor['type'] == t].apply(
-            lambda row: (row['finish_time'] - row['starting_time']) * len(row['allocated_resources'].split()),
-            axis=1
-        ).sum()
-    
-    for t, time in total_times.items():
-        print(f'{t} time: {time}')
-
-    return total_times
-
-def calculate_waiting_time(jobs_monitor):
-    total_waiting_time = (jobs_monitor['starting_time'] - jobs_monitor['submission_time']).sum()
-    print('total waiting time: ', total_waiting_time)
-    print('avg waiting time: ', total_waiting_time/len(jobs_monitor))
-
-def calculate_last_finish(jobs_monitor):
-    last_finish_time = jobs_monitor['finish_time'].max()
-    print('last finish time: ', last_finish_time)
-
 df['job_id'] = df.apply(set_job_id, axis=1)
 
 grouped_df = df.groupby(['type', 'starting_time', 'finish_time']).agg({'allocated_resources': lambda x: ' '.join(map(str, x)), 'job_id': 'first'}).reset_index()
@@ -97,10 +65,6 @@ final_df = pd.concat([grouped_df, jobs_e], ignore_index=True)
 
 final_df = final_df.sort_values(by=['starting_time', 'finish_time'])
 
-calculate_energy(final_df)
-calculate_total_time(final_df)
-calculate_waiting_time(jobs_e)
-calculate_last_finish(jobs_e)
 
-final_df.to_csv(f'results/sp/timeout/easy_nodes_t{timeout}.csv', index=False)
-final_df.to_json(f'results/sp/timeout/easy_nodes_t{timeout}.json', orient='records', lines=True)
+final_df.to_csv(f'results/sp/rl/easy_nodes.csv', index=False)
+final_df.to_json(f'results/sp/rl/easy_nodes.json', orient='records', lines=True)

@@ -3,6 +3,8 @@ import heapq
 import pandas as pd
 import copy
 import numpy as np
+import torch.optim as optim  # Import the optim module
+
 
 class MyDict:
     def __init__(self, _dict: dict):
@@ -28,8 +30,6 @@ class MyDict:
             elif self._dict['current_time'] > other._dict['current_time']:
                 return False
         
-
-        
         if self._dict['type'] != 'execution_finished' and self._dict['type'] != 'execution_start':
             return self._dict['id'] < other._dict['id']
         else:
@@ -44,8 +44,6 @@ class MyDict:
             else:
                 return self._dict['id'] < other._dict['id']
                 
-                
-    
     def __getitem__(self, key):
         return self._dict[key]
     
@@ -56,7 +54,7 @@ class MyDict:
         return key in self._dict
     
 class SPSimulator:
-    def __init__(self, platform_path="platforms/spsim/platform.json", workload_path="workloads/simple_data_100.json"):        
+    def __init__(self, model, platform_path="platforms/spsim/platform.json", workload_path="workloads/simple_data_100.json"):        
         with open(platform_path, 'r') as file:
             self.platform_info = json.load(file)
         with open(workload_path, 'r') as file:
@@ -66,6 +64,8 @@ class SPSimulator:
         self.machines = self.platform_info['machines']
         self.profiles = self.workload_info['profiles']
         self.transition_time = [self.platform_info['switch_off_time'], self.platform_info['switch_on_time']]
+        self.model = model
+        self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
         
         self.jobs = []
         for job in self.workload_info['jobs']:
@@ -75,7 +75,7 @@ class SPSimulator:
         
         self.sim_monitor = {
             "energy_consumption": [0] * len(self.machines),
-            "start_idle": [0] * len(self.machines),
+            "nodes_action": [{'state': 'idle', 'time': 0} for _ in range(self.nb_res)],
             "total_idle_time": [0] * len(self.machines),
             'avg_waiting_time': 0,
             'waiting_event_count': 0,
@@ -92,24 +92,8 @@ class SPSimulator:
                                 'computing': 0, 
                                 'computing_nodes': [],
                                 'unavailable': 0}]),
-            'nodes': [
-                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
-                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
-                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
-                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
-                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
-                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
-                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
-                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
-                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
-                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
-                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
-                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
-                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
-                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
-                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}],
-                        [{'type': 'idle', 'starting_time': 0, 'finish_time': 0}]
-                    ]
+            'nodes': [[{'type': 'idle', 'starting_time': 0, 'finish_time': 0}] for _ in range(16)]
+
         }
         
         #EDIT HERE
@@ -120,6 +104,7 @@ class SPSimulator:
         self.off_on_resources = []
         self.schedule_queue = []
         self.waiting_queue = []
+        self.waiting_queue_ney = []
         self.executed_jobs = []
         self.monitor_jobs=[]
         self.active_jobs = []
