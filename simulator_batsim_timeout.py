@@ -35,6 +35,14 @@ def run_simulation(scheduler, shutdown_policy):
 timeout = 30
 jobs_wt, sim_wt, host_wt, e_wt = run_simulation(EASYScheduler, lambda s: TimeoutPolicy(timeout, s))
 
+print('jul: ',sim_wt.info['consumed_joules'])
+print('idle_time: ',sim_wt.info['time_idle'])
+print('mean_idle_time: ',sim_wt.info['time_idle']/16)
+print('waiting_time: ',sum(jobs_wt.info['waiting_time']))
+print('mean_waiting_time: ',sim_wt.info['mean_waiting_time'])
+print('finish_time', max(jobs_wt.info['finish_time']))
+
+
 jobs_wt = jobs_wt.to_dataframe()
 host_wt = host_wt.to_dataframe()
 jobs_wt.to_csv(f'results/batsim/timeout/easy_jobs_t{timeout}.csv', index=False)

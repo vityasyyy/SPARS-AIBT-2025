@@ -3,6 +3,7 @@ from sp_simulator.env import SPSimulator
 from sp_simulator.rl2 import simulate_easy, step, reward1, reward2, max_jwt, fcfsbf
 from types import MethodType
 import torch
+from trash_ai_generator import HPCNodeManager
 
 model = torch.load("untrained/hpc_node_manager.pth", map_location=torch.device('cpu'))
 model.train()

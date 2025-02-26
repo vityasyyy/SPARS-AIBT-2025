@@ -65,7 +65,8 @@ class SPSimulator:
         self.profiles = self.workload_info['profiles']
         self.transition_time = [self.platform_info['switch_off_time'], self.platform_info['switch_on_time']]
         self.model = model
-        self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
+        if self.model is not None:
+            self.optimizer = optim.Adam(self.model.parameters(), lr=0.1)
         
         self.jobs = []
         for job in self.workload_info['jobs']:
@@ -110,6 +111,9 @@ class SPSimulator:
         self.active_jobs = []
         self.reserved_count = 0
         self.step_count = 0
+        
+        self.arrival_count = 0
+        self.total_req_res = 0
     
     def update_nb_res(self, current_time, event, _type, nodes):
         mask = self.sim_monitor['nb_res']['time'] == current_time
@@ -230,6 +234,35 @@ class SPSimulator:
 
         return estimated_finish_time < last_job_active_job_finish_time_that_required_to_be_released or temp_aval_res >= event['res'] + next_job['res']
     
+    def update_node_action(self, allocated, event):
+        for node in allocated:
+            self.sim_monitor['nodes_action'][node]['state'] = 'idle'
+            self.sim_monitor['nodes_action'][node]['time'] = self.current_time
+
+        self.update_nb_res(self.current_time, event, 'release', allocated)
+    
+    def update_energy_consumption(self):
+        temp_index = 0
+        for node_action in self.sim_monitor['nodes_action']:
+            if node_action['state'] == 'sleeping':
+                rate_energy_consumption = self.machines[temp_index]['wattage_per_state'][0]
+            elif node_action['state'] == 'idle':
+                rate_energy_consumption = self.machines[temp_index]['wattage_per_state'][1]
+            elif node_action['state'] == 'computing':
+                rate_energy_consumption = self.machines[temp_index]['wattage_per_state'][2]
+            elif node_action['state'] == 'switching_on':
+                rate_energy_consumption = self.machines[temp_index]['wattage_per_state'][3]
+            elif node_action['state'] == 'switching_off':
+                rate_energy_consumption = self.machines[temp_index]['wattage_per_state'][4]
+            
+            rate_energy_consumption = self.machines[temp_index]['wattage_per_state'][1]
+            duration = self.current_time - node_action['time']
+            self.sim_monitor['energy_consumption'][temp_index] += (duration * rate_energy_consumption)
+            
+            self.sim_monitor['nodes_action'][temp_index]['time'] = self.current_time
+        
+            temp_index +=1
+            
     def find_grouped_resources(self, resources, count):
         resources = sorted(resources)
         for i in range(len(resources) - count + 1):
@@ -237,4 +270,13 @@ class SPSimulator:
                 return resources[i:i + count]
         return resources[:count]
     
+    def print_energy_consumption(self):
+        index = 0
+        sum = 0
+        for node_energy_consumption in self.sim_monitor['energy_consumption']:
+            print(f'Energy consumption of node {index}: ', node_energy_consumption)
+            sum+=node_energy_consumption
+            index += 1
+        print(f'Total energy consumption: {sum}')    
+        
     

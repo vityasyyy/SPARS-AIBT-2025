@@ -89,6 +89,14 @@ def reward1(self):
 def reward2(self):
     return len(self.waiting_queue) + len(self.waiting_queue_ney)
 
+# def reward2(self):
+#     result = 0
+#     for job in self.waiting_queue:
+#         result += self.current_time - job['subtime']
+#     for job in self.waiting_queue_ney:
+#         result += self.current_time - job['subtime']
+#     return result
+
 def max_jwt(self, waiting_queue, executed_jobs, next_time, delta_t):
     result = 0
     
@@ -154,6 +162,8 @@ def step(self, event):
         
         
     elif event['type'] == 'arrival':
+        self.total_req_res += event['res']
+        self.arrival_count += 1
         if len(self.available_resources) + len(self.inactive_resources) >= event['res']:
             if self.waiting_queue:
                 self.active_jobs = sorted(self.active_jobs, key=lambda x: x['finish_time'])
@@ -175,17 +185,15 @@ def step(self, event):
             self.waiting_queue.append(event)
             
     elif event['type'] == 'execution_start':
-        
         new_waiting_queue_ney = []
         for d in self.waiting_queue_ney:
             if d['id'] != event['id']:
                 new_waiting_queue_ney.append(d)
         self.waiting_queue_ney = new_waiting_queue_ney
 
-        print(event['id'])
+
         if event['res'] > len(self.available_resources):
             self.waiting_queue.append(event)
-            print('Execution canceled, not enough resources')
             return
         
             
@@ -241,8 +249,6 @@ def step(self, event):
         })
     
     elif event['type'] == 'execution_finished':
-        if event['id'] == 9:
-            print('here')
         allocated = event['allocated_resources']
         self.available_resources.extend(allocated)
         self.available_resources.sort() 
@@ -251,11 +257,12 @@ def step(self, event):
             self.sim_monitor['nodes_action'][node]['state'] = 'idle'
             self.sim_monitor['nodes_action'][node]['time'] = self.current_time
 
+        self.update_nb_res(self.current_time, event, 'release', allocated)
+        
         self.active_jobs = [active_job for active_job in self.active_jobs if active_job['id'] != event['id']]
         
         temp_available_resource = len(self.available_resources) + len(self.off_on_resources)
         
-        self.update_nb_res(self.current_time, event, 'release', allocated)
         
         skipbf = False
         for aj in self.active_jobs:
@@ -284,19 +291,49 @@ def simulate_easy(self):
         self.step(event)
         self.step_count += 1
         print(f'=============== {self.step_count} ===============')
-        print(event['type'])
+        print('event type: ',event['type'])
+        if event.has_key('id'):
+            print('event id: ', event['id'])
+        print('current_time: ',self.current_time)
         if len(self.schedule_queue) != 0 or len(self.waiting_queue) != 0:
-
-            avg_waiting_time = 0
-                
-            if len(self.waiting_queue) == 0:
-                avg_waiting_time = 0
-            else:
+            
+            # waiting_queue_ney are the job popped out of waiting_queue and added into schedule queue with event as execution start at hasnt been executed yet.add()
+            
+            total_waiting_time = 0
+            needed_res_for_execution = 0
+            if len(self.waiting_queue) > 0:
                 for job in self.waiting_queue:
-                    avg_waiting_time += self.current_time - job['subtime']
+                    total_waiting_time += self.current_time - job['subtime']
+            if len(self.waiting_queue_ney) > 0:
+                for job in self.waiting_queue_ney:
+                    total_waiting_time += self.current_time - job['subtime']
+                    needed_res_for_execution += job['res']
+            
                 
+             
+            # Global Feature:
+            # 1. num of job in waiting queue + waiting queue ney
+            # 2. total waiting time
+            # 3. total requested resource for all job in waiting queue
+            # 4. num of idle resource
+            # 5. num of sleeping resource
+            # 6. num of resource needed for job ready for execution
+            
+            # Node Feature:
+            # 1. state: 0 sleeping, 1 idle
+            # 2. Transition cost
+            # 3. Transition time
+            
+            
+            gfb1 = len(self.waiting_queue) + len(self.waiting_queue_ney)
+            gfb2 = total_waiting_time
+            gfb3 = self.total_req_res
+            gfb4 = len(self.available_resources)
+            gfb5 = len(self.inactive_resources)
+            gfb6 = needed_res_for_execution
+            
 
-            global_feature = [len(self.waiting_queue), avg_waiting_time]
+            global_feature = [gfb1, gfb2, gfb3, gfb4, gfb5, gfb6]
             
             nodes = self.available_resources + self.inactive_resources
             nodes.sort()
@@ -307,11 +344,15 @@ def simulate_easy(self):
             nodes_features = []
             for node in nodes:
                 node_features = copy.deepcopy(global_feature)
-                node_features.append(self.sim_monitor['energy_consumption'][node])
+
                 if node in self.available_resources:
                     node_features.append(1)
-                else:
+                    node_features.append(9)
+                    node_features.append(5)
+                elif node in self.inactive_resources:
                     node_features.append(0)
+                    node_features.append(190)
+                    node_features.append(5)
                 
                 nodes_features.append(node_features)
                 
@@ -357,16 +398,18 @@ def simulate_easy(self):
                 heapq.heappush(self.schedule_queue, (self.current_time + self.transition_time[1], MyDict({'node': copy.deepcopy(switch_on), 'type': 'turn_on' })))
                 
             
-            
+            print(f'action : switch on {len(switch_on)} nodes, switch off {len(switch_off)} nodes')
             copied_instance = copy.deepcopy(self)
             
-            if copied_instance.schedule_queue:
-                n_event_time, n_event = heapq.heappop(copied_instance.schedule_queue)
-            else:
-                n_event = copied_instance.waiting_queue.pop(0)
-                
-            copied_instance.current_time = n_event_time
-            copied_instance.step(n_event)
+            for i in range(10):
+                if copied_instance.schedule_queue:
+                    n_event_time, n_event = heapq.heappop(copied_instance.schedule_queue)
+                elif copied_instance.waiting_queue:
+                    n_event = copied_instance.waiting_queue.pop(0)
+                    
+                if copied_instance.schedule_queue or copied_instance.waiting_queue:
+                    copied_instance.current_time = n_event_time
+                    copied_instance.step(n_event)
             
             reward1 = self.reward1() + copied_instance.reward1()
             reward2 = self.reward2() + copied_instance.reward2()
@@ -375,11 +418,16 @@ def simulate_easy(self):
             
             alpha = 0.5
             beta = 0.5
-            final_reward = -alpha * (reward1 / self.nb_res * 190 * delta_t) - beta * (reward2/jwt)
+            fr1 = -alpha * (reward1 / self.nb_res * 190 * delta_t)
+            # fr2 = -beta * (reward2/jwt)
+            fr2 = -beta * total_waiting_time * 10
+            final_reward = fr1 + fr2
             
 
-            print(final_reward)
-            print(action)
+            print('reward ec: ',fr1)
+            print('reward wt: ',fr2)
+            print('final reward: ',final_reward)
+            # print(action)
             
             loss = torch.tensor(final_reward, dtype=torch.float32, requires_grad=True)
             self.optimizer.zero_grad()  

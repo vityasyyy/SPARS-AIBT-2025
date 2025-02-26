@@ -1,17 +1,12 @@
-import json
-import heapq
-from multiprocessing import heap
-import time
 from matplotlib.style import available
 import pandas as pd
-import copy
-import numpy as np
+
 
 from sp_simulator.env import SPSimulator
 from sp_simulator.tp_policy import simulate_easy
 
 timeout = 30
-sp_simulator = SPSimulator()
+sp_simulator = SPSimulator(model = None)
 jobs_monitor, fault_list = simulate_easy(sp_simulator, timeout)
 
 max_finish_time = max(job.get('finish_time', 0) for job in jobs_monitor)

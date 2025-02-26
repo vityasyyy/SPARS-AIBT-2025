@@ -3,7 +3,7 @@ import json
 import math
 
 class ProblemGenerator:
-    def __init__(self, lambda_arrival=0.05, mu_execution=150, sigma_execution=2, mu_noise=0, sigma_noise=1, num_jobs=None, max_node=8):
+    def __init__(self, lambda_arrival=0.5, mu_execution=150, sigma_execution=2, mu_noise=0, sigma_noise=1, num_jobs=None, max_node=8):
         self.lambda_arrival = lambda_arrival
         self.mu_execution = mu_execution
         self.sigma_execution = sigma_execution
