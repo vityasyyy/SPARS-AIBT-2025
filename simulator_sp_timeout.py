@@ -5,6 +5,7 @@ from sp_simulator.t_policy import simulate_easy
 timeout = 30
 sp_simulator = SPSimulator(model = None)
 jobs_e = simulate_easy(sp_simulator, timeout)
+sp_simulator.print_energy_consumption()
 max_finish_time = max(job.get('finish_time', 0) for job in jobs_e)
 jobs_e = pd.DataFrame(jobs_e)
 jobs_e['allocated_resources'] = jobs_e['allocated_resources'].apply(
@@ -41,7 +42,7 @@ def set_job_id(row):
 def calculate_energy(nodes_monitor):
     total_joule = nodes_monitor.apply(
         lambda row: (row['finish_time'] - row['starting_time']) * len(row['allocated_resources'].split()) * (
-            95 if row['type'] == 'idle' else
+            190 if row['type'] == 'idle' else
             9 if row['type'] == 'sleeping' else
             190 if row['type'] == 'computing' else
             9 if row['type'] == 'switching_off' else

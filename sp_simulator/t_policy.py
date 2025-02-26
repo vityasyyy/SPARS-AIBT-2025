@@ -20,7 +20,7 @@ def simulate_easy(self, timeout):
         
         self.current_time = event_time
 
-      
+        self.update_energy_consumption()
       
         if event['type'] == 'switch_off':
             valid_switch_off = [item for item in event['node'] if item in self.available_resources]
@@ -31,7 +31,7 @@ def simulate_easy(self, timeout):
             self.available_resources = [item for item in self.available_resources if item not in valid_switch_off]
             self.on_off_resources.extend(valid_switch_off)
             self.on_off_resources = sorted(self.on_off_resources)
-            self.update_nb_res(self.current_time, event, event['type'], valid_switch_off)
+            self.update_node_action(valid_switch_off, event, 'switch_off', 'switching_off')
             
             heapq.heappush(self.schedule_queue, (self.current_time + self.transition_time[0], MyDict({'node': copy.deepcopy(valid_switch_off), 'type': 'turn_off' })))
             
@@ -41,13 +41,13 @@ def simulate_easy(self, timeout):
             
             self.on_off_resources = [item for item in self.on_off_resources if item not in event['node']]
             self.on_off_resources = sorted(self.on_off_resources)
-            self.update_nb_res(self.current_time, event, event['type'], event['node'])
+            self.update_node_action(event['node'], event, 'turn_off', 'sleeping')
             
         elif event['type'] == 'switch_on':
             self.inactive_resources = [item for item in self.inactive_resources if item not in event['node']]
             self.off_on_resources.extend(event['node'])
             self.off_on_resources = sorted(self.off_on_resources)
-            self.update_nb_res(self.current_time, event, event['type'], event['node'])
+            self.update_node_action(event['node'], event, 'switch_on', 'switching_on')
             
             heapq.heappush(self.schedule_queue, (self.current_time + self.transition_time[1], MyDict({'node': copy.deepcopy(event['node']), 'type': 'turn_on' })))
             
@@ -56,7 +56,7 @@ def simulate_easy(self, timeout):
             self.available_resources = sorted(self.available_resources)
             self.off_on_resources = [item for item in self.off_on_resources if item not in event['node']]
             self.off_on_resources = sorted(self.off_on_resources)
-            self.update_nb_res(self.current_time, event, event['type'], event['node'])
+            self.update_node_action(event['node'], event, 'turn_on', 'idle')
             
         elif event['type'] == 'arrival':
             if len(self.available_resources) + len(self.inactive_resources) >= event['res']:
@@ -80,8 +80,7 @@ def simulate_easy(self, timeout):
                 self.waiting_queue.append(event)
                 
         elif event['type'] == 'execution_start':
-            if event['id'] == 7:
-                print('here')
+
             if event['res'] > len(self.available_resources) and event['res'] <= len(self.available_resources) + len(self.off_on_resources):
                 heapq.heappush(self.schedule_queue, (self.current_time + self.transition_time[1], MyDict(event)))
                 continue
@@ -128,11 +127,11 @@ def simulate_easy(self, timeout):
                     new_waiting_queue_ney.append(d)
             self.waiting_queue_ney = new_waiting_queue_ney
             
+            
             allocated = self.available_resources[:event['res']]    
             self.available_resources = self.available_resources[event['res']:]
             
-            
-            self.update_nb_res(self.current_time, event, 'allocate', allocated)
+            self.update_node_action(allocated, event, 'allocate', 'computing')
 
             finish_time = self.current_time + event['walltime']
             finish_event = {
@@ -174,8 +173,7 @@ def simulate_easy(self, timeout):
             })
         
         elif event['type'] == 'execution_finished':
-            if self.current_time == 301:
-                print('here')
+
             allocated = event['allocated_resources']
             self.available_resources.extend(allocated)
             self.available_resources.sort() 
@@ -192,7 +190,7 @@ def simulate_easy(self, timeout):
             temp_available_resource = len(self.available_resources) + len(self.inactive_resources) + len(self.off_on_resources) - reserved_count
             check_if_need_activation = temp_available_resource - temp_available_resource_2 + reserved_count
             
-            self.update_nb_res(self.current_time, event, 'release', allocated)
+            self.update_node_action(allocated, event, 'release', 'idle')
             
             skipbf = False
             for aj in self.active_jobs:
@@ -258,5 +256,8 @@ def simulate_easy(self, timeout):
         if has_idle:
             heapq.heappush(self.schedule_queue, (self.current_time + timeout, MyDict({'type':'switch_off', 'node': copy.deepcopy(self.available_resources)})))
     
+    for x in self.sim_monitor['nodes']:
+        if x[len(x)-1]['finish_time'] != self.current_time:
+            x[len(x)-1]['finish_time'] = self.current_time
             
     return self.monitor_jobs

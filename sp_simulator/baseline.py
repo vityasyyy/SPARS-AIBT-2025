@@ -41,7 +41,7 @@ def simulate_easy(self):
             self.available_resources = self.available_resources[event['res']:]
             allocated_len = len(allocated)
             
-            self.update_node_action(allocated, event)
+            self.update_node_action(allocated, event, 'allocate', 'computing')
             
             mask = self.sim_monitor['nb_res']['time'] == self.current_time
 
@@ -103,7 +103,7 @@ def simulate_easy(self):
             self.available_resources.extend(allocated)
             self.available_resources.sort() 
 
-            self.update_node_action(allocated, event)
+            self.update_node_action(allocated, event, 'release', 'idle')
             
             self.active_jobs = [active_job for active_job in self.active_jobs if active_job['id'] != event['id']]
             

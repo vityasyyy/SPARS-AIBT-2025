@@ -234,14 +234,18 @@ class SPSimulator:
 
         return estimated_finish_time < last_job_active_job_finish_time_that_required_to_be_released or temp_aval_res >= event['res'] + next_job['res']
     
-    def update_node_action(self, allocated, event):
+    def update_node_action(self, allocated, event, event_type, target_state):
+        if self.current_time == 0 and target_state =='computing':
+            print('here')
         for node in allocated:
-            self.sim_monitor['nodes_action'][node]['state'] = 'idle'
+            self.sim_monitor['nodes_action'][node]['state'] = target_state
             self.sim_monitor['nodes_action'][node]['time'] = self.current_time
 
-        self.update_nb_res(self.current_time, event, 'release', allocated)
+        self.update_nb_res(self.current_time, event, event_type, allocated)
     
     def update_energy_consumption(self):
+        if self.current_time ==148:
+            print('here')
         temp_index = 0
         for node_action in self.sim_monitor['nodes_action']:
             if node_action['state'] == 'sleeping':
@@ -255,7 +259,6 @@ class SPSimulator:
             elif node_action['state'] == 'switching_off':
                 rate_energy_consumption = self.machines[temp_index]['wattage_per_state'][4]
             
-            rate_energy_consumption = self.machines[temp_index]['wattage_per_state'][1]
             duration = self.current_time - node_action['time']
             self.sim_monitor['energy_consumption'][temp_index] += (duration * rate_energy_consumption)
             
