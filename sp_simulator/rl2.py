@@ -346,13 +346,13 @@ def simulate_easy(self):
                 node_features = copy.deepcopy(global_feature)
 
                 if node in self.available_resources:
-                    node_features.append(1)
-                    node_features.append(9)
-                    node_features.append(5)
+                    node_features.append(1) # idle = 1
+                    node_features.append(9) # switch off consumption rate = 9
+                    node_features.append(5) # transition time = 5
                 elif node in self.inactive_resources:
-                    node_features.append(0)
-                    node_features.append(190)
-                    node_features.append(5)
+                    node_features.append(0) #inactive = 1
+                    node_features.append(190) # switch on consumption rate = 190
+                    node_features.append(5) # transition time = 5
                 
                 nodes_features.append(node_features)
                 
@@ -401,26 +401,33 @@ def simulate_easy(self):
             print(f'action : switch on {len(switch_on)} nodes, switch off {len(switch_off)} nodes')
             copied_instance = copy.deepcopy(self)
             
-            for i in range(10):
-                if copied_instance.schedule_queue:
-                    n_event_time, n_event = heapq.heappop(copied_instance.schedule_queue)
-                elif copied_instance.waiting_queue:
-                    n_event = copied_instance.waiting_queue.pop(0)
-                    
-                if copied_instance.schedule_queue or copied_instance.waiting_queue:
-                    copied_instance.current_time = n_event_time
-                    copied_instance.step(n_event)
+            # for i in range(1):
+            dostep = False
+            if copied_instance.schedule_queue:
+                n_event_time, n_event = heapq.heappop(copied_instance.schedule_queue)
+                dostep = True
+            elif copied_instance.waiting_queue:
+                n_event = copied_instance.waiting_queue.pop(0)
+                dostep = True
+                
+            if dostep:
+                copied_instance.current_time = n_event_time
+                copied_instance.step(n_event)
             
             reward1 = self.reward1() + copied_instance.reward1()
             reward2 = self.reward2() + copied_instance.reward2()
             delta_t = copied_instance.current_time - self.current_time
+           
+            if delta_t == 0:
+                print('here')
+
             jwt = self.max_jwt(copied_instance.waiting_queue, copied_instance.executed_jobs, copied_instance.current_time, delta_t)
             
             alpha = 0.5
             beta = 0.5
-            fr1 = -alpha * (reward1 / self.nb_res * 190 * delta_t)
-            # fr2 = -beta * (reward2/jwt)
-            fr2 = -beta * total_waiting_time * 10
+            fr1 = -alpha * (reward1 / (self.nb_res * 190 * delta_t))
+            fr2 = -beta * (reward2/jwt)
+            # fr2 = -beta * total_waiting_time * 10
             final_reward = fr1 + fr2
             
 

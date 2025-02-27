@@ -39,19 +39,6 @@ def set_job_id(row):
         return -4
     return 0 
 
-def calculate_energy(nodes_monitor):
-    total_joule = nodes_monitor.apply(
-        lambda row: (row['finish_time'] - row['starting_time']) * len(row['allocated_resources'].split()) * (
-            190 if row['type'] == 'idle' else
-            9 if row['type'] == 'sleeping' else
-            190 if row['type'] == 'computing' else
-            9 if row['type'] == 'switching_off' else
-            190 if row['type'] == 'switching_on' else 0
-        ), axis=1
-    ).sum()
-
-    print('total joule: ', total_joule)
-
 def calculate_total_time(nodes_monitor):
     types = ['idle', 'sleeping', 'computing', 'switching_on', 'switching_off']
     total_times = {}
@@ -89,7 +76,6 @@ final_df = pd.concat([grouped_df, jobs_e], ignore_index=True)
 
 final_df = final_df.sort_values(by=['starting_time', 'finish_time'])
 
-calculate_energy(final_df)
 calculate_total_time(final_df)
 calculate_waiting_time(jobs_e)
 calculate_last_finish(jobs_e)

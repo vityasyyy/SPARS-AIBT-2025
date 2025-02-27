@@ -322,10 +322,10 @@
 {"type":"idle","starting_time":4499.0,"finish_time":4529.0,"allocated_resources":"9 10 11 12 13 14","job_id":-1,"submission_time":4499.0}
 {"type":"computing","starting_time":4499.0,"finish_time":4652.0,"allocated_resources":"3 4 5 6 7","job_id":100,"submission_time":197.0}
 {"type":"switching_off","starting_time":4529.0,"finish_time":4534.0,"allocated_resources":"9 10 11 12 13 14","job_id":-2,"submission_time":4529.0}
-{"type":"sleeping","starting_time":4534.0,"finish_time":4534.0,"allocated_resources":"9 10 11 12 13 14","job_id":-4,"submission_time":4534.0}
+{"type":"sleeping","starting_time":4534.0,"finish_time":4707.0,"allocated_resources":"9 10 11 12 13 14","job_id":-4,"submission_time":4534.0}
 {"type":"idle","starting_time":4642.0,"finish_time":4672.0,"allocated_resources":"0 1 2 8 15","job_id":-1,"submission_time":4642.0}
 {"type":"idle","starting_time":4652.0,"finish_time":4682.0,"allocated_resources":"3 4 5 6 7","job_id":-1,"submission_time":4652.0}
 {"type":"switching_off","starting_time":4672.0,"finish_time":4677.0,"allocated_resources":"0 1 2 8 15","job_id":-2,"submission_time":4672.0}
-{"type":"sleeping","starting_time":4677.0,"finish_time":4677.0,"allocated_resources":"0 1 2 8 15","job_id":-4,"submission_time":4677.0}
+{"type":"sleeping","starting_time":4677.0,"finish_time":4707.0,"allocated_resources":"0 1 2 8 15","job_id":-4,"submission_time":4677.0}
 {"type":"switching_off","starting_time":4682.0,"finish_time":4687.0,"allocated_resources":"3 4 5 6 7","job_id":-2,"submission_time":4682.0}
-{"type":"sleeping","starting_time":4687.0,"finish_time":4687.0,"allocated_resources":"3 4 5 6 7","job_id":-4,"submission_time":4687.0}
+{"type":"sleeping","starting_time":4687.0,"finish_time":4707.0,"allocated_resources":"3 4 5 6 7","job_id":-4,"submission_time":4687.0}

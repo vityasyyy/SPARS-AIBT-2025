@@ -100,6 +100,7 @@ class SPSimulator:
         #EDIT HERE
         self.current_time = 0
         self.available_resources = list(range(self.nb_res))
+        self.reserved_resources = []
         self.inactive_resources = []
         self.on_off_resources = []
         self.off_on_resources = []
@@ -235,8 +236,6 @@ class SPSimulator:
         return estimated_finish_time < last_job_active_job_finish_time_that_required_to_be_released or temp_aval_res >= event['res'] + next_job['res']
     
     def update_node_action(self, allocated, event, event_type, target_state):
-        if self.current_time == 0 and target_state =='computing':
-            print('here')
         for node in allocated:
             self.sim_monitor['nodes_action'][node]['state'] = target_state
             self.sim_monitor['nodes_action'][node]['time'] = self.current_time
@@ -244,8 +243,6 @@ class SPSimulator:
         self.update_nb_res(self.current_time, event, event_type, allocated)
     
     def update_energy_consumption(self):
-        if self.current_time ==148:
-            print('here')
         temp_index = 0
         for node_action in self.sim_monitor['nodes_action']:
             if node_action['state'] == 'sleeping':
