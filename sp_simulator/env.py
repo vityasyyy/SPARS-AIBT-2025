@@ -1,5 +1,6 @@
 import json
 import heapq
+from sched import scheduler
 import pandas as pd
 import copy
 import numpy as np
@@ -99,6 +100,7 @@ class SPSimulator:
         
         #EDIT HERE
         self.current_time = 0
+        self.event = None
         self.available_resources = list(range(self.nb_res))
         self.reserved_resources = []
         self.inactive_resources = []
@@ -278,5 +280,272 @@ class SPSimulator:
             sum+=node_energy_consumption
             index += 1
         print(f'Total energy consumption: {sum}')    
-        
     
+    def start_simulator(self, timeout = None):
+        if timeout is not None:
+            heapq.heappush(self.schedule_queue, (timeout, MyDict({'node': copy.deepcopy(self.available_resources), 'type': 'switch_off'})))
+    
+    
+    def switch_off(self, node):
+        valid_switch_off = [item for item in node if item in self.available_resources]
+        
+        if len(valid_switch_off) == 0:
+            return
+        
+        self.available_resources = [item for item in self.available_resources if item not in valid_switch_off]
+        self.on_off_resources.extend(valid_switch_off)
+        self.on_off_resources = sorted(self.on_off_resources)
+        self.update_node_action(valid_switch_off, self.event, 'switch_off', 'switching_off')
+        
+        heapq.heappush(self.schedule_queue, (self.current_time + self.transition_time[0], MyDict({'node': copy.deepcopy(valid_switch_off), 'type': 'turn_off' })))
+    
+    def turn_off(self, node):
+        self.inactive_resources.extend(node)
+        self.inactive_resources = sorted(self.inactive_resources)
+        
+        self.on_off_resources = [item for item in self.on_off_resources if item not in node]
+        self.on_off_resources = sorted(self.on_off_resources)
+        self.update_node_action(node, self.event, 'turn_off', 'sleeping')
+    
+    def switch_on(self, node):
+        self.inactive_resources = [item for item in self.inactive_resources if item not in node]
+        self.off_on_resources.extend(node)
+        self.off_on_resources = sorted(self.off_on_resources)
+        self.update_node_action(node, self.event, 'switch_on', 'switching_on')
+        
+        heapq.heappush(self.schedule_queue, (self.current_time + self.transition_time[1], MyDict({'node': copy.deepcopy(node), 'type': 'turn_on' })))
+    
+    def turn_on(self, node):
+        self.available_resources.extend(node)
+        self.available_resources = sorted(self.available_resources)
+        self.off_on_resources = [item for item in self.off_on_resources if item not in node]
+        self.off_on_resources = sorted(self.off_on_resources)
+        self.update_node_action(node, self.event, 'turn_on', 'idle')
+        
+    def prioritize_lowest_node(self, num_needed_res):
+        reserved_node = []
+        need_activation_node = []
+        
+        for node_index in range(self.nb_res):
+            if (node_index in self.available_resources or node_index in self.inactive_resources) and node_index not in self.reserved_resources:
+                reserved_node.append(node_index)
+        
+                if node_index in self.inactive_resources:
+                    need_activation_node.append(node_index)
+                if len(reserved_node) == num_needed_res:
+                    return reserved_node, need_activation_node
+            
+        return reserved_node, need_activation_node
+        
+    def proceed(self, timeout = None):
+        if self.schedule_queue:
+            self.current_time, self.event = heapq.heappop(self.schedule_queue)
+        else:
+            self.event = self.waiting_queue.pop(0)
+
+        self.update_energy_consumption()
+      
+        if self.event['type'] == 'switch_off':
+            self.switch_off(self.event['node'])
+            
+        elif self.event['type'] == 'turn_off':
+            self.turn_off(self.event['node'])
+            
+        elif self.event['type'] == 'switch_on':
+            self.switch_on(self.event['node'])
+            
+        elif self.event['type'] == 'turn_on':
+            self.turn_on(self.event['node'])
+            
+        elif self.event['type'] == 'arrival':
+            if len(self.available_resources) + len(self.inactive_resources) >= self.event['res']:
+                if self.waiting_queue:
+                    self.active_jobs = sorted(self.active_jobs, key=lambda x: x['finish_time'])
+                    backfilled_node_count = 0
+                    if self.check_backfilling(self.current_time, self.event, len(self.available_resources) + len(self.inactive_resources), self.active_jobs, self.waiting_queue[0], backfilled_node_count):
+                        
+                        reserved_node, need_activation_node = self.prioritize_lowest_node(self.event['res'])
+                        
+                        self.event['type'] = 'execution_start'
+                        self.event['reserved_nodes'] = reserved_node
+                        self.reserved_resources += reserved_node
+                        self.reserved_resources = sorted(self.reserved_resources)
+                        
+                        self.waiting_queue_ney.append(self.event)
+                        self.waiting_queue_ney = sorted(self.waiting_queue_ney)
+                        
+                        if len(need_activation_node) > 0:
+                            heapq.heappush(self.schedule_queue, (self.current_time, MyDict({'type': 'switch_on', 'node': need_activation_node})))
+                            heapq.heappush(self.schedule_queue, (self.current_time + self.transition_time[1], MyDict(self.event)))
+                        else:
+                            heapq.heappush(self.schedule_queue, (self.current_time, MyDict(self.event)))
+                    else:
+                        
+                        self.event['current_time'] = self.current_time
+                        self.waiting_queue.append(self.event)
+                else:        
+                    reserved_node, need_activation_node = self.prioritize_lowest_node(self.event['res'])
+                    
+                    self.event['type'] = 'execution_start'
+                    self.event['reserved_nodes'] = reserved_node
+                    self.reserved_resources += reserved_node
+                    self.reserved_resources = sorted(self.reserved_resources)
+                    
+                    self.waiting_queue_ney.append(self.event)
+                    self.waiting_queue_ney = sorted(self.waiting_queue_ney)
+                    
+                    if len(need_activation_node) > 0:
+                        heapq.heappush(self.schedule_queue, (self.current_time, MyDict({'type': 'switch_on', 'node': need_activation_node})))
+                        heapq.heappush(self.schedule_queue, (self.current_time + self.transition_time[1], MyDict(self.event)))
+                    else:
+                        heapq.heappush(self.schedule_queue, (self.current_time, MyDict(self.event)))
+                        
+            else:
+                self.event['current_time'] = self.current_time
+                self.waiting_queue.append(self.event)
+                
+        elif self.event['type'] == 'execution_start': 
+            new_waiting_queue_ney = []
+            for d in self.waiting_queue_ney:
+                if d['id'] != self.event['id']:
+                    new_waiting_queue_ney.append(d)
+            self.waiting_queue_ney = new_waiting_queue_ney
+            
+            allocated = self.event['reserved_nodes']
+            self.reserved_resources = [node for node in self.reserved_resources if node not in allocated]
+            self.available_resources = [node for node in self.available_resources if node not in allocated]
+            self.update_node_action(allocated, self.event, 'allocate', 'computing')
+
+            finish_time = self.current_time + self.event['walltime']
+            finish_event = {
+                'id': self.event['id'],
+                'res': self.event['res'],
+                'walltime': self.event['walltime'],
+                'type': 'execution_finished',
+                'subtime': self.event['subtime'],
+                'profile': self.event['profile'],
+                'allocated_resources': allocated
+            }
+            
+            if finish_event['subtime'] != self.current_time:
+                self.sim_monitor['avg_waiting_time'] += (self.current_time - finish_event['subtime'])
+                self.sim_monitor['waiting_event_count'] += 1
+                
+            heapq.heappush(self.schedule_queue, (finish_time, MyDict(finish_event)))
+            
+            finish_event['finish_time'] = finish_time
+            self.active_jobs.append(finish_event)
+            
+            self.monitor_jobs.append({
+                'job_id': self.event['id'],
+                'workload_name': 'w0',
+                'profile': self.event['profile'],
+                'submission_time': self.event['subtime'],
+                'requested_number_of_resources': self.event['res'],
+                'requested_time': self.event['walltime'],
+                'success': 0,
+                'final_state': 'COMPLETED_WALLTIME_REACHED',
+                'starting_time': self.current_time,
+                'execution_time': self.event['walltime'],
+                'finish_time': finish_time,
+                'waiting_time': self.current_time - self.event['subtime'],
+                'turnaround_time': finish_time - self.event['subtime'],
+                'stretch': (finish_time - self.event['subtime']) / self.event['walltime'],
+                'allocated_resources': allocated,
+                'consumed_energy': -1
+            })
+        
+        elif self.event['type'] == 'execution_finished':
+            allocated = self.event['allocated_resources']
+            self.available_resources.extend(allocated)
+            self.available_resources.sort() 
+            
+            self.active_jobs = [active_job for active_job in self.active_jobs if active_job['id'] != self.event['id']]
+            
+            self.update_node_action(allocated, self.event, 'release', 'idle')
+            
+            skipbf = False
+            for aj in self.active_jobs:
+                if aj['finish_time'] == self.current_time:
+                    skipbf=True
+                    
+            if skipbf == True:
+                return
+            
+            reserved_count = 0
+            for job in self.waiting_queue_ney:
+                reserved_count += job['res']
+                
+            temp_available_resource = len(self.available_resources) + len(self.inactive_resources) + len(self.off_on_resources) - reserved_count
+
+            self.waiting_queue = sorted(self.waiting_queue)
+
+            switch_on_nodes = []
+            
+            for _ in range(len(self.waiting_queue)):
+                job = self.waiting_queue[0]
+                if temp_available_resource >= job['res']:
+                    next_job = self.waiting_queue.pop(0)
+                    next_job['type'] = 'execution_start'
+                    temp_available_resource -= next_job['res']
+                    
+                    reserved_node, need_activation_node = self.prioritize_lowest_node(next_job['res'])
+                    next_job['reserved_nodes'] = reserved_node
+                    self.reserved_resources += reserved_node
+                    self.reserved_resources = sorted(self.reserved_resources)
+                    switch_on_nodes += need_activation_node
+                    self.waiting_queue_ney.append(next_job)
+                    self.waiting_queue_ney = sorted(self.waiting_queue_ney)
+                    if len(need_activation_node) > 0:
+                        heapq.heappush(self.schedule_queue, (self.current_time + self.transition_time[1], MyDict(next_job)))
+                    else:
+                        heapq.heappush(self.schedule_queue, (self.current_time, MyDict(next_job)))
+                else:
+                    break
+
+            self.active_jobs = sorted(self.active_jobs, key=lambda x: x['finish_time'])
+            backfilled_node_count = 0
+            while True:
+                is_pushed = False
+                for k in range(0, len(self.waiting_queue)):
+                    job = self.waiting_queue[k]
+                    if temp_available_resource >= job['res']:
+                        if not self.check_backfilling(self.current_time, job, temp_available_resource, self.active_jobs, self.waiting_queue[0], backfilled_node_count):
+                            continue
+                        backfilled_node_count += job['res']
+                        next_job = self.waiting_queue.pop(k)
+                        next_job['type'] = 'execution_start'
+                        temp_available_resource -= next_job['res']
+                        
+                        reserved_node, need_activation_node = self.prioritize_lowest_node(next_job['res'])
+                        next_job['reserved_nodes'] = reserved_node
+                        switch_on_nodes += need_activation_node
+                        self.reserved_resources += reserved_node
+                        self.reserved_resources = sorted(self.reserved_resources)
+                        self.waiting_queue_ney.append(next_job)
+                        self.waiting_queue_ney = sorted(self.waiting_queue_ney)
+                        
+                        if len(need_activation_node) > 0:
+                            heapq.heappush(self.schedule_queue, (self.current_time + self.transition_time[1], MyDict(next_job)))
+                        else:
+                            heapq.heappush(self.schedule_queue, (self.current_time, MyDict(next_job)))
+                            
+                        is_pushed = True
+                        break
+                if is_pushed == False:
+                    break
+            
+            switch_on_nodes = sorted(switch_on_nodes)
+            
+            if len(switch_on_nodes) > 0:
+                heapq.heappush(self.schedule_queue, (self.current_time, MyDict({'type': 'switch_on', 'node': copy.deepcopy(switch_on_nodes)})))    
+
+        mask = self.sim_monitor['nb_res']['time'] == self.current_time
+        has_idle = (self.sim_monitor['nb_res'].loc[mask, 'idle'] > 0).any()
+        if has_idle:
+            heapq.heappush(self.schedule_queue, (self.current_time + timeout, MyDict({'type':'switch_off', 'node': copy.deepcopy(self.available_resources)})))
+        
+        if len(self.waiting_queue) == 0 and len(self.schedule_queue) == 0:
+            for x in self.sim_monitor['nodes']:
+                if x[len(x)-1]['finish_time'] != self.current_time:
+                    x[len(x)-1]['finish_time'] = self.current_time
