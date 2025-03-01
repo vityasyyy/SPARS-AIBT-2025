@@ -1,6 +1,6 @@
 import batsim_py
-from scheduler.fcfs import FCFSScheduler
-from scheduler.backfilling import EASYScheduler
+from scheduler_batsim.fcfs import FCFSScheduler
+from scheduler_batsim.backfilling import EASYScheduler
 from evalys.jobset import JobSet
 
 def run_simulation(scheduler):
@@ -27,7 +27,15 @@ def run_simulation(scheduler):
     
 jobs_f, sim_f = run_simulation(FCFSScheduler)
 jobs_e, sim_e = run_simulation(EASYScheduler)
+print('~~~ FCFS SCHEDULER ~~~')
+print('jul: ',sim_f.info['consumed_joules'])
+print('idle_time: ',sim_f.info['time_idle'])
+print('mean_idle_time: ',sim_f.info['time_idle']/16)
+print('waiting_time: ',sum(jobs_f.info['waiting_time']))
+print('mean_waiting_time: ',sim_f.info['mean_waiting_time'])
+print('finish_time', max(jobs_f.info['finish_time']))
 
+print('~~~ EASY SCHEDULER ~~~')
 print('jul: ',sim_e.info['consumed_joules'])
 print('idle_time: ',sim_e.info['time_idle'])
 print('mean_idle_time: ',sim_e.info['time_idle']/16)

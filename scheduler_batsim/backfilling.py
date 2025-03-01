@@ -1,4 +1,4 @@
-from scheduler.fcfs import FCFSScheduler
+from .fcfs import FCFSScheduler
 
 class EASYScheduler(FCFSScheduler):
     def __str__(self) -> str:
@@ -22,6 +22,7 @@ class EASYScheduler(FCFSScheduler):
 
         # Get the next expected releases
         next_releases = sorted(self.simulator.agenda, key=lambda a: a.release_time)
+        
         #next rilis = [{rilis: 1}, {rilis: 2}, {host: adk, rilis: 3}, {rilis: 4}, {rilis: 5},  ]
         # Get the last required host for p_job.
         last_host = next_releases[p_job.res - 1]

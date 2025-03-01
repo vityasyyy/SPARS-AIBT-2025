@@ -1,7 +1,7 @@
 from batsim_py import SimulatorHandler
 from batsim_py.monitors import SimulationMonitor, HostStateSwitchMonitor, ConsumedEnergyMonitor, JobMonitor
 from batsim_utils.shutdown_policy import TimeoutPolicy
-from scheduler.backfilling import EASYScheduler
+from scheduler_batsim.backfilling import EASYScheduler
 
 def run_simulation(scheduler, shutdown_policy):
     simulator = SimulatorHandler()
