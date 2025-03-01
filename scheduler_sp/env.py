@@ -5,7 +5,7 @@ import pandas as pd
 import copy
 import numpy as np
 import torch.optim as optim  # Import the optim module
-
+from collections import defaultdict
 
 class MyDict:
     def __init__(self, _dict: dict):
@@ -77,7 +77,7 @@ class SPSimulator:
         self.sim_monitor = {
             "energy_consumption": [0] * len(self.machines),
             "nodes_action": [{'state': 'idle', 'time': 0} for _ in range(self.nb_res)],
-            "total_idle_time": [0] * len(self.machines),
+            "idle_time": [0] * len(self.machines),
             'total_waiting_time': 0,
             'finish_time': 0,
             'nb_res': pd.DataFrame([{'time': 0, 
@@ -249,27 +249,35 @@ class SPSimulator:
         self.update_nb_res(self.current_time, event, event_type, allocated)
     
     def update_energy_consumption(self):
-        temp_index = 0
-        for node_action in self.sim_monitor['nodes_action']:
-            if node_action['state'] == 'sleeping':
-                rate_energy_consumption = self.machines[temp_index]['wattage_per_state'][0]
-            elif node_action['state'] == 'idle':
-                rate_energy_consumption = self.machines[temp_index]['wattage_per_state'][1]
-            elif node_action['state'] == 'computing':
-                rate_energy_consumption = self.machines[temp_index]['wattage_per_state'][2]
-            elif node_action['state'] == 'switching_on':
-                rate_energy_consumption = self.machines[temp_index]['wattage_per_state'][3]
-            elif node_action['state'] == 'switching_off':
-                rate_energy_consumption = self.machines[temp_index]['wattage_per_state'][4]
+        for index, node_action in enumerate(self.sim_monitor['nodes_action']):
+            state = node_action['state']
             
-            duration = self.current_time - node_action['time']
-            self.sim_monitor['energy_consumption'][temp_index] += (duration * rate_energy_consumption)
+            state_mapping = {
+                'sleeping': 0,
+                'idle': 1,
+                'computing': 2,
+                'switching_on': 3,
+                'switching_off': 4
+            }
             
-            self.sim_monitor['nodes_action'][temp_index]['time'] = self.current_time
-        
-            temp_index +=1
-    
+            rate_energy_consumption = self.machines[index]['wattage_per_state'][state_mapping[state]]
 
+            last_time = max(node_action['time'], self.last_event_time) 
+            duration = self.current_time - last_time  
+
+            self.sim_monitor['energy_consumption'][index] += duration * rate_energy_consumption
+            ec = self.sim_monitor['energy_consumption'][index]
+            if ec > self.current_time * 190:
+                print('here')
+
+        
+    def update_idle_time(self):
+        for index, node_action in enumerate(self.sim_monitor['nodes_action']):
+            if node_action['state'] == 'idle':
+                last_time = max(node_action['time'], self.last_event_time) 
+        
+                self.sim_monitor['idle_time'][index] += self.current_time - last_time
+                 
             
     def find_grouped_resources(self, resources, count):
         resources = sorted(resources)
@@ -364,6 +372,7 @@ class SPSimulator:
         else:
             heapq.heappush(self.schedule_queue, (self.current_time, MyDict(job)))    
             
+
     def proceed(self, timeout = None):
         if self.schedule_queue:
             self.current_time, self.event = heapq.heappop(self.schedule_queue)
@@ -371,7 +380,10 @@ class SPSimulator:
             self.event = self.waiting_queue.pop(0)
 
         self.update_energy_consumption()
-      
+        self.update_idle_time()
+        
+        self.last_event_time = self.current_time
+        
         if self.event['type'] == 'switch_off':
             self.switch_off(self.event['node'])
             
@@ -451,7 +463,7 @@ class SPSimulator:
                 if aj['finish_time'] == self.current_time:
                     return
             
-            
+        
         mask = self.sim_monitor['nb_res']['time'] == self.current_time
         has_idle = (self.sim_monitor['nb_res'].loc[mask, 'idle'] > 0).any()
         
@@ -469,6 +481,19 @@ class SPSimulator:
       
     def on_finish(self):
         self.print_energy_consumption()
+
+        node_state_durations = []
+        for node_list in self.sim_monitor['nodes']:
+            state_durations = defaultdict(float)  # Store time for each state in this node
+            for entry in node_list:
+                state = entry['type']
+                duration = entry['finish_time'] - entry['starting_time']
+                state_durations[state] += duration
+            node_state_durations.append(dict(state_durations))
         
+        for i, times in enumerate(node_state_durations):
+            print(f"Node {i}: {times}")
+            
+        self.sim_monitor['finish_time'] = self.last_event_time
         
         
