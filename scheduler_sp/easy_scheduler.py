@@ -37,9 +37,9 @@ class EasyScheduler(FCFSScheduler):
         not_reserved_resources = [r for r in not_reserved_resources if r not in reservation]
 
         for job in backfilling_queue:
-            available = self.simulator.available_resources + self.simulator.inactive_resources
-            available = sorted(available)
+            available = self.simulator.get_not_allocated_resources()
             not_reserved = [h for h in available if h not in reservation]
+
             if job['res'] <= len(not_reserved):
                 reserved_node, need_activation_node = self.simulator.prioritize_lowest_node(job['res'])
                 self.simulator.execution_start(job, reserved_node, need_activation_node)

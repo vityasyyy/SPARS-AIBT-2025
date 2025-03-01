@@ -18,7 +18,7 @@ class MyDict:
         priority_type = {'turn_on', 'turn_off', 'switch_on', 'switch_off'}
 
         if self._dict['type'] in priority_type:
-            return True
+            return True 
         elif other._dict['type'] in priority_type:
             return False
         elif self._dict['type'] not in priority_type and other._dict['type'] in priority_type:
@@ -55,9 +55,9 @@ class MyDict:
         return key in self._dict
     
 class SPSimulator:
-    def __init__(self, scheduler, model, platform_path="platforms/spsim/platform.json", workload_path="workloads/simple_data_100.json"):        
+    def __init__(self, scheduler, model=None, timeout=None, platform_path="platforms/spsim/platform.json", workload_path="workloads/simple_data_100.json"):        
         self.scheduler = scheduler
-        
+        self.timeout = timeout
         with open(platform_path, 'r') as file:
             self.platform_info = json.load(file)
             
@@ -72,8 +72,6 @@ class SPSimulator:
         if self.model is not None:
             self.optimizer = optim.Adam(self.model.parameters(), lr=0.1)
         
- 
-
         self.sim_monitor = {
             "energy_consumption": [0] * len(self.machines),
             "nodes_action": [{'state': 'idle', 'time': 0} for _ in range(self.nb_res)],
@@ -267,8 +265,6 @@ class SPSimulator:
 
             self.sim_monitor['energy_consumption'][index] += duration * rate_energy_consumption
             ec = self.sim_monitor['energy_consumption'][index]
-            if ec > self.current_time * 190:
-                print('here')
 
         
     def update_idle_time(self):
@@ -356,9 +352,7 @@ class SPSimulator:
         self.reserved_resources = sorted(self.reserved_resources)
         job['reserved_nodes'] = reserved_node
         job['type'] = 'execution_start'
-        
-        self.available_resources = [node for node in self.available_resources if node not in reserved_node]
-        self.inactive_resources = [node for node in self.inactive_resources if node not in reserved_node]
+
         for index, _job in enumerate(self.waiting_queue): 
             if _job['id'] == job['id']:
                 self.waiting_queue.pop(index)
@@ -372,8 +366,13 @@ class SPSimulator:
         else:
             heapq.heappush(self.schedule_queue, (self.current_time, MyDict(job)))    
             
-
-    def proceed(self, timeout = None):
+    def get_not_allocated_resources(self):
+        not_allocated_resources = self.available_resources + self.inactive_resources
+        not_allocated_resources = [resource for resource in not_allocated_resources if resource not in self.reserved_resources]
+        not_allocated_resources = sorted(not_allocated_resources)
+        return not_allocated_resources
+    
+    def proceed(self):
         if self.schedule_queue:
             self.current_time, self.event = heapq.heappop(self.schedule_queue)
         else:
@@ -469,8 +468,8 @@ class SPSimulator:
         
         self.scheduler.schedule()
         
-        if has_idle and timeout is not None:
-            heapq.heappush(self.schedule_queue, (self.current_time + timeout, MyDict({'type':'switch_off', 'node': copy.deepcopy(self.available_resources)})))
+        if has_idle and self.timeout is not None:
+            heapq.heappush(self.schedule_queue, (self.current_time + self.timeout, MyDict({'type':'switch_off', 'node': copy.deepcopy(self.available_resources)})))
         
         if len(self.waiting_queue) == 0 and len(self.schedule_queue) == 0:
             for x in self.sim_monitor['nodes']:

@@ -40,7 +40,6 @@ class EASYScheduler(FCFSScheduler):
         for job in backfilling_queue:
             available = self.simulator.platform.get_not_allocated_hosts()  # Hosts
             not_reserved = [h for h in available if h.id not in reservation]
-
             if job.res <= len(not_reserved):
                 # Schedule job on not reserved hosts.
                 allocation = [h.id for h in not_reserved[:job.res]]
