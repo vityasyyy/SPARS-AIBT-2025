@@ -5,7 +5,9 @@ class FCFSScheduler:
         self.simulator = simulator
         
     def schedule(self):
-        for job in self.simulator.waiting_queue[:]:
+        for job in self.simulator.jobs_monitor.waiting_queue[:]:
+            # if self.simulator.current_time == 1795:
+            #     print('here')
             if job['res'] <= len(self.simulator.get_not_allocated_resources()):
                 reserved_node, need_activation_node = self.simulator.prioritize_lowest_node(job['res'])
                 self.simulator.execution_start(job, reserved_node, need_activation_node)

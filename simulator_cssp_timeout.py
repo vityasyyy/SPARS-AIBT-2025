@@ -1,6 +1,9 @@
 from scheduler_sp.env import SPSimulator
 from scheduler_sp.easy_scheduler import EasyScheduler
 import pandas as pd
+import time
+
+start_time = time.perf_counter()
 
 timeout = 30
 
@@ -38,30 +41,38 @@ def run_simulation(scheduler):
     simulator = SPSimulator(scheduler, timeout = timeout)
     scheduler.simulator = simulator
     
-    while simulator.schedule_queue:
+    while simulator.schedule_queue or simulator.jobs_monitor.waiting_queue:
         simulator.proceed()
     
-    return simulator.monitor_jobs, simulator.sim_monitor
+    return simulator.jobs_monitor, simulator.sim_monitor
 
 easy_scheduler = EasyScheduler(None)
 jobs_e, sim_e = run_simulation(easy_scheduler)
 
+sum(range(10**6))
+
+end_time = time.perf_counter()
+execution_time = end_time - start_time
+
+print(f"Execution time: {execution_time:.6f} seconds")
+
 print('~~~ EASY SCHEDULER ~~~')
-print('total idle time: ',sum(sim_e['idle_time']))
-print('mean idle time: ',sim_e['idle_time'])
-print('finish time: ',sim_e['finish_time'])
-print('total waiting time: ',sim_e['total_waiting_time'])
-print('mean waiting time: ',sim_e['total_waiting_time']/len(jobs_e))
+print('total idle time: ',sum(sim_e.idle_time))
+print('mean idle time: ',sim_e.idle_time)
+print('finish time: ',sim_e.finish_time)
+print('total waiting time: ',sim_e.total_waiting_time)
+print('mean waiting time: ',sim_e.total_waiting_time/len(jobs_e.monitor_jobs))
+print('energy consumption: ', sim_e.energy_consumption)
+print('energy waste: ', sum(sim_e.energy_waste))
 
-
-jobs_e = pd.DataFrame(jobs_e)
+jobs_e = pd.DataFrame(jobs_e.monitor_jobs)
 jobs_e['allocated_resources'] = jobs_e['allocated_resources'].apply(
     lambda x: f' '.join(map(str, x))
 )
 
 jobs_e.to_csv(f'results/cssp/timeout/easy_jobs_t{timeout}.csv', index=False)
 
-sim_e['nb_res'].to_csv(f'results/cssp/timeout/easy_host_t{timeout}.csv', index=False)
+sim_e.nb_res.to_csv(f'results/cssp/timeout/easy_host_t{timeout}.csv', index=False)
 
-nodes_e = process_node_job_data(sim_e['nodes'], jobs_e)
+nodes_e = process_node_job_data(sim_e.nodes, jobs_e)
 nodes_e.to_csv(f'results/cssp/timeout/easy_nodes_t{timeout}.csv', index=False)

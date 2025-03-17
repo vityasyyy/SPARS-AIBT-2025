@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 class HPCNodeManager(nn.Module):
-    def __init__(self, input_dim, hidden_dim=128, num_heads=3, num_layers=3):
+    def __init__(self, input_dim, hidden_dim=128, num_heads=1, num_layers=3):
         super(HPCNodeManager, self).__init__()
 
         self.encoder_layer = nn.TransformerEncoderLayer(
@@ -22,9 +22,9 @@ class HPCNodeManager(nn.Module):
         return predictions.squeeze(-1)  # (batch_size, num_nodes)
 
 # Initialize model
-feature_dim = 9  # Set feature dimension
+feature_dim = 7  # Set feature dimension
 model = HPCNodeManager(input_dim=feature_dim)
 
 # Save the untrained model
-torch.save(model, "untrained/hpc_node_manager.pth")
+torch.save(model, "untrained/hpc_actor.pth")
 print("Model saved successfully.")

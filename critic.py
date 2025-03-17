@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 class HPCCritic(nn.Module):
-    def __init__(self, input_dim, hidden_dim=128, num_heads=3, num_layers=3):
+    def __init__(self, input_dim, hidden_dim=128, num_heads=1, num_layers=3):
         super(HPCCritic, self).__init__()
 
         self.encoder_layer = nn.TransformerEncoderLayer(
@@ -21,7 +21,7 @@ class HPCCritic(nn.Module):
         return value.squeeze(-1)  # (batch_size,)
 
 # Initialize and save Critic model
-feature_dim = 9  # Match with the actor
+feature_dim = 3  # Match with the actor
 critic = HPCCritic(input_dim=feature_dim)
 
 # Save the untrained model

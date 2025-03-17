@@ -1,3 +1,4 @@
+import time
 from batsim_py import SimulatorHandler
 from batsim_py.monitors import SimulationMonitor, HostStateSwitchMonitor, ConsumedEnergyMonitor, JobMonitor
 from batsim_utils.shutdown_policy import TimeoutPolicy
@@ -16,7 +17,7 @@ def run_simulation(scheduler, shutdown_policy):
 
     # 2) Start simulation
     simulator.start(platform="platforms/batsim/platform.xml",
-                    workload="workloads/simple_data_100.json",
+                    workload="workloads/workload_mg_5.json",
                     verbosity="information")
 
     # 3) Schedule all jobs
@@ -32,14 +33,17 @@ def run_simulation(scheduler, shutdown_policy):
     # 4) Return/Dump statistics
     return jobs_mon, sim_mon, host_mon, e_mon
 
-timeout = 30
+timeout = 100
 jobs_wt, sim_wt, host_wt, e_wt = run_simulation(EASYScheduler, lambda s: TimeoutPolicy(timeout, s))
+
+print(f"Execution time: {execution_time:.6f} seconds")
 
 print('jul: ',sim_wt.info['consumed_joules'])
 print('idle_time: ',sim_wt.info['time_idle'])
 print('mean_idle_time: ',sim_wt.info['time_idle']/16)
 print('waiting_time: ',sum(jobs_wt.info['waiting_time']))
 print('mean_waiting_time: ',sim_wt.info['mean_waiting_time'])
+print('energy waste: ',sim_wt.info['energy_waste'])
 print('finish_time', max(jobs_wt.info['finish_time']))
 
 
@@ -47,3 +51,4 @@ jobs_wt = jobs_wt.to_dataframe()
 host_wt = host_wt.to_dataframe()
 jobs_wt.to_csv(f'results/batsim/timeout/easy_jobs_t{timeout}.csv', index=False)
 host_wt.to_csv(f'results/batsim/timeout/easy_host_t{timeout}.csv', index=False)
+
