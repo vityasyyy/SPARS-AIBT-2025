@@ -1,10 +1,7 @@
 import json
-import heapq
-from re import L
 import pandas as pd
 import copy
 import numpy as np
-import torch.optim as optim  # Import the optim module
 from collections import defaultdict
 
 class MyDict:
@@ -94,7 +91,7 @@ class SimMonitor:
     
     
 class SPSimulator:
-    def __init__(self, scheduler, timeout=None, platform_path="platforms/spsim/platform.json", workload_path="workloads/simple_data_100.json"):        
+    def __init__(self, scheduler, timeout=None, platform_path="platforms/spsim/platform.json", workload_path="workloads/simple_data_1000.json"):        
         self.scheduler = scheduler
         self.timeout = timeout
         with open(platform_path, 'r') as file:
@@ -120,11 +117,14 @@ class SPSimulator:
         self.inactive_resources = []
         self.on_off_resources = []
         self.off_on_resources = []
-        self.schedule_queue = []
-
+        
+        self.events = []
+        
         for job in self.workload_info['jobs']:
             job['type'] = 'arrival'
-            heapq.heappush(self.schedule_queue, (float(job['subtime']), MyDict(job)))
+            timestamp = job['subtime']
+
+            self.push_event(timestamp, job)
 
         self.step_count = 0
         
@@ -271,7 +271,7 @@ class SPSimulator:
             
             rate_energy_consumption = self.machines[index]['wattage_per_state'][state_mapping[state]]
 
-            last_time = max(node_action['time'], self.last_event_time) 
+            last_time = max(node_action['time'], self.last_event_time)
             duration = self.current_time - last_time  
 
             self.sim_monitor.energy_consumption[index] += duration * rate_energy_consumption
@@ -314,8 +314,9 @@ class SPSimulator:
     
     def start_simulator(self, timeout = None):
         if timeout is not None:
-            heapq.heappush(self.schedule_queue, (timeout, MyDict({'node': copy.deepcopy(self.available_resources), 'type': 'switch_off'})))
-    
+            e = {'type': 'switch_off', 'node': copy.deepcopy(self.available_resources)}
+            ts = self.current_time + self.timeout
+            self.push_event(ts, e)
     
     def switch_off(self, node):
         valid_switch_off = [item for item in node if item in self.available_resources]
@@ -332,7 +333,9 @@ class SPSimulator:
             if i in node:
                 self.resources_agenda[i]['release_time'] = self.current_time + self.transition_time[0]
                 
-        heapq.heappush(self.schedule_queue, (self.current_time + self.transition_time[0], MyDict({'node': copy.deepcopy(valid_switch_off), 'type': 'turn_off' })))
+        ts = self.current_time + self.transition_time[0]
+        e = {'type': 'turn_off', 'node': copy.deepcopy(valid_switch_off)}
+        self.push_event(ts, e)
     
     def turn_off(self, node):
         self.inactive_resources.extend(node)
@@ -356,8 +359,10 @@ class SPSimulator:
         for i in range(16):
             if i in node:
                 self.resources_agenda[i]['release_time'] = self.current_time + self.transition_time[1]
-                
-        heapq.heappush(self.schedule_queue, (self.current_time + self.transition_time[1], MyDict({'node': copy.deepcopy(node), 'type': 'turn_on' })))
+        
+        ts = self.current_time + self.transition_time[1]
+        e = {'type': 'turn_on', 'node': copy.deepcopy(node)}
+        self.push_event(ts, e)
     
     def turn_on(self, node):
         self.available_resources.extend(node)
@@ -408,12 +413,15 @@ class SPSimulator:
                 if i in need_activation_node or i in reserved_node:
                     self.resources_agenda[i]['release_time'] = self.current_time + self.transition_time[1] + job['walltime']
             self.switch_on(need_activation_node)
-            heapq.heappush(self.schedule_queue, (self.current_time + self.transition_time[1], MyDict(job)))
+            ts = self.current_time + self.transition_time[1]
+            self.push_event(ts, job)
+
         else:
             for i in range(16):
                 if i in need_activation_node or i in reserved_node:
                     self.resources_agenda[i]['release_time'] = self.current_time + job['walltime']
-            heapq.heappush(self.schedule_queue, (self.current_time, MyDict(job)))    
+            
+            self.push_event(self.current_time, job)
             
     def get_not_allocated_resources(self):
         not_allocated_resources = self.available_resources + self.inactive_resources
@@ -421,107 +429,109 @@ class SPSimulator:
         not_allocated_resources = sorted(not_allocated_resources)
         return not_allocated_resources
     
+    def push_event(self, timestamp, event):
+        found = None
+        for x in self.events:
+            if x['timestamp'] == timestamp:
+                found = x
+                break
+        if found:
+            found['events'].append(event)
+        else:
+            self.events.append({'timestamp':timestamp, 'events':[event]})
+        
+        self.events.sort(key=lambda x: x['timestamp'])
     
     def proceed(self):
-        if self.schedule_queue:
-            self.current_time, self.event = heapq.heappop(self.schedule_queue)
-        else:
-            self.event = self.jobs_monitor.waiting_queue.pop(0)
-
-        
+        self.current_time, events = self.events.pop(0).values()
         self.update_energy_consumption()
         self.update_node_state_monitor()
         self.update_idle_time()
         self.update_total_waiting_time()
         self.sim_monitor.update_energy_waste()
-        
         self.last_event_time = self.current_time
-        
-        if self.event['type'] == 'switch_off':
-            self.switch_off(self.event['node'])
-            
-        elif self.event['type'] == 'turn_off':
-            self.turn_off(self.event['node'])
-            
-        elif self.event['type'] == 'switch_on':
-            self.switch_on(self.event['node'])
-            
-        elif self.event['type'] == 'turn_on':
-            self.turn_on(self.event['node'])
-            
-        elif self.event['type'] == 'arrival':
-            self.jobs_monitor.waiting_queue.append(self.event)
-                
-        elif self.event['type'] == 'execution_start':
-            new_waiting_queue_ney = []
-            for d in self.jobs_monitor.waiting_queue_ney:
-                if d['id'] != self.event['id']:
-                    new_waiting_queue_ney.append(d)
-                    
-            self.jobs_monitor.waiting_queue_ney = new_waiting_queue_ney
-    
-            allocated = self.event['reserved_nodes']
-                    
-            self.reserved_resources = [node for node in self.reserved_resources if node not in allocated]
-            self.available_resources = [node for node in self.available_resources if node not in allocated]
-            self.update_node_action(allocated, self.event, 'allocate', 'computing')
+        for event in events:
+            self.event = event
+            if self.event['type'] == 'switch_off':
+                self.switch_off(self.event['node'])
 
-            finish_time = self.current_time + self.event['walltime']
-            finish_event = {
-                'id': self.event['id'],
-                'res': self.event['res'],
-                'walltime': self.event['walltime'],
-                'type': 'execution_finished',
-                'subtime': self.event['subtime'],
-                'profile': self.event['profile'],
-                'allocated_resources': allocated
-            }
+            elif self.event['type'] == 'turn_off':
+                self.turn_off(self.event['node'])
                 
-            heapq.heappush(self.schedule_queue, (finish_time, MyDict(finish_event)))
-            
-            finish_event['finish_time'] = finish_time
-            self.jobs_monitor.active_jobs.append(finish_event)
-            
-            self.jobs_monitor.monitor_jobs.append({
-                'job_id': self.event['id'],
-                'workload_name': 'w0',
-                'profile': self.event['profile'],
-                'submission_time': self.event['subtime'],
-                'requested_number_of_resources': self.event['res'],
-                'requested_time': self.event['walltime'],
-                'success': 0,
-                'final_state': 'COMPLETED_WALLTIME_REACHED',
-                'starting_time': self.current_time,
-                'execution_time': self.event['walltime'],
-                'finish_time': finish_time,
-                'waiting_time': self.current_time - self.event['subtime'],
-                'turnaround_time': finish_time - self.event['subtime'],
-                'stretch': (finish_time - self.event['subtime']) / self.event['walltime'],
-                'allocated_resources': allocated,
-                'consumed_energy': -1
-            })
-        
-        elif self.event['type'] == 'execution_finished':
-            self.jobs_monitor.num_jobs_finished += 1
-            
-            if self.jobs_monitor.num_jobs_finished == self.jobs_monitor.num_jobs:
-                self.sim_monitor.finish_time = self.current_time
-            allocated = self.event['allocated_resources']
-            for i in range(16):
-                if i in allocated:
-                    self.resources_agenda[i]['release_time'] = 0
+            elif self.event['type'] == 'switch_on':
+                self.switch_on(self.event['node'])
+                
+            elif self.event['type'] == 'turn_on':
+                self.turn_on(self.event['node'])
+                
+            elif self.event['type'] == 'arrival':
+                self.jobs_monitor.waiting_queue.append(self.event)
                     
-            self.available_resources.extend(allocated)
-            self.available_resources.sort()
+            elif self.event['type'] == 'execution_start':
+                new_waiting_queue_ney = []
+                for d in self.jobs_monitor.waiting_queue_ney:
+                    if d['id'] != self.event['id']:
+                        new_waiting_queue_ney.append(d)
+                        
+                self.jobs_monitor.waiting_queue_ney = new_waiting_queue_ney
+        
+                allocated = self.event['reserved_nodes']
+                        
+                self.reserved_resources = [node for node in self.reserved_resources if node not in allocated]
+                self.available_resources = [node for node in self.available_resources if node not in allocated]
+                self.update_node_action(allocated, self.event, 'allocate', 'computing')
+
+                finish_time = self.current_time + self.event['walltime']
+                finish_event = {
+                    'id': self.event['id'],
+                    'res': self.event['res'],
+                    'walltime': self.event['walltime'],
+                    'type': 'execution_finished',
+                    'subtime': self.event['subtime'],
+                    'profile': self.event['profile'],
+                    'allocated_resources': allocated
+                }
+                
+                self.push_event(finish_time, finish_event)    
+                
+                finish_event['finish_time'] = finish_time
+                self.jobs_monitor.active_jobs.append(finish_event)
+                
+                self.jobs_monitor.monitor_jobs.append({
+                    'job_id': self.event['id'],
+                    'workload_name': 'w0',
+                    'profile': self.event['profile'],
+                    'submission_time': self.event['subtime'],
+                    'requested_number_of_resources': self.event['res'],
+                    'requested_time': self.event['walltime'],
+                    'success': 0,
+                    'final_state': 'COMPLETED_WALLTIME_REACHED',
+                    'starting_time': self.current_time,
+                    'execution_time': self.event['walltime'],
+                    'finish_time': finish_time,
+                    'waiting_time': self.current_time - self.event['subtime'],
+                    'turnaround_time': finish_time - self.event['subtime'],
+                    'stretch': (finish_time - self.event['subtime']) / self.event['walltime'],
+                    'allocated_resources': allocated,
+                    'consumed_energy': -1
+                })
             
-            self.update_node_action(allocated, self.event, 'release', 'idle')
-            
-            self.jobs_monitor.active_jobs = [active_job for active_job in self.jobs_monitor.active_jobs if active_job['id'] != self.event['id']]
-            
-            for aj in self.jobs_monitor.active_jobs:
-                if aj['finish_time'] == self.current_time:
-                    return
-            
+            elif self.event['type'] == 'execution_finished':
+                self.jobs_monitor.num_jobs_finished += 1
+                
+                if self.jobs_monitor.num_jobs_finished == self.jobs_monitor.num_jobs:
+                    self.sim_monitor.finish_time = self.current_time
+                allocated = self.event['allocated_resources']
+                for i in range(16):
+                    if i in allocated:
+                        self.resources_agenda[i]['release_time'] = 0
+                        
+                self.available_resources.extend(allocated)
+                self.available_resources.sort()
+                
+                self.update_node_action(allocated, self.event, 'release', 'idle')
+                
+                self.jobs_monitor.active_jobs = [active_job for active_job in self.jobs_monitor.active_jobs if active_job['id'] != self.event['id']]
         
         mask = self.sim_monitor.nb_res['time'] == self.current_time
         has_idle = (self.sim_monitor.nb_res.loc[mask, 'idle'] > 0).any()
@@ -529,9 +539,12 @@ class SPSimulator:
         self.scheduler.schedule()
         
         if has_idle and self.timeout is not None:
-            heapq.heappush(self.schedule_queue, (self.current_time + self.timeout, MyDict({'type':'switch_off', 'node': copy.deepcopy(self.available_resources)})))
+            e = {'type': 'switch_off', 'node': copy.deepcopy(self.available_resources)}
+            ts = self.current_time + self.timeout
+            self.push_event(ts, e)
+
         
-        if len(self.jobs_monitor.waiting_queue) == 0 and len(self.schedule_queue) == 0:
+        if len(self.jobs_monitor.waiting_queue) == 0 and len(self.events) == 0:
             for x in self.sim_monitor.nodes:
                 if x[len(x)-1]['finish_time'] != self.current_time:
                     x[len(x)-1]['finish_time'] = self.current_time

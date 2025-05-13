@@ -1,24 +1,23 @@
 import torch
 from scheduler_sp.env import SPSimulator
-from scheduler_sp.rl_scheduler import RLScheduler
+from scheduler_sp.rl_scheduler_2 import RLScheduler
 import pandas as pd
-from actor import HPCNodeManager
-from critic import HPCCritic
+from nn_generator.model_generator_2 import HPCNodeManager
 
-def run_simulation(scheduler):
-    simulator = SPSimulator(scheduler)
+
+def run_simulation(scheduler, platform_filepath, workload_filepath):
+    simulator = SPSimulator(scheduler, platform_path=platform_filepath, workload_path=workload_filepath)
     scheduler.simulator = simulator
     
-    while simulator.schedule_queue or simulator.jobs_monitor.waiting_queue:
+    while simulator.events or simulator.jobs_monitor.waiting_queue:
         simulator.proceed()
     
     return simulator.jobs_monitor.monitor_jobs, simulator.sim_monitor
 
-actor = torch.load('untrained/hpc_actor.pth', map_location=torch.device('cpu'))
-critic = torch.load('untrained/hpc_critic.pth', map_location=torch.device('cpu'))
-rl_scheduler = RLScheduler(None, actor, critic)
-
-jobs_e, sim_e = run_simulation(rl_scheduler)
+agent = torch.load('nn_generator/hpc_node_manager.pth', map_location=torch.device('cpu'))
+rl_scheduler = RLScheduler(None, agent)
+workload_filepath = "workloads/simple_data_10.json"
+jobs_e, sim_e = run_simulation(rl_scheduler, "platforms/spsim/platform.json", workload_filepath)
 
 
 print('~~~ EASY SCHEDULER ~~~')
@@ -32,4 +31,4 @@ jobs_e = pd.DataFrame(jobs_e)
 jobs_e['allocated_resources'] = jobs_e['allocated_resources'].apply(
     lambda x: f' '.join(map(str, x))
 )
-jobs_e.to_csv('results/cssp/baseline/easy_jobs.csv', index=False)
+jobs_e.to_csv('results/cssp/rl/easy_jobs.csv', index=False)

@@ -21,10 +21,13 @@ class HPCNodeManager(nn.Module):
         predictions = torch.sigmoid(logits)  # Convert logits to probabilities (on/off)
         return predictions.squeeze(-1)  # (batch_size, num_nodes)
 
-# Initialize model
-feature_dim = 7  # Set feature dimension
-model = HPCNodeManager(input_dim=feature_dim)
 
-# Save the untrained model
-torch.save(model, "untrained/hpc_actor.pth")
-print("Model saved successfully.")
+
+if __name__ == "__main__":
+    # Initialize model
+    feature_dim = 7  # Set feature dimension
+    model = HPCNodeManager(input_dim=feature_dim)
+
+    # Save the untrained model
+    torch.save(model, "hpc_node_manager.pth")
+    print("Model saved successfully.")

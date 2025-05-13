@@ -31,22 +31,17 @@ class ProblemGenerator:
                 'user_id': 0
             })
 
- 
-
-        # Cek apakah ID dalam string menyebabkan urutan salah
         for i in range(len(workloads) - 1):
             id_current = workloads[i]['id']
             id_next = workloads[i + 1]['id']
             subtime_current = workloads[i]['subtime']
             subtime_next = workloads[i + 1]['subtime']
 
-            # Jika ID yang lebih besar dalam string malah diurutkan lebih awal
             if str(id_current) > str(id_next) and subtime_current == subtime_next:
-                workloads[i + 1]['subtime'] += 1  # Tambah 1 ke subtime agar tetap terurut
+                workloads[i + 1]['subtime'] += 1 
 
         return workloads
 
-# Contoh penggunaan
 num_jobs = 1000
 max_node = 8
 problem_generator = ProblemGenerator(num_jobs=num_jobs, max_node=max_node)

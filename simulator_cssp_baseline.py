@@ -7,7 +7,7 @@ def run_simulation(scheduler, platform_filepath, workload_filepath):
     simulator = SPSimulator(scheduler, platform_path=platform_filepath, workload_path=workload_filepath)
     scheduler.simulator = simulator
     
-    while simulator.schedule_queue or simulator.jobs_monitor.waiting_queue:
+    while simulator.events or simulator.jobs_monitor.waiting_queue:
         simulator.proceed()
     
     return simulator.jobs_monitor, simulator.sim_monitor
