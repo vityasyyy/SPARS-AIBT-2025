@@ -1,10 +1,5 @@
 # HPCv2 Simulator 🖥️⚡
 
-Simulasi penjadwalan dan manajemen energi untuk lingkungan High-Performance Computing (HPC) dengan dukungan kebijakan manajemen daya dan berbagai algoritma penjadwalan.
-
-![HPC Simulation Visualization](https://via.placeholder.com/800x400.png?text=Sample+Gantt+Chart+Visualization)
-_(Contoh visualisasi hasil simulasi)_
-
 ## 📥 Instalasi
 
 ### Prasyarat
