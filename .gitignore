@@ -1,7 +1,7 @@
 mynote.md
 prompt.md
 myenv
-
+requirements_linux.txt
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

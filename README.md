@@ -25,6 +25,7 @@ _(Contoh visualisasi hasil simulasi)_
 
 ### Clone dan Setup Environment
 
+#### LINUX
 ```bash
 git clone https://github.com/RakaSP/HPCv2.git
 cd HPCv2
@@ -33,13 +34,25 @@ python3.8 -m venv myenv
 # aktivasi virtual environment (linux)
 source myenv/bin/activate
 
+# install dependensi
+pip install batsim-py
+pip install --upgrade pandas numpy
+pip install evalys
+
+```
+
+#### WINDOWS
+```bash
+git clone https://github.com/RakaSP/HPCv2.git
+cd HPCv2
+python3.8 -m venv myenv
+
 # aktivasi virtual environment (windows)
 myenv/Scripts/activate
 
-# install dependensi
-pip install -r requirements.txt
+# install dependensi (tidak perlu download module batsim pada windows)
+pip install -r requirements_windows.txt
 ```
-
 ## 🐧 Panduan Penggunaan Linux
 
 1. **Simulasi Batsim**
