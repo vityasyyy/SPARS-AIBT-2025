@@ -28,7 +28,7 @@ _(Contoh visualisasi hasil simulasi)_
 ```bash
 git clone https://github.com/RakaSP/HPCv2.git
 cd HPCv2
-python -m venv myenv
+python3.8 -m venv myenv
 
 # aktivasi virtual environment (linux)
 source myenv/bin/activate
