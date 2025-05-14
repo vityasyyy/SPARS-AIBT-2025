@@ -17,7 +17,7 @@ def run_simulation(scheduler, shutdown_policy):
 
     # 2) Start simulation
     simulator.start(platform="platforms/batsim/platform.xml",
-                    workload="workloads/workload_mg_5.json",
+                    workload="workloads/simple_data_1000.json",
                     verbosity="information")
 
     # 3) Schedule all jobs
@@ -33,10 +33,9 @@ def run_simulation(scheduler, shutdown_policy):
     # 4) Return/Dump statistics
     return jobs_mon, sim_mon, host_mon, e_mon
 
-timeout = 100
+timeout = 30
 jobs_wt, sim_wt, host_wt, e_wt = run_simulation(EASYScheduler, lambda s: TimeoutPolicy(timeout, s))
 
-print(f"Execution time: {execution_time:.6f} seconds")
 
 print('jul: ',sim_wt.info['consumed_joules'])
 print('idle_time: ',sim_wt.info['time_idle'])

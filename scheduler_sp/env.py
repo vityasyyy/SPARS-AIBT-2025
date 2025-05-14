@@ -91,7 +91,7 @@ class SimMonitor:
     
     
 class SPSimulator:
-    def __init__(self, scheduler, timeout=None, platform_path="platforms/spsim/platform.json", workload_path="workloads/simple_data_1000.json"):        
+    def __init__(self, scheduler, platform_path, workload_path, timeout=None):        
         self.scheduler = scheduler
         self.timeout = timeout
         with open(platform_path, 'r') as file:
@@ -329,9 +329,9 @@ class SPSimulator:
         self.on_off_resources = sorted(self.on_off_resources)
         self.update_node_action(valid_switch_off, self.event, 'switch_off', 'switching_off')
         
-        for i in range(16):
-            if i in node:
-                self.resources_agenda[i]['release_time'] = self.current_time + self.transition_time[0]
+        # for i in range(16):
+        #     if i in node:
+        #         self.resources_agenda[i]['release_time'] = self.current_time + self.transition_time[0]
                 
         ts = self.current_time + self.transition_time[0]
         e = {'type': 'turn_off', 'node': copy.deepcopy(valid_switch_off)}
@@ -344,21 +344,22 @@ class SPSimulator:
         self.on_off_resources = [item for item in self.on_off_resources if item not in node]
         self.on_off_resources = sorted(self.on_off_resources)
         
-        for i in range(16):
-            if i in node:
-                self.resources_agenda[i]['release_time'] = 0
+        # for i in range(16):
+        #     if i in node:
+        #         self.resources_agenda[i]['release_time'] = 0
                 
         self.update_node_action(node, self.event, 'turn_off', 'sleeping')
     
-    def switch_on(self, node):
+    def switch_on(self, node, update_resources_agenda = True):
         self.inactive_resources = [item for item in self.inactive_resources if item not in node]
         self.off_on_resources.extend(node)
         self.off_on_resources = sorted(self.off_on_resources)
         self.update_node_action(node, self.event, 'switch_on', 'switching_on')
         
-        for i in range(16):
-            if i in node:
-                self.resources_agenda[i]['release_time'] = self.current_time + self.transition_time[1]
+        # if update_resources_agenda:
+        #     for i in range(16):
+        #         if i in node:
+        #             self.resources_agenda[i]['release_time'] = self.current_time + self.transition_time[1]
         
         ts = self.current_time + self.transition_time[1]
         e = {'type': 'turn_on', 'node': copy.deepcopy(node)}
@@ -370,9 +371,9 @@ class SPSimulator:
         self.off_on_resources = [item for item in self.off_on_resources if item not in node]
         self.off_on_resources = sorted(self.off_on_resources)
         
-        for i in range(16):
-            if i in node:
-                self.resources_agenda[i]['release_time'] = 0
+        # for i in range(16):
+        #     if i in node:
+        #         self.resources_agenda[i]['release_time'] = 0
                 
         self.update_node_action(node, self.event, 'turn_on', 'idle')
         
@@ -407,12 +408,14 @@ class SPSimulator:
                 break
         
         self.jobs_monitor.waiting_queue_ney.append(job)
-            
+        
+        if job['id'] == 21:
+            print('here')
         if len(need_activation_node) > 0:
             for i in range(16):
                 if i in need_activation_node or i in reserved_node:
                     self.resources_agenda[i]['release_time'] = self.current_time + self.transition_time[1] + job['walltime']
-            self.switch_on(need_activation_node)
+            self.switch_on(need_activation_node, update_resources_agenda=False)
             ts = self.current_time + self.transition_time[1]
             self.push_event(ts, job)
 

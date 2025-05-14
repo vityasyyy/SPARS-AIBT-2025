@@ -42,7 +42,7 @@ class EASYScheduler(FCFSScheduler):
 
         # Try to maximize the number of hosts available for the remaining queue.
         reservation = candidates[-p_job.res:]
-
+        
         # Let's try to start some jobs earlier.
         for job in backfilling_queue:
             available = self.simulator.platform.get_not_allocated_hosts()  # Hosts

@@ -5,8 +5,6 @@ import time
 
 start_time = time.perf_counter()
 
-timeout = 30
-
 def process_node_job_data(nodes_data, jobs):
     job_type_map = {'idle': -1, 'switching_off': -2, 'switching_on': -3, 'sleeping': -4}
     
@@ -35,19 +33,21 @@ def process_node_job_data(nodes_data, jobs):
     final_df = pd.concat([grouped_df, jobs], ignore_index=True).sort_values(by=['starting_time', 'finish_time'])
     return final_df
 
-
-
-def run_simulation(scheduler):
-    simulator = SPSimulator(scheduler, timeout = timeout)
+def run_simulation(scheduler, platform_filepath, workload_filepath, timeout):
+    simulator = SPSimulator(scheduler, platform_path=platform_filepath, workload_path=workload_filepath, timeout = timeout)
     scheduler.simulator = simulator
     
-    while simulator.schedule_queue or simulator.jobs_monitor.waiting_queue:
+    while simulator.events or simulator.jobs_monitor.waiting_queue:
         simulator.proceed()
     
     return simulator.jobs_monitor, simulator.sim_monitor
 
+
 easy_scheduler = EasyScheduler(None)
-jobs_e, sim_e = run_simulation(easy_scheduler)
+workload_filepath = "workloads/simple_data_1000.json"
+platform_filepath = "platforms/spsim/platform.json"
+timeout = 30
+jobs_e, sim_e = run_simulation(easy_scheduler, platform_filepath, workload_filepath, timeout)
 
 sum(range(10**6))
 

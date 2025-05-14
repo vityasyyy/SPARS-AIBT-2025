@@ -27,7 +27,7 @@ class FCFSScheduler:
         #     42497, 42648, 43990
         # ]
 
-        # test_time = [1957, 4059]
+        # test_time = [31971]
         # if self.simulator.current_time in test_time:
         #     # print('current time:', self.simulator.current_time)
         #     input('Press key to continue')
