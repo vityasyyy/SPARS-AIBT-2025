@@ -37,7 +37,7 @@ source myenv/bin/activate
 myenv/Scripts/activate
 
 # install dependensi
-pip install requirements.txt
+pip install -r requirements.txt
 ```
 
 ## 🐧 Panduan Penggunaan Linux
