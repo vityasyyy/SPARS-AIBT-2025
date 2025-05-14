@@ -409,8 +409,6 @@ class SPSimulator:
         
         self.jobs_monitor.waiting_queue_ney.append(job)
         
-        if job['id'] == 21:
-            print('here')
         if len(need_activation_node) > 0:
             for i in range(16):
                 if i in need_activation_node or i in reserved_node:
