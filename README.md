@@ -5,17 +5,6 @@ Simulasi penjadwalan dan manajemen energi untuk lingkungan High-Performance Comp
 ![HPC Simulation Visualization](https://via.placeholder.com/800x400.png?text=Sample+Gantt+Chart+Visualization)
 _(Contoh visualisasi hasil simulasi)_
 
-## Daftar Isi 📜
-
-- [Instalasi](#-instalasi)
-- [Panduan Penggunaan](#-panduan-penggunaan)
-  - [Linux](#-linux-instructions)
-  - [Windows](#-windows-instructions)
-- [Kebijakan Manajemen Daya](#-kebijakan-manajemen-daya)
-- [Algoritma Penjadwalan](#-algoritma-penjadwalan)
-- [Visualisasi Hasil](#-visualisasi-hasil)
-- [Dokumentasi Tambahan](#-dokumentasi-tambahan)
-
 ## 📥 Instalasi
 
 ### Prasyarat
