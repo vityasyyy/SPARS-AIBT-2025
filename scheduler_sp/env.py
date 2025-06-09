@@ -3,58 +3,6 @@ import pandas as pd
 import copy
 import numpy as np
 from collections import defaultdict
-
-class MyDict:
-    def __init__(self, _dict: dict):
-        if isinstance(_dict, MyDict):
-            self._dict = copy.deepcopy(_dict._dict)
-        else:
-            self._dict = _dict
-        
-    def __lt__(self, other):
-        priority_type = {'turn_on', 'turn_off', 'switch_on', 'switch_off'}
-
-        if self._dict['type'] in priority_type:
-            return True 
-        elif other._dict['type'] in priority_type:
-            return False
-        elif self._dict['type'] not in priority_type and other._dict['type'] in priority_type:
-            return True
-       
-        
-        if 'current_time' in self._dict and 'current_time' in other._dict:
-            if self._dict['current_time'] < other._dict['current_time']:
-                return True
-            elif self._dict['current_time'] > other._dict['current_time']:
-                return False
-        
-        if self._dict['type'] != 'execution_finished' and self._dict['type'] != 'execution_start':
-            return self._dict['id'] < other._dict['id']
-        else:
-            if self._dict['type'] == 'execution_finished' and other._dict['type'] == 'execution_start':
-                return True
-            elif self._dict['type'] == 'execution_start' and other._dict['type'] == 'execution_finished':
-                return False
-            elif self._dict['type'] == 'execution_finished' and other._dict['type'] == 'execution_finished':
-                return str(self._dict['id']) < str(other._dict['id'])
-            elif self._dict['type'] == 'pre_switch_on_check':
-                return False
-            elif other._dict['type'] == 'pre_switch_on_check':
-                return True
-            else:
-                return self._dict['id'] < other._dict['id']
-                
-    def __getitem__(self, key):
-        return self._dict[key]
-    
-    def __setitem__(self, key, value):
-        self._dict[key] = value
-        
-    def has_key(self, key):
-        return key in self._dict
-    
-    def __str__(self):
-       return f'{self["id"]}'
     
 class JobsMonitor:
     def __init__(self, workload_info):
@@ -329,9 +277,10 @@ class SPSimulator:
         self.on_off_resources = sorted(self.on_off_resources)
         self.update_node_action(valid_switch_off, self.event, 'switch_off', 'switching_off')
         
-        # for i in range(16):
-        #     if i in node:
-        #         self.resources_agenda[i]['release_time'] = self.current_time + self.transition_time[0]
+        for i in range(16):
+            if i in valid_switch_off:
+                self.resources_agenda[i]['release_time'] = self.current_time + self.transition_time[0]
+
                 
         ts = self.current_time + self.transition_time[0]
         e = {'type': 'turn_off', 'node': copy.deepcopy(valid_switch_off)}
@@ -344,22 +293,44 @@ class SPSimulator:
         self.on_off_resources = [item for item in self.on_off_resources if item not in node]
         self.on_off_resources = sorted(self.on_off_resources)
         
-        # for i in range(16):
-        #     if i in node:
-        #         self.resources_agenda[i]['release_time'] = 0
+        for i in range(16):
+            if i in node:
+                self.resources_agenda[i]['release_time'] = self.current_time + self.platform_info['switch_on_time']
+
                 
         self.update_node_action(node, self.event, 'turn_off', 'sleeping')
     
-    def switch_on(self, node, update_resources_agenda = True):
+    def switch_on(self, node):
         self.inactive_resources = [item for item in self.inactive_resources if item not in node]
         self.off_on_resources.extend(node)
         self.off_on_resources = sorted(self.off_on_resources)
         self.update_node_action(node, self.event, 'switch_on', 'switching_on')
         
-        # if update_resources_agenda:
-        #     for i in range(16):
-        #         if i in node:
-        #             self.resources_agenda[i]['release_time'] = self.current_time + self.transition_time[1]
+        reserved_node_indices = [res["node_index"] for res in self.reserved_resources]
+        for i in range(16):
+            if i in node:
+                if i in reserved_node_indices:
+                    # Find the reserved resource dict for this node i
+                    reserved = next((res for res in self.reserved_resources if res['node_index'] == i), None)
+                    if reserved is not None:
+                        job_id = reserved['job_id']
+                        # Find the job detail with matching job_id
+                        job_detail = next((job for job in self.workload_info['jobs'] if job['id'] == job_id), None)
+                        if job_detail is not None:
+                            self.resources_agenda[i]['release_time'] = (
+                                self.current_time + self.transition_time[1] + job_detail['walltime']
+                            )
+                        else:
+                            # fallback if job detail not found
+                            self.resources_agenda[i]['release_time'] = self.current_time + self.transition_time[1]
+                    else:
+                        # fallback if reserved resource not found
+                        self.resources_agenda[i]['release_time'] = self.current_time + self.transition_time[1]
+                else:
+                    # Node not in reserved_node_indices, just add switch on time
+                    self.resources_agenda[i]['release_time'] = self.current_time + self.transition_time[1]
+
+
         
         ts = self.current_time + self.transition_time[1]
         e = {'type': 'turn_on', 'node': copy.deepcopy(node)}
@@ -371,9 +342,10 @@ class SPSimulator:
         self.off_on_resources = [item for item in self.off_on_resources if item not in node]
         self.off_on_resources = sorted(self.off_on_resources)
         
-        # for i in range(16):
-        #     if i in node:
-        #         self.resources_agenda[i]['release_time'] = 0
+        for i in range(16):
+            if i in node:
+                self.resources_agenda[i]['release_time'] = 0
+
                 
         self.update_node_action(node, self.event, 'turn_on', 'idle')
         
@@ -381,8 +353,9 @@ class SPSimulator:
         reserved_node = []
         need_activation_node = []
         
+        reserved_node_indices = [res["node_index"] for res in self.reserved_resources]
         for node_index in range(self.nb_res):
-            if (node_index in self.available_resources or node_index in self.inactive_resources) and node_index not in self.reserved_resources:
+            if (node_index in self.available_resources or node_index in self.inactive_resources) and node_index not in reserved_node_indices:
                 reserved_node.append(node_index)
 
                 if node_index in self.inactive_resources:
@@ -392,13 +365,18 @@ class SPSimulator:
             
         return reserved_node, need_activation_node
     
-    def execution_start(self, job, reserved_node, need_activation_node):
+    def execution_start(self, job, reserved_node, need_activation_node=[]):
         if len(reserved_node) + len(need_activation_node) < job['res']:
             print('not enough res')
             return
         
-        self.reserved_resources += reserved_node
-        self.reserved_resources = sorted(self.reserved_resources)
+        for node in reserved_node:
+            self.reserved_resources.append({
+                "node_index": node,
+                "job_id": job['id']
+            })
+        self.reserved_resources = sorted(self.reserved_resources, key=lambda x: x["node_index"])
+
         job['reserved_nodes'] = reserved_node
         job['type'] = 'execution_start'
 
@@ -413,7 +391,8 @@ class SPSimulator:
             for i in range(16):
                 if i in need_activation_node or i in reserved_node:
                     self.resources_agenda[i]['release_time'] = self.current_time + self.transition_time[1] + job['walltime']
-            self.switch_on(need_activation_node, update_resources_agenda=False)
+
+            self.switch_on(need_activation_node)
             ts = self.current_time + self.transition_time[1]
             self.push_event(ts, job)
 
@@ -421,12 +400,13 @@ class SPSimulator:
             for i in range(16):
                 if i in need_activation_node or i in reserved_node:
                     self.resources_agenda[i]['release_time'] = self.current_time + job['walltime']
-            
+
             self.push_event(self.current_time, job)
             
     def get_not_allocated_resources(self):
         not_allocated_resources = self.available_resources + self.inactive_resources
-        not_allocated_resources = [resource for resource in not_allocated_resources if resource not in self.reserved_resources]
+        reserved_node_indices = [res["node_index"] for res in self.reserved_resources]
+        not_allocated_resources = [resource for resource in not_allocated_resources if resource not in reserved_node_indices]
         not_allocated_resources = sorted(not_allocated_resources)
         return not_allocated_resources
     
@@ -443,12 +423,22 @@ class SPSimulator:
         
         self.events.sort(key=lambda x: x['timestamp'])
     
+    def update_inactive_release_time(self):
+        for i in range(16):
+            if i in self.inactive_resources:
+                self.resources_agenda[i]['release_time'] = self.current_time + self.platform_info['switch_on_time'] 
+
+                
     def proceed(self):
         self.current_time, events = self.events.pop(0).values()
+        if self.current_time == 12228:
+            print(events)
+            input("c")
         self.update_energy_consumption()
         self.update_node_state_monitor()
         self.update_idle_time()
         self.update_total_waiting_time()
+        # self.update_inactive_release_time()
         self.sim_monitor.update_energy_waste()
         self.last_event_time = self.current_time
         for event in events:
@@ -467,7 +457,8 @@ class SPSimulator:
                 
             elif self.event['type'] == 'arrival':
                 self.jobs_monitor.waiting_queue.append(self.event)
-                    
+                self.jobs_monitor.waiting_queue.sort(key=lambda job: (job['subtime'], str(job['id'])))
+
             elif self.event['type'] == 'execution_start':
                 new_waiting_queue_ney = []
                 for d in self.jobs_monitor.waiting_queue_ney:
@@ -477,8 +468,9 @@ class SPSimulator:
                 self.jobs_monitor.waiting_queue_ney = new_waiting_queue_ney
         
                 allocated = self.event['reserved_nodes']
-                        
-                self.reserved_resources = [node for node in self.reserved_resources if node not in allocated]
+   
+                
+                self.reserved_resources = [node for node in self.reserved_resources if node['node_index'] not in allocated]
                 self.available_resources = [node for node in self.available_resources if node not in allocated]
                 self.update_node_action(allocated, self.event, 'allocate', 'computing')
 
@@ -493,6 +485,12 @@ class SPSimulator:
                     'allocated_resources': allocated
                 }
                 
+                
+
+                for i in range(16):
+                    if i in allocated:
+                        self.resources_agenda[i]['release_time'] = self.current_time + self.event['walltime']
+                    
                 self.push_event(finish_time, finish_event)    
                 
                 finish_event['finish_time'] = finish_time
@@ -526,6 +524,7 @@ class SPSimulator:
                 for i in range(16):
                     if i in allocated:
                         self.resources_agenda[i]['release_time'] = 0
+
                         
                 self.available_resources.extend(allocated)
                 self.available_resources.sort()

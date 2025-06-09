@@ -27,14 +27,24 @@ class FCFSScheduler:
         #     42497, 42648, 43990
         # ]
 
-        # test_time = [31971]
+        test_time = [3788, 3793]
+        
         # if self.simulator.current_time in test_time:
-        #     # print('current time:', self.simulator.current_time)
+
         #     input('Press key to continue')
+                
         for job in self.simulator.queue:
             available = self.simulator.platform.get_not_allocated_hosts()
-
+            # if self.simulator.current_time == 12228:
+            #     print('current time:', self.simulator.current_time)
+            #     print('aval:', available)
+            #     print('job head:', self.simulator.queue)
+            #     print('job head:', job.id)
+            #     input('Press key to continue')
             if job.res <= len(available):
+                # if job.id == "w0!87":
+                #     print(self.simulator.current_time)
+                #     input('Press key to continue')
                 # Schedule if the job can start now.
                 allocation = [h.id for h in available[:job.res]]
                 self.simulator.allocate(job.id, allocation)

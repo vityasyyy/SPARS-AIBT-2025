@@ -25,7 +25,7 @@ class EASYScheduler(FCFSScheduler):
         
         #next rilis = [{rilis: 1}, {rilis: 2}, {host: adk, rilis: 3}, {rilis: 4}, {rilis: 5},  ]
         # Get the last required host for p_job.
-        # if self.simulator.current_time == 7467:
+        # if self.simulator.current_time == 4368:
         #     print(p_job.id)
         #     for r in next_releases:
         #         print(r.host)
@@ -47,22 +47,31 @@ class EASYScheduler(FCFSScheduler):
         for job in backfilling_queue:
             available = self.simulator.platform.get_not_allocated_hosts()  # Hosts
             not_reserved = [h for h in available if h.id not in reservation]
-            # if self.simulator.current_time == 7467 and job.id == "w0!179":
+            # if self.simulator.current_time == 313:
+            #     print(backfilling_queue)
             #     print(candidates)
             #     print(reservation)
+            #     print(p_job)
             #     print(p_job.res)
             #     print(job.res)
             #     print(not_reserved)
             #     print(job.walltime)
             #     print(p_start_t)
             #     print(available)
+            #     input('Press key to continue')
                 
             #     input('x in bf')
             if job.res <= len(not_reserved):
                 # Schedule job on not reserved hosts.
+                # if job.id == "w0!87":
+                #     print(self.simulator.current_time)
+                #     input('Press key to continue')
                 allocation = [h.id for h in not_reserved[:job.res]]
                 self.simulator.allocate(job.id, allocation)
             elif job.walltime and job.walltime <= p_start_t and job.res <= len(available):
                 # Schedule job on reserved hosts without delaying p_job.
+                # if job.id == "w0!87":
+                #     print(self.simulator.current_time)
+                #     input('Press key to continue')
                 allocation = [h.id for h in available[:job.res]]
                 self.simulator.allocate(job.id, allocation)

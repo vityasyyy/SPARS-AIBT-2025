@@ -93,13 +93,11 @@ class RLScheduler:
             
             for job in backfilling_queue:
                 available = self.simulator.get_not_allocated_resources()
-                not_reserved = [h for h in available if h not in reservation]
-                if job['res'] <= len(not_reserved):
-                    reserved_node, need_activation_node = self.simulator.prioritize_lowest_node(job['res'])
-                    self.simulator.execution_start(job, reserved_node, need_activation_node)
+                reserved_nodes = sorted([node for node in available if node not in reservation and node in self.simulator.available_resources])[:x]
+                if job['res'] <= len(reserved_nodes):
+                    self.simulator.execution_start(job, reserved_nodes)
                 elif job['walltime'] and job['walltime'] + self.simulator.current_time <= p_start_t and job['res'] <= len(available):
-                    reserved_node, need_activation_node = self.simulator.prioritize_lowest_node(job['res'])
-                    self.simulator.execution_start(job, reserved_node, need_activation_node)
+                    self.simulator.execution_start(job, reserved_nodes)
     
     def easy_schedule(self):
         self.fcfs_schedule()

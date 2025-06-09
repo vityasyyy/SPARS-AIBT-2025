@@ -29,7 +29,8 @@ class EasyScheduler(FCFSScheduler):
         reservation = candidates[-p_job['res']:]
         
         not_reserved_resources = [r for r in not_reserved_resources if r not in reservation]
-
+    
+        
         for job in backfilling_queue:
             available = self.simulator.get_not_allocated_resources()
             not_reserved = [h for h in available if h not in reservation]
@@ -39,3 +40,4 @@ class EasyScheduler(FCFSScheduler):
             elif job['walltime'] and job['walltime'] + self.simulator.current_time <= p_start_t and job['res'] <= len(available):
                 reserved_node, need_activation_node = self.simulator.prioritize_lowest_node(job['res'])
                 self.simulator.execution_start(job, reserved_node, need_activation_node)
+                
