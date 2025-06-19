@@ -15,9 +15,9 @@ class ProblemGenerator:
         interarrival_times = np.random.exponential(1 / self.lambda_arrival, self.num_jobs)
         arrival_times = np.cumsum(interarrival_times)
         requested_execution_times = np.random.normal(self.mu_execution, self.sigma_execution, self.num_jobs)
-        noise = np.random.normal(self.mu_noise, self.sigma_noise, self.num_jobs)
-
-        actual_execution_times = np.maximum(0, requested_execution_times + noise)
+        
+        # noise = np.random.normal(self.mu_noise, self.sigma_noise, self.num_jobs)
+        # actual_execution_times = np.maximum(0, requested_execution_times + noise)
         num_nodes_required = np.clip(np.random.normal(5, 1, self.num_jobs), 1, self.max_node)
         workloads = []
 

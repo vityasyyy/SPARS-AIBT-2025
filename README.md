@@ -51,8 +51,8 @@ pip install -r requirements_windows.txt
 
    ```bash
    source myenv/bin/activate
-   python batsim_cssp_baseline.py
-   python batsim_cssp_timeout.py  # dengan timeout policy
+   python batsim_hpcv2_baseline.py
+   python batsim_hpcv2_timeout.py  # dengan timeout policy
    ```
 
 ## 🪟 Panduan Penggunaan Windows

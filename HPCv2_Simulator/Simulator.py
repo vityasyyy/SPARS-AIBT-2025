@@ -1,0 +1,230 @@
+from HPCv2_Simulator.JobsManager import JobsManager
+from HPCv2_Simulator.Monitor import SimMonitor
+from HPCv2_Simulator.NodesManager import NodeManager
+import json
+import copy
+from collections import defaultdict
+
+class SPSimulator:
+    def __init__(self, scheduler, platform_path, workload_path, timeout=None):        
+        self.scheduler = scheduler
+        self.timeout = timeout
+        with open(platform_path, 'r') as file:
+            self.platform_info = json.load(file)
+        with open(workload_path, 'r') as file:
+            self.workload_info = json.load(file)
+
+        self.nb_res = self.platform_info['nb_res']
+        self.machines = self.platform_info['machines']
+        self.profiles = self.workload_info['profiles']
+
+        self.sim_monitor = SimMonitor(self.nb_res, self.machines)
+        self.jobs_manager = JobsManager(self.workload_info)
+        self.node_manager = NodeManager(self.nb_res, self.sim_monitor, self.platform_info)
+        
+        self.current_time = 0
+        self.last_event_time = 0
+        self.event = None    
+        self.is_finish = False
+        
+        self.total_req_res = 0
+    
+    def print_energy_consumption(self):
+        index = 0
+        sum = 0
+        for node_energy_consumption in self.sim_monitor.energy_consumption:
+            print(f'Energy consumption of node {index}: ', node_energy_consumption)
+            sum+=node_energy_consumption
+            index += 1
+        print(f'Total energy consumption: {sum}')    
+    
+    def start_simulator(self, timeout = None):
+        if timeout is not None:
+            e = {'type': 'switch_off', 'node': copy.deepcopy(self.node_manager.available_resources)}
+            ts = self.current_time + self.timeout
+            self.jobs_manager.push_event(ts, e)
+    
+    def execution_start(self, job, reserved_node, need_activation_node=[]):
+        if len(reserved_node) + len(need_activation_node) < job['res']:
+            print('not enough res')
+            return
+        
+        for node in reserved_node:
+            self.node_manager.reserved_resources.append({
+                "node_index": node,
+                "job_id": job['id']
+            })
+            
+        self.node_manager.reserved_resources = sorted(self.node_manager.reserved_resources, key=lambda x: x["node_index"])
+
+        job['reserved_nodes'] = reserved_node
+        job['type'] = 'execution_start'
+
+        for index, _job in enumerate(self.jobs_manager.waiting_queue): 
+            if _job['id'] == job['id']:
+                self.jobs_manager.waiting_queue.pop(index)
+                break
+        
+        self.jobs_manager.waiting_queue_ney.append(job)
+        
+        if len(need_activation_node) > 0:
+            for i in range(16):
+                if i in need_activation_node or i in reserved_node:
+                    self.node_manager.resources_agenda[i]['release_time'] = self.current_time + self.node_manager.transition_time[1] + job['walltime']
+
+            ts, e = self.node_manager.switch_on(need_activation_node, self.current_time, job, self.workload_info)
+        
+            self.jobs_manager.push_event(ts, e) # Push turn on event
+            self.jobs_manager.push_event(ts, job) # Push execution start event
+
+        else:
+            for i in range(16):
+                if i in need_activation_node or i in reserved_node:
+                    self.node_manager.resources_agenda[i]['release_time'] = self.current_time + job['walltime']
+
+            self.jobs_manager.push_event(self.current_time, job)
+            
+    def proceed(self):
+        self.current_time, events = self.jobs_manager.events.pop(0).values()
+  
+        self.sim_monitor.update_energy_consumption(self.machines, self.current_time, self.last_event_time)
+        self.node_manager.update_node_state_monitor(self.current_time, self.last_event_time)
+        self.sim_monitor.update_idle_time(self.current_time, self.last_event_time)
+        
+        num_job_in_queue = len(self.jobs_manager.waiting_queue) + len(self.jobs_manager.waiting_queue_ney)
+        self.sim_monitor.update_total_waiting_time(num_job_in_queue, self.current_time, self.last_event_time)
+
+        self.sim_monitor.update_energy_waste()
+        self.last_event_time = self.current_time
+        for event in events:
+            self.event = event
+            if self.event['type'] == 'switch_off':
+                # ts = scheduled time when the node will be turned off
+                # e = the 'turn_off' event to be triggered at time ts
+                result = self.node_manager.switch_off(self.event['node'], self.current_time, self.event)
+                if result is not None:
+                    ts, e = result
+                    self.jobs_manager.push_event(ts, e)
+
+
+            elif self.event['type'] == 'turn_off':
+                self.node_manager.turn_off(self.event['node'], self.current_time, self.event)
+                
+            elif self.event['type'] == 'switch_on':
+                # ts = scheduled time when the node will be turned off
+                # e = the 'turn_off' event to be triggered at time ts
+                ts, e = self.node_manager.switch_on(self.event['node'], self.current_time, self.event, self.workload_info)
+                self.jobs_manager.push_event(ts, e) # add the turn on event
+                
+            elif self.event['type'] == 'turn_on':
+                self.node_manager.turn_on(self.event['node'], self.event, self.current_time)
+                
+            elif self.event['type'] == 'arrival':
+                # Upon arrival, push the job into waiting queue
+                self.jobs_manager.waiting_queue.append(self.event)
+                # Sort the waiting queue based on submission time
+                self.jobs_manager.waiting_queue.sort(key=lambda job: (job['subtime'], str(job['id'])))
+
+            elif self.event['type'] == 'execution_start':
+                new_waiting_queue_ney = []
+                for d in self.jobs_manager.waiting_queue_ney:
+                    if d['id'] != self.event['id']:
+                        new_waiting_queue_ney.append(d)
+                        
+                self.jobs_manager.waiting_queue_ney = new_waiting_queue_ney
+        
+                allocated = self.event['reserved_nodes']
+   
+                
+                self.node_manager.reserved_resources = [node for node in self.node_manager.reserved_resources if node['node_index'] not in allocated]
+                self.node_manager.available_resources = [node for node in self.node_manager.available_resources if node not in allocated]
+                self.node_manager.update_node_action(allocated, self.event, 'allocate', 'computing', self.current_time)
+
+                finish_time = self.current_time + self.event['walltime']
+                finish_event = {
+                    'id': self.event['id'],
+                    'res': self.event['res'],
+                    'walltime': self.event['walltime'],
+                    'type': 'execution_finished',
+                    'subtime': self.event['subtime'],
+                    'profile': self.event['profile'],
+                    'allocated_resources': allocated
+                }
+                
+            
+                for i in range(16):
+                    if i in allocated:
+                        self.node_manager.resources_agenda[i]['release_time'] = self.current_time + self.event['walltime']
+                    
+                self.jobs_manager.push_event(finish_time, finish_event)    
+                
+                finish_event['finish_time'] = finish_time
+                self.jobs_manager.active_jobs.append(finish_event)
+                
+                self.jobs_manager.monitor_jobs.append({
+                    'job_id': self.event['id'],
+                    'workload_name': 'w0',
+                    'profile': self.event['profile'],
+                    'submission_time': self.event['subtime'],
+                    'requested_number_of_resources': self.event['res'],
+                    'requested_time': self.event['walltime'],
+                    'success': 0,
+                    'final_state': 'COMPLETED_WALLTIME_REACHED',
+                    'starting_time': self.current_time,
+                    'execution_time': self.event['walltime'],
+                    'finish_time': finish_time,
+                    'waiting_time': self.current_time - self.event['subtime'],
+                    'turnaround_time': finish_time - self.event['subtime'],
+                    'stretch': (finish_time - self.event['subtime']) / self.event['walltime'],
+                    'allocated_resources': allocated,
+                    'consumed_energy': -1
+                })
+            
+            elif self.event['type'] == 'execution_finished':
+                self.jobs_manager.num_jobs_finished += 1
+                
+                if self.jobs_manager.num_jobs_finished == self.jobs_manager.num_jobs:
+                    self.sim_monitor.finish_time = self.current_time
+                allocated = self.event['allocated_resources']
+                for i in range(16):
+                    if i in allocated:
+                        self.node_manager.resources_agenda[i]['release_time'] = 0
+                        
+                self.node_manager.available_resources.extend(allocated)
+                self.node_manager.available_resources.sort()
+                
+                self.node_manager.update_node_action(allocated, self.event, 'release', 'idle', self.current_time)
+                
+                self.jobs_manager.active_jobs = [active_job for active_job in self.jobs_manager.active_jobs if active_job['id'] != self.event['id']]
+        
+        mask = self.sim_monitor.node_state_log['time'] == self.current_time
+        has_idle = (self.sim_monitor.node_state_log.loc[mask, 'idle'] > 0).any()
+        
+        self.scheduler.schedule()
+        
+        if has_idle and self.timeout is not None:
+            e = {'type': 'switch_off', 'node': copy.deepcopy(self.node_manager.available_resources)}
+            ts = self.current_time + self.timeout
+            self.jobs_manager.push_event(ts, e)
+
+        if len(self.jobs_manager.waiting_queue) == 0 and len(self.jobs_manager.events) == 0:
+            for x in self.sim_monitor.nodes:
+                if x[len(x)-1]['finish_time'] != self.current_time:
+                    x[len(x)-1]['finish_time'] = self.current_time
+            
+            self.on_finish()
+      
+    def on_finish(self):
+        self.print_energy_consumption()
+
+        node_state_durations = []
+        for node_list in self.sim_monitor.nodes:
+            state_durations = defaultdict(float) 
+            for entry in node_list:
+                state = entry['type']
+                duration = entry['finish_time'] - entry['starting_time']
+                state_durations[state] += duration
+            node_state_durations.append(dict(state_durations))
+        
+        for i, times in enumerate(node_state_durations):
+            print(f"Node {i}: {times}")
