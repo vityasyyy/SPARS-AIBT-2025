@@ -27,11 +27,12 @@ class FCFSScheduler:
         #     42497, 42648, 43990
         # ]
 
-        test_time = [3788, 3793]
+        test_time = [453]
         
-        # if self.simulator.current_time in test_time:
-
-        #     input('Press key to continue')
+        if self.simulator.current_time in test_time:
+            for job in self.simulator.queue:
+                print(f"Job {job.id} - res: {job.res}, walltime: {job.walltime}")
+            input('Press key to continue')
                 
         for job in self.simulator.queue:
             available = self.simulator.platform.get_not_allocated_hosts()

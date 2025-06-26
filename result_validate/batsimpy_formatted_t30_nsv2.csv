@@ -1,0 +1,32 @@
+type,starting_time,finish_time,allocated_resources,job_id
+idle,0,19,0 1 2 3,-1
+computing,19,75,0 1 2,1
+idle,19,30,3,-1
+switching_off,30,35,3,-2
+sleeping,35,75,3,-4
+computing,75,122,0 1 2,2
+sleeping,75,122,3,-4
+computing,122,173,0 1 2,3
+sleeping,122,173,3,-4
+computing,173,224,0 1,4
+idle,173,178,2,-1
+switching_on,173,178,3,-3
+computing,178,225,2 3,8
+idle,224,225,0 1,-1
+computing,225,277,0 1 2,5
+idle,225,255,3,-1
+switching_off,255,260,3,-2
+sleeping,260,277,3,-4
+computing,277,326,0 1 2,6
+sleeping,277,326,3,-4
+computing,326,381,0 1 2,7
+sleeping,326,381,3,-4
+computing,381,432,0 1 2,9
+sleeping,381,432,3,-4
+computing,432,479,0 1 2,10
+sleeping,432,479,3,-4
+idle,479,509,0 1 2,-1
+sleeping,479,509,3,-4
+switching_off,509,514,0 1 2,-2
+sleeping,509,514,3,-4
+sleeping,514,514,0 1 2 3,-4

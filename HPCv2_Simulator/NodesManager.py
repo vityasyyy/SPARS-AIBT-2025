@@ -9,7 +9,7 @@ class NodeManager:
         self.inactive_resources = []
         self.on_off_resources = []
         self.off_on_resources = []
-        self.resources_agenda = [{'release_time': 0, 'node': i} for i in range(16)]
+        self.resources_agenda = [{'release_time': 0, 'node': i} for i in range(self.nb_res)]
         
         self.transition_time = [platform_info['switch_off_time'], platform_info['switch_on_time']]
         
@@ -151,7 +151,7 @@ class NodeManager:
         self.on_off_resources = sorted(self.on_off_resources)
         self.update_node_action(valid_switch_off, event, 'switch_off', 'switching_off', current_time)
         
-        for i in range(16):
+        for i in range(self.nb_res):
             if i in valid_switch_off:
                 self.resources_agenda[i]['release_time'] = current_time + self.transition_time[0]
 
@@ -167,7 +167,7 @@ class NodeManager:
         self.on_off_resources = [item for item in self.on_off_resources if item not in node]
         self.on_off_resources = sorted(self.on_off_resources)
         
-        for i in range(16):
+        for i in range(self.nb_res):
             if i in node:
                 self.resources_agenda[i]['release_time'] = current_time + self.transition_time[0]
 
@@ -180,7 +180,7 @@ class NodeManager:
         self.update_node_action(node, event, 'switch_on', 'switching_on', current_time)
         
         reserved_node_indices = [res["node_index"] for res in self.reserved_resources]
-        for i in range(16):
+        for i in range(self.nb_res):
             # If i is in switch_on node
             if i in node:
                 # If i is in reserved node (based on index)
@@ -212,7 +212,7 @@ class NodeManager:
         self.off_on_resources = [item for item in self.off_on_resources if item not in node]
         self.off_on_resources = sorted(self.off_on_resources)
         
-        for i in range(16):
+        for i in range(self.nb_res):
             if i in node:
                 self.resources_agenda[i]['release_time'] = 0
                 

@@ -1,0 +1,24 @@
+time,sleeping,sleeping_nodes,switching_on,switching_on_nodes,switching_off,switching_off_nodes,idle,idle_nodes,computing,computing_nodes,unavailable
+0,0,[],0,[],0,[],8,"[0, 1, 2, 3, 4, 5, 6, 7]",0,"[{'job_id': 1, 'nodes': [0, 1], 'starting_time': 3, 'finish_time': 155}, {'job_id': 2, 'nodes': [2, 3, 4, 5], 'starting_time': 35, 'finish_time': 183}]",0
+3,0,[],0,[],0,[],6,"[2, 3, 4, 5, 6, 7]",2,"[{'job_id': 1, 'nodes': [0, 1], 'starting_time': 3, 'finish_time': 155}, {'job_id': 2, 'nodes': [2, 3, 4, 5], 'starting_time': 35, 'finish_time': 183}]",0
+35,0,[],0,[],0,[],2,"[6, 7]",6,"[{'job_id': 1, 'nodes': [0, 1], 'starting_time': 3, 'finish_time': 155}, {'job_id': 2, 'nodes': [2, 3, 4, 5], 'starting_time': 35, 'finish_time': 183}]",0
+155,0,[],0,[],0,[],0,[],8,"[{'job_id': 2, 'nodes': [2, 3, 4, 5], 'starting_time': 35, 'finish_time': 183}, {'job_id': 3, 'nodes': [0, 1, 6, 7], 'starting_time': 155, 'finish_time': 306}]",0
+183,0,[],0,[],0,[],1,[5],7,"[{'job_id': 3, 'nodes': [0, 1, 6, 7], 'starting_time': 155, 'finish_time': 306}, {'job_id': 4, 'nodes': [2, 3, 4], 'starting_time': 183, 'finish_time': 334}]",0
+306,0,[],0,[],0,[],2,"[6, 7]",6,"[{'job_id': 4, 'nodes': [2, 3, 4], 'starting_time': 183, 'finish_time': 334}, {'job_id': 5, 'nodes': [0, 1, 5], 'starting_time': 306, 'finish_time': 455}]",0
+334,0,[],0,[],0,[],1,[7],7,"[{'job_id': 5, 'nodes': [0, 1, 5], 'starting_time': 306, 'finish_time': 455}, {'job_id': 6, 'nodes': [2, 3, 4, 6], 'starting_time': 334, 'finish_time': 481}]",0
+455,0,[],0,[],0,[],0,[],8,"[{'job_id': 6, 'nodes': [2, 3, 4, 6], 'starting_time': 334, 'finish_time': 481}, {'job_id': 7, 'nodes': [0, 1, 5, 7], 'starting_time': 455, 'finish_time': 604}]",0
+481,0,[],0,[],0,[],1,[6],7,"[{'job_id': 7, 'nodes': [0, 1, 5, 7], 'starting_time': 455, 'finish_time': 604}, {'job_id': 8, 'nodes': [2, 3, 4], 'starting_time': 481, 'finish_time': 633}]",0
+604,0,[],0,[],0,[],2,"[6, 7]",6,"[{'job_id': 8, 'nodes': [2, 3, 4], 'starting_time': 481, 'finish_time': 633}, {'job_id': 9, 'nodes': [0, 1, 5], 'starting_time': 604, 'finish_time': 750}]",0
+633,0,[],0,[],0,[],1,[7],7,"[{'job_id': 9, 'nodes': [0, 1, 5], 'starting_time': 604, 'finish_time': 750}, {'job_id': 10, 'nodes': [2, 3, 4, 6], 'starting_time': 633, 'finish_time': 781}]",0
+750,0,[],0,[],0,[],0,[],8,"[{'job_id': 10, 'nodes': [2, 3, 4, 6], 'starting_time': 633, 'finish_time': 781}, {'job_id': 11, 'nodes': [0, 1, 5, 7], 'starting_time': 750, 'finish_time': 900}]",0
+781,0,[],0,[],0,[],0,[],8,"[{'job_id': 11, 'nodes': [0, 1, 5, 7], 'starting_time': 750, 'finish_time': 900}, {'job_id': 12, 'nodes': [2, 3, 4, 6], 'starting_time': 781, 'finish_time': 931}]",0
+900,0,[],0,[],0,[],1,[7],7,"[{'job_id': 12, 'nodes': [2, 3, 4, 6], 'starting_time': 781, 'finish_time': 931}, {'job_id': 13, 'nodes': [0, 1, 5], 'starting_time': 900, 'finish_time': 1047}]",0
+931,0,[],0,[],0,[],0,[],8,"[{'job_id': 13, 'nodes': [0, 1, 5], 'starting_time': 900, 'finish_time': 1047}, {'job_id': 14, 'nodes': [2, 3], 'starting_time': 931, 'finish_time': 1079}, {'job_id': 15, 'nodes': [4, 6, 7], 'starting_time': 931, 'finish_time': 1082}]",0
+1047,0,[],0,[],0,[],0,[],8,"[{'job_id': 14, 'nodes': [2, 3], 'starting_time': 931, 'finish_time': 1079}, {'job_id': 15, 'nodes': [4, 6, 7], 'starting_time': 931, 'finish_time': 1082}, {'job_id': 16, 'nodes': [0, 1, 5], 'starting_time': 1047, 'finish_time': 1195}]",0
+1079,0,[],0,[],0,[],0,[],8,"[{'job_id': 15, 'nodes': [4, 6, 7], 'starting_time': 931, 'finish_time': 1082}, {'job_id': 16, 'nodes': [0, 1, 5], 'starting_time': 1047, 'finish_time': 1195}, {'job_id': 19, 'nodes': [2, 3], 'starting_time': 1079, 'finish_time': 1229}]",0
+1082,0,[],0,[],0,[],0,[],8,"[{'job_id': 16, 'nodes': [0, 1, 5], 'starting_time': 1047, 'finish_time': 1195}, {'job_id': 19, 'nodes': [2, 3], 'starting_time': 1079, 'finish_time': 1229}, {'job_id': 17, 'nodes': [4, 6, 7], 'starting_time': 1082, 'finish_time': 1235}]",0
+1195,0,[],0,[],0,[],3,"[0, 1, 5]",5,"[{'job_id': 19, 'nodes': [2, 3], 'starting_time': 1079, 'finish_time': 1229}, {'job_id': 17, 'nodes': [4, 6, 7], 'starting_time': 1082, 'finish_time': 1235}]",0
+1229,0,[],0,[],0,[],1,[5],7,"[{'job_id': 17, 'nodes': [4, 6, 7], 'starting_time': 1082, 'finish_time': 1235}, {'job_id': 18, 'nodes': [0, 1, 2, 3], 'starting_time': 1229, 'finish_time': 1380}]",0
+1235,0,[],0,[],0,[],1,[7],7,"[{'job_id': 18, 'nodes': [0, 1, 2, 3], 'starting_time': 1229, 'finish_time': 1380}, {'job_id': 20, 'nodes': [4, 5, 6], 'starting_time': 1235, 'finish_time': 1386}]",0
+1380,0,[],0,[],0,[],5,"[0, 1, 2, 3, 7]",3,"[{'job_id': 20, 'nodes': [4, 5, 6], 'starting_time': 1235, 'finish_time': 1386}]",0
+1386,0,[],0,[],0,[],8,"[0, 1, 2, 3, 4, 5, 6, 7]",0,[],0

@@ -42,11 +42,30 @@ class EASYScheduler(FCFSScheduler):
 
         # Try to maximize the number of hosts available for the remaining queue.
         reservation = candidates[-p_job.res:]
+        test_time = [453]
         
+           
         # Let's try to start some jobs earlier.
         for job in backfilling_queue:
             available = self.simulator.platform.get_not_allocated_hosts()  # Hosts
             not_reserved = [h for h in available if h.id not in reservation]
+            
+            if self.simulator.current_time in test_time and job.id == "w0!11":
+                print(p_start_t)
+                print(job.res)
+                print(not_reserved)
+                print(available)
+                for r in next_releases:
+                    print(r.host.id, r.release_time)
+                print(candidates)
+                input('Press key to continue')
+            if self.simulator.current_time in test_time and job.id == "w0!19":
+                print(p_start_t)
+                print(job.res)
+                print(not_reserved)
+                print(available)
+                input('Press key to continue')
+                
             # if self.simulator.current_time == 313:
             #     print(backfilling_queue)
             #     print(candidates)
@@ -61,6 +80,7 @@ class EASYScheduler(FCFSScheduler):
             #     input('Press key to continue')
                 
             #     input('x in bf')
+            
             if job.res <= len(not_reserved):
                 # Schedule job on not reserved hosts.
                 # if job.id == "w0!87":

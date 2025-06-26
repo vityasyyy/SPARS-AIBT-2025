@@ -28,6 +28,8 @@ class SPSimulator:
         self.is_finish = False
         
         self.total_req_res = 0
+        
+        self.is_running = True
     
     def print_energy_consumption(self):
         index = 0
@@ -38,8 +40,8 @@ class SPSimulator:
             index += 1
         print(f'Total energy consumption: {sum}')    
     
-    def start_simulator(self, timeout = None):
-        if timeout is not None:
+    def start_simulator(self):
+        if self.timeout is not None:
             e = {'type': 'switch_off', 'node': copy.deepcopy(self.node_manager.available_resources)}
             ts = self.current_time + self.timeout
             self.jobs_manager.push_event(ts, e)
@@ -68,7 +70,7 @@ class SPSimulator:
         self.jobs_manager.waiting_queue_ney.append(job)
         
         if len(need_activation_node) > 0:
-            for i in range(16):
+            for i in range(self.nb_res):
                 if i in need_activation_node or i in reserved_node:
                     self.node_manager.resources_agenda[i]['release_time'] = self.current_time + self.node_manager.transition_time[1] + job['walltime']
 
@@ -78,7 +80,7 @@ class SPSimulator:
             self.jobs_manager.push_event(ts, job) # Push execution start event
 
         else:
-            for i in range(16):
+            for i in range(self.nb_res):
                 if i in need_activation_node or i in reserved_node:
                     self.node_manager.resources_agenda[i]['release_time'] = self.current_time + job['walltime']
 
@@ -96,6 +98,13 @@ class SPSimulator:
 
         self.sim_monitor.update_energy_waste()
         self.last_event_time = self.current_time
+
+        for node_states in self.sim_monitor.node_state_monitor:
+            acc = node_states['idle'] + node_states['switching_off'] + node_states['switching_on'] + node_states['computing'] + node_states['sleeping']
+       
+            if acc != self.current_time:
+                input('bug occur')
+
         for event in events:
             self.event = event
             if self.event['type'] == 'switch_off':
@@ -152,7 +161,7 @@ class SPSimulator:
                 }
                 
             
-                for i in range(16):
+                for i in range(self.nb_res):
                     if i in allocated:
                         self.node_manager.resources_agenda[i]['release_time'] = self.current_time + self.event['walltime']
                     
@@ -186,7 +195,7 @@ class SPSimulator:
                 if self.jobs_manager.num_jobs_finished == self.jobs_manager.num_jobs:
                     self.sim_monitor.finish_time = self.current_time
                 allocated = self.event['allocated_resources']
-                for i in range(16):
+                for i in range(self.nb_res):
                     if i in allocated:
                         self.node_manager.resources_agenda[i]['release_time'] = 0
                         
@@ -200,14 +209,20 @@ class SPSimulator:
         mask = self.sim_monitor.node_state_log['time'] == self.current_time
         has_idle = (self.sim_monitor.node_state_log.loc[mask, 'idle'] > 0).any()
         
-        self.scheduler.schedule()
-        
+        for nsl in self.sim_monitor.node_state_monitor:
+            if nsl['sleeping'] + nsl['switching_on'] + nsl['switching_off'] + nsl['idle'] + nsl['computing'] != self.current_time:
+                print('?')
+                
+                
+        if self.jobs_manager.num_jobs_finished < self.jobs_manager.num_jobs:
+            self.scheduler.schedule()
+            
         if has_idle and self.timeout is not None:
             e = {'type': 'switch_off', 'node': copy.deepcopy(self.node_manager.available_resources)}
             ts = self.current_time + self.timeout
             self.jobs_manager.push_event(ts, e)
 
-        if len(self.jobs_manager.waiting_queue) == 0 and len(self.jobs_manager.events) == 0:
+        if self.jobs_manager.num_jobs_finished == self.jobs_manager.num_jobs:
             for x in self.sim_monitor.nodes:
                 if x[len(x)-1]['finish_time'] != self.current_time:
                     x[len(x)-1]['finish_time'] = self.current_time
@@ -215,16 +230,8 @@ class SPSimulator:
             self.on_finish()
       
     def on_finish(self):
+        self.is_running = False
         self.print_energy_consumption()
 
-        node_state_durations = []
-        for node_list in self.sim_monitor.nodes:
-            state_durations = defaultdict(float) 
-            for entry in node_list:
-                state = entry['type']
-                duration = entry['finish_time'] - entry['starting_time']
-                state_durations[state] += duration
-            node_state_durations.append(dict(state_durations))
-        
-        for i, times in enumerate(node_state_durations):
-            print(f"Node {i}: {times}")
+        for node_index, node in enumerate(self.sim_monitor.node_state_monitor):
+            print('Node', node_index, ': ', node)

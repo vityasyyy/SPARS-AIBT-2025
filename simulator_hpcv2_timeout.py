@@ -36,16 +36,16 @@ def process_node_job_data(nodes_data, jobs):
 def run_simulation(scheduler, platform_filepath, workload_filepath, timeout):
     simulator = SPSimulator(scheduler, platform_path=platform_filepath, workload_path=workload_filepath, timeout = timeout)
     scheduler.simulator = simulator
-    
-    while simulator.jobs_manager.events or simulator.jobs_manager.waiting_queue:
+    simulator.start_simulator()
+    while simulator.is_running:
         simulator.proceed()
     
     return simulator.jobs_manager, simulator.sim_monitor
 
 
 easy_scheduler = EasyScheduler(None)
-workload_filepath = "workloads/simple_data_1000.json"
-platform_filepath = "platforms/spsim/platform.json"
+workload_filepath = "workloads/validate_data.json"
+platform_filepath = "platforms/spsim/platform_validate.json"
 timeout = 30
 jobs_e, sim_e = run_simulation(easy_scheduler, platform_filepath, workload_filepath, timeout)
 
