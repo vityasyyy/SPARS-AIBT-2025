@@ -2,6 +2,7 @@ mynote.md
 prompt.md
 myenv
 requirements_linux.txt
+*:Zone.Identifier
 # benchmark_execution_time.py
 # command_list.txt
 # batsimpy_data_rtfv1.py
