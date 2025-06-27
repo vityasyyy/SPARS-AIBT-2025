@@ -15,10 +15,10 @@ class ProblemGenerator:
         interarrival_times = np.random.exponential(1 / self.lambda_arrival, self.num_jobs)
         arrival_times = np.cumsum(interarrival_times)
         requested_execution_times = np.random.normal(self.mu_execution, self.sigma_execution, self.num_jobs)
-        
-        # noise = np.random.normal(self.mu_noise, self.sigma_noise, self.num_jobs)
-        # actual_execution_times = np.maximum(0, requested_execution_times + noise)
-        num_nodes_required = np.clip(np.random.normal(4, 1, self.num_jobs), 1, self.max_node)
+        noise = np.random.normal(self.mu_noise, self.sigma_noise, self.num_jobs)
+
+        actual_execution_times = np.maximum(0, requested_execution_times + noise)
+        num_nodes_required = np.clip(np.random.normal(5, 1, self.num_jobs), 1, self.max_node)
         workloads = []
 
         for i in range(self.num_jobs):
@@ -42,11 +42,11 @@ class ProblemGenerator:
 
         return workloads
 
-num_jobs = 20
-max_node = 4
+num_jobs = 1000
+max_node = 8
 problem_generator = ProblemGenerator(num_jobs=num_jobs, max_node=max_node)
 
-workload_filepath = "workloads/validate_data.json"
+workload_filepath = "workloads/simple_data_1000.json"
 workloads = problem_generator.generate()
 
 workloads = {
