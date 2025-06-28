@@ -1,0 +1,41 @@
+python workloads_generator.py \
+  --num_jobs 10 \
+  --max_node 2
+
+python simulator_hpcv2.py \
+  --out vd1 \
+  --scheduler fcfs \
+  --workload workloads/wl_nj10_mn2.json \
+  --platform platforms/HPCv2/platform_validate.json \
+  --timeout 30
+
+python simulator_batsimpy.py \
+  --out vd1 \
+  --scheduler fcfs \
+  --workload workloads/wl_nj10_mn2.json \
+  --platform platforms/batsimpy/platform_validate.xml \
+  --timeout 30
+
+python batsimpy_data_rtfv1.py \
+  --machine_events results/batsimpy/vd1_fcfs_hosts_t30.csv \
+  --jobs results/batsimpy/vd1_fcfs_jobs_t30.csv \
+  --result results/batsimpy/vd1_formatted_t30_nsv1.csv
+
+python batsimpy_data_rtfv2.py\
+  --input results/batsimpy/vd1_formatted_t30_nsv1.csv \
+  --output results/batsimpy/vd1_formatted_t30_nsv2.csv
+
+python plot_result_edited.py \
+  --hpcv2 results/hpcv2/vd1_fcfs_nodes_t30.csv \
+  --output plt/val/comparison_gantt_baseline.png
+
+python plot_result_edited.py \
+  --hpcv2 results/hpcv2/vd1_fcfs_nodes_t30.csv \
+  --batsimpy results/batsimpy/vd1_formatted_t30_nsv2.csv \
+  --output plt/val/comparison_gantt_baseline.png
+
+python plot_result_edited.py \
+  --hpcv2 results/hpcv2/vd1_fcfs_nodes_t30.csv \
+  --batsimpy results/batsimpy/vd1_formatted_t30_nsv2.csv \
+  --batsched results/batsched/vd1_formatted_t30_nsv2.csv \
+  --output plt/val/comparison_gantt_baseline.png

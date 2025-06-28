@@ -48,12 +48,16 @@ def main():
     jobs_df = pd.DataFrame(jobs.monitor_jobs)
     jobs_df['allocated_resources'] = jobs_df['allocated_resources'].apply(lambda x: ' '.join(map(str, x)))
 
-    out_prefix = args.out
-
-    jobs_df.to_csv(f'{out_prefix}_{args.scheduler}_jobs_t{args.timeout}.csv', index=False)
     nodes_df = process_node_job_data(sim.nodes, jobs_df)
-    sim.node_state_log.to_csv(f'{out_prefix}_{args.scheduler}_host_t{args.timeout}.csv', index=False)
-    nodes_df.to_csv(f'{out_prefix}_{args.scheduler}_nodes_t{args.timeout}.csv', index=False)
+    
+    
+    output_dir_jobs = f"results/hpcv2/{args.output}_{args.scheduler}_jobs_{'t'+str(args.timeout) if args.timeout else 'baseline'}.csv"
+    output_dir_hosts = f"results/hpcv2/{args.output}_{args.scheduler}_hosts_{'t'+str(args.timeout) if args.timeout else 'baseline'}.csv"
+    output_dir_nodes = f"results/hpcv2/{args.output}_{args.scheduler}_nodes_{'t'+str(args.timeout) if args.timeout else 'baseline'}.csv"
+    
+    jobs_df.to_csv(output_dir_jobs, index=False)
+    sim.node_state_log.to_csv(output_dir_hosts, index=False)
+    nodes_df.to_csv(output_dir_nodes, index=False)
 
 
 if __name__ == '__main__':
