@@ -7,13 +7,14 @@ import numpy as np
 import pandas as pd
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description="Plot dual/triple Gantt chart for HPCv2, BatsimPy, and optionally Batsched.")
+    parser = argparse.ArgumentParser(description="Plot Gantt chart for HPCv2, BatsimPy (optional), and optionally Batsched.")
     parser.add_argument('--hpcv2', required=True, help="CSV file for HPCv2 schedule (NSV2 format)")
-    parser.add_argument('--batsimpy', required=True, help="CSV file for BatsimPy schedule (NSV2 format)")
+    parser.add_argument('--batsimpy', required=False, help="CSV file for BatsimPy schedule (NSV2 format, optional)")
     parser.add_argument('--batsched', required=False, help="CSV file for Batsched schedule (NSV2 format, optional)")
-    parser.add_argument('--output', default=None, help="Output PNG file path (default: plt/val/dual_gantt_t{timeout}.png)")
-    parser.add_argument('--timeout', type=int, default=30, help="Timeout value for labeling (default: 30)")
+    parser.add_argument('--output', default="plt/val/comparison_gantt.png", help="Output PNG file path (default: plt/val/comparison_gantt.png)")
     return parser.parse_args()
+
+
 
 def plot_timeline(ax, timeline, title, xticks, max_time):
     job_colors = {}
@@ -80,45 +81,46 @@ def main():
     args = parse_arguments()
 
     timeline_hpcv2 = read_timeline(args.hpcv2)
-    timeline_batsim = read_timeline(args.batsimpy)
+    timeline_batsim = read_timeline(args.batsimpy) if args.batsimpy else None
+    timeline_batsched = read_timeline(args.batsched) if args.batsched else None
 
-    if args.batsched:
-        timeline_batsched = read_timeline(args.batsched)
-        max_time = max(
-            max([ev['finish_time'] for ev in timeline_hpcv2]),
-            max([ev['finish_time'] for ev in timeline_batsim]),
-            max([ev['finish_time'] for ev in timeline_batsched])
-        )
-    else:
-        timeline_batsched = None
-        max_time = max(
-            max([ev['finish_time'] for ev in timeline_hpcv2]),
-            max([ev['finish_time'] for ev in timeline_batsim])
-        )
+    max_time = max([ev['finish_time'] for ev in timeline_hpcv2])
+    if timeline_batsim:
+        max_time = max(max_time, max([ev['finish_time'] for ev in timeline_batsim]))
+    if timeline_batsched:
+        max_time = max(max_time, max([ev['finish_time'] for ev in timeline_batsched]))
 
-    xticks_hpcv2 = sorted(set([e['starting_time'] for e in timeline_hpcv2] + [e['finish_time'] for e in timeline_hpcv2]))
-    xticks_batsim = sorted(set([e['starting_time'] for e in timeline_batsim] + [e['finish_time'] for e in timeline_batsim]))
+    num_plots = 1 + int(timeline_batsim is not None) + int(timeline_batsched is not None)
+    fig, axes = plt.subplots(num_plots, 1, figsize=(150, 4 * num_plots))
+
+    if num_plots == 1:
+        axes = [axes]
+
+    plot_timeline(axes[0], timeline_hpcv2, "HPCv2 Schedule",
+                  sorted(set(e['starting_time'] for e in timeline_hpcv2) | set(e['finish_time'] for e in timeline_hpcv2)),
+                  max_time)
+
+    idx = 1
+    if timeline_batsim:
+        plot_timeline(axes[idx], timeline_batsim, "Batsimpy Schedule",
+                      sorted(set(e['starting_time'] for e in timeline_batsim) | set(e['finish_time'] for e in timeline_batsim)),
+                      max_time)
+        idx += 1
 
     if timeline_batsched:
-        xticks_batsched = sorted(set([e['starting_time'] for e in timeline_batsched] + [e['finish_time'] for e in timeline_batsched]))
-        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(150, 10))
-    else:
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(150, 7))
+        plot_timeline(axes[idx], timeline_batsched, "Batsched Schedule",
+                      sorted(set(e['starting_time'] for e in timeline_batsched) | set(e['finish_time'] for e in timeline_batsched)),
+                      max_time)
 
-    plot_timeline(ax1, timeline_hpcv2, "HPCv2 Schedule", xticks_hpcv2, max_time)
-    plot_timeline(ax2, timeline_batsim, "Batsimpy Schedule", xticks_batsim, max_time)
+    axes[-1].set_xlabel("Time")
 
-    if timeline_batsched:
-        plot_timeline(ax3, timeline_batsched, "Batsched Schedule", xticks_batsched, max_time)
-        ax3.set_xlabel('Time')
-    else:
-        ax2.set_xlabel('Time')
-
+    # submission point markers (HPCv2 only)
     for event in timeline_hpcv2:
-        if event['job_id'] > 0:
-            ax1.plot(event['submission_time'], 9, 'ro')
-            ax1.text(event['submission_time'], 8.5, str(event['job_id']), ha='center', va='center', color='red')
-        
+        if event['job_id'] > 0 and 'submission_time' in event:
+            axes[0].plot(event['submission_time'], 9, 'ro')
+            axes[0].text(event['submission_time'], 8.5, str(event['job_id']),
+                         ha='center', va='center', color='red')
+
     legend_patches = [
         mpatches.Patch(color='gray', label='Idle (-1)'),
         mpatches.Patch(color='red', label='Switching Off (-2)'),
@@ -126,13 +128,14 @@ def main():
         mpatches.Patch(color='lightblue', label='Sleeping (-4)'),
         mpatches.Patch(color='blue', label='Computing Jobs')
     ]
-    ax1.legend(handles=legend_patches, loc='upper right')
+    axes[0].legend(handles=legend_patches, loc='upper right')
 
     plt.tight_layout()
 
-    output_path = args.output if args.output else f"plt/val/comparison_gantt_t{args.timeout}.png"
+    output_path = args.output
     plt.savefig(output_path)
     print(f"Gantt chart saved to: {output_path}")
+
 
 
 # Global color mapping

@@ -43,3 +43,17 @@ python plot_result_edited.py \
   --batsimpy result_validate/batsimpy_formatted_baseline_nsv2.csv \
   --batsched result_validate/batsched_formatted_baseline_nsv2.csv \
   --output plt/val/comparison_gantt_baseline.png
+
+python simulator_hpcv2.py \
+  --out results/hpcv2/vd1 \
+  --scheduler fcfs \
+  --workload workloads/wl_nj10_mn3.json \
+  --platform platforms/HPCv2/platform_validate.json \
+  --timeout 30
+
+python workloads_generator.py \
+  --num_jobs 10 \
+  --max_node 2
+
+python plot_result_edited.py \
+  --hpcv2 results/hpcv2/vd1_fcfs_nodes_t30.csv

@@ -2,9 +2,14 @@ from .fcfs_scheduler import FCFSScheduler
 
 class EasyScheduler(FCFSScheduler):
     def schedule(self):
-        super().schedule()
+        super().fcfs()
         if len(self.simulator.jobs_manager.waiting_queue) >= 2:
             self.backfill()
+        
+        if len(self.simulator.node_manager.available_resources) > 0 and self.timeout is not None:
+            e = {'type': 'switch_off', 'node': self.simulator.node_manager.available_resources}
+            ts = self.simulator.current_time + self.timeout
+            self.simulator.jobs_manager.push_event(ts, e)
             
     def backfill(self):
         p_job = self.simulator.jobs_manager.waiting_queue[0]
@@ -29,9 +34,7 @@ class EasyScheduler(FCFSScheduler):
         reservation = candidates[-p_job['res']:]
         
         not_reserved_resources = [r for r in not_reserved_resources if r not in reservation]
-    
         
-            
         for job in backfilling_queue:
             available = self.simulator.node_manager.get_not_allocated_resources()
             not_reserved = [h for h in available if h not in reservation]

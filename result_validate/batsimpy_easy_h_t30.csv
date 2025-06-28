@@ -1,2 +1,2 @@
 time_idle,time_computing,time_switching_off,time_switching_on,time_sleeping,consumed_joules,energy_waste,nb_switches,nb_computing_machines
-409.0,9600.0,55.0,35.0,969.0,1917576.0,84855.0,36.0,4.0
+487.0,9600.0,70.0,30.0,1029.0,1932121.0,98860.0,40.0,8.0

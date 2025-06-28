@@ -6,9 +6,8 @@ import copy
 from collections import defaultdict
 
 class SPSimulator:
-    def __init__(self, scheduler, platform_path, workload_path, timeout=None):        
+    def __init__(self, scheduler, platform_path, workload_path):        
         self.scheduler = scheduler
-        self.timeout = timeout
         with open(platform_path, 'r') as file:
             self.platform_info = json.load(file)
         with open(workload_path, 'r') as file:
@@ -25,11 +24,8 @@ class SPSimulator:
         self.current_time = 0
         self.last_event_time = 0
         self.event = None    
-        self.is_finish = False
-        
         self.total_req_res = 0
-        
-        self.is_running = True
+        self.is_running = False
     
     def print_energy_consumption(self):
         index = 0
@@ -41,10 +37,8 @@ class SPSimulator:
         print(f'Total energy consumption: {sum}')    
     
     def start_simulator(self):
-        if self.timeout is not None:
-            e = {'type': 'switch_off', 'node': copy.deepcopy(self.node_manager.available_resources)}
-            ts = self.current_time + self.timeout
-            self.jobs_manager.push_event(ts, e)
+        self.is_running = True
+        self.scheduler.schedule()
     
     def execution_start(self, job, reserved_node, need_activation_node=[]):
         if len(reserved_node) + len(need_activation_node) < job['res']:
@@ -206,9 +200,6 @@ class SPSimulator:
                 
                 self.jobs_manager.active_jobs = [active_job for active_job in self.jobs_manager.active_jobs if active_job['id'] != self.event['id']]
         
-        mask = self.sim_monitor.node_state_log['time'] == self.current_time
-        has_idle = (self.sim_monitor.node_state_log.loc[mask, 'idle'] > 0).any()
-        
         for nsl in self.sim_monitor.node_state_monitor:
             if nsl['sleeping'] + nsl['switching_on'] + nsl['switching_off'] + nsl['idle'] + nsl['computing'] != self.current_time:
                 print('?')
@@ -217,10 +208,7 @@ class SPSimulator:
         if self.jobs_manager.num_jobs_finished < self.jobs_manager.num_jobs:
             self.scheduler.schedule()
             
-        if has_idle and self.timeout is not None:
-            e = {'type': 'switch_off', 'node': copy.deepcopy(self.node_manager.available_resources)}
-            ts = self.current_time + self.timeout
-            self.jobs_manager.push_event(ts, e)
+
 
         if self.jobs_manager.num_jobs_finished == self.jobs_manager.num_jobs:
             for x in self.sim_monitor.nodes:

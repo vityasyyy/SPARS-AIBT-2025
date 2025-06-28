@@ -1,2 +1,2 @@
 makespan,max_slowdown,max_stretch,max_waiting_time,max_turnaround_time,mean_slowdown,mean_pp_slowdown,mean_stretch,mean_waiting_time,mean_turnaround_time,nb_jobs,nb_jobs_finished,nb_jobs_killed,nb_jobs_rejected,nb_jobs_success
-2767.0,17.593333333333334,16.593333333333334,2489.0,2639.0,9.144902497055412,3.2709616349635704,8.144902497055412,1222.6,1372.6,20.0,20.0,20.0,0.0,0.0
+1402.0,8.557046979865772,7.557046979865772,1126.0,1275.0,4.527288901370638,1.685699378707577,3.527288901370638,529.65,679.65,20.0,20.0,20.0,0.0,0.0

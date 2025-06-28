@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Python Debugger: Run HPCv2 Timeout",
+        "type": "debugpy",
+        "request": "launch",
+        "program": "${workspaceFolder}/simulator_hpcv2.py",
+        "args": [
+          "--out", "results/hpcv2/vd1",
+          "--scheduler", "fcfs",
+          "--workload", "workloads/wl_nj10_mn3.json",
+          "--platform", "platforms/HPCv2/platform_validate.json",
+          "--timeout", "30"
+        ],
+        "console": "integratedTerminal"
+      }
+    ]
+  }
+  

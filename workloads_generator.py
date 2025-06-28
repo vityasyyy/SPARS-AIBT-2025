@@ -1,8 +1,10 @@
 import numpy as np
 import json
+import argparse
 
 class ProblemGenerator:
-    def __init__(self, lambda_arrival=0.2, mu_execution=150, sigma_execution=2, mu_noise=0, sigma_noise=1, num_jobs=None, max_node=8):
+    def __init__(self, lambda_arrival=0.08, mu_execution=20, sigma_execution=2,
+                 mu_noise=0, sigma_noise=1, num_jobs=None, max_node=8):
         self.lambda_arrival = lambda_arrival
         self.mu_execution = mu_execution
         self.sigma_execution = sigma_execution
@@ -38,28 +40,32 @@ class ProblemGenerator:
             subtime_next = workloads[i + 1]['subtime']
 
             if str(id_current) > str(id_next) and subtime_current == subtime_next:
-                workloads[i + 1]['subtime'] += 1 
+                workloads[i + 1]['subtime'] += 1
 
         return workloads
 
-num_jobs = 1000
-max_node = 8
-problem_generator = ProblemGenerator(num_jobs=num_jobs, max_node=max_node)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Generate synthetic workload JSON.")
+    parser.add_argument("--num_jobs", type=int, required=True, help="Number of jobs to generate")
+    parser.add_argument("--max_node", type=int, required=True, help="Maximum number of nodes per job")
+    
 
-workload_filepath = "workloads/simple_data_1000.json"
-workloads = problem_generator.generate()
+    args = parser.parse_args()
 
-workloads = {
-    "nb_res": max_node,
-    "jobs": workloads,
-    "profiles": {
-        "100": {
-            "cpu": 10000000000000000000000,
-            "com": 0,
-            "type": "parallel_homogeneous"
+    problem_generator = ProblemGenerator(num_jobs=args.num_jobs, max_node=args.max_node)
+    workloads = problem_generator.generate()
+
+    output_data = {
+        "nb_res": args.max_node,
+        "jobs": workloads,
+        "profiles": {
+            "100": {
+                "cpu": 10000000000000000000000,
+                "com": 0,
+                "type": "parallel_homogeneous"
+            }
         }
     }
-}
-
-with open(workload_filepath, "w") as json_file:
-    json.dump(workloads, json_file, indent=4)
+    workload_filepath = f'workloads/wl_nj{args.num_jobs}_mn{args.max_node}.json'
+    with open(workload_filepath, "w") as json_file:
+        json.dump(output_data, json_file, indent=4)
