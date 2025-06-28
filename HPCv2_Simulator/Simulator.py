@@ -99,6 +99,17 @@ class SPSimulator:
             if acc != self.current_time:
                 input('bug occur')
 
+        event_priority = {
+            'turn_on': 0,
+            'turn_off': 1,
+            'execution_finished': 2,
+            'execution_start': 3,
+            'arrival': 4,
+            'switch_off': 5,
+            'switch_on': 6
+        }
+        
+        events = sorted(events, key=lambda e: event_priority.get(e['type'], float('inf')))
         for event in events:
             self.event = event
             if self.event['type'] == 'switch_off':
