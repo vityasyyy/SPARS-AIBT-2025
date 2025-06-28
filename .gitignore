@@ -3,18 +3,18 @@ prompt.md
 myenv
 requirements_linux.txt
 *:Zone.Identifier
-# benchmark_execution_time.py
-# command_list.txt
-# batsimpy_data_rtfv1.py
-# batsimpy_data_rtfv2.py
-# validate_simulator.py
-# plt/val
-# platforms/batsim/platform_validate.xml
-# platforms/spsim/platform_validate.json
-# plot_result_edited.py
-# simulator_cssp_rl.py
-# hpcv2_batsimpy_baseline.py
-# hpcv2_batsimpy_timeout.py
+benchmark_execution_time.py
+command_list.txt
+batsimpy_data_rtfv1.py
+batsimpy_data_rtfv2.py
+validate_simulator.py
+plt/val
+platforms/batsim/platform_validate.xml
+platforms/spsim/platform_validate.json
+plot_result_edited.py
+simulator_cssp_rl.py
+hpcv2_batsimpy_baseline.py
+hpcv2_batsimpy_timeout.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
