@@ -7,9 +7,19 @@ class EasyScheduler(FCFSScheduler):
             self.backfill()
         
         if len(self.simulator.node_manager.available_resources) > 0 and self.timeout is not None:
-            e = {'type': 'switch_off', 'node': self.simulator.node_manager.available_resources}
-            ts = self.simulator.current_time + self.timeout
-            self.simulator.jobs_manager.push_event(ts, e)
+            e = {'type': 'call_me_later'}
+            timestamp = self.simulator.current_time + self.timeout
+            self.simulator.jobs_manager.push_event(timestamp, e)
+        
+        switch_off_nodes = []
+        for node_index, node in enumerate(self.simulator.sim_monitor.nodes_action):
+            if node['state'] == 'idle' and self.simulator.current_time - node['time'] >= self.timeout:
+                switch_off_nodes.append(node_index)
+
+        if len(switch_off_nodes) > 0:
+            e = {'type': 'switch_off', 'node': switch_off_nodes}
+            timestamp = self.simulator.current_time
+            self.simulator.jobs_manager.push_event(timestamp, e)
             
     def backfill(self):
         p_job = self.simulator.jobs_manager.waiting_queue[0]
