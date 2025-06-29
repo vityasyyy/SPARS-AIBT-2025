@@ -5,8 +5,8 @@ python workloads_generator.py \
 python simulator_hpcv2.py \
   --out vd1 \
   --scheduler fcfs \
-  --workload workloads/wl_nj10_mn2.json \
-  --platform platforms/HPCv2/platform_validate.json \
+  --workload workloads/validate_data_f1.json \
+  --platform platforms/HPCv2/platform_validate_8.json \
   --timeout 30
 
 python simulator_batsimpy.py \
@@ -27,6 +27,11 @@ python batsimpy_data_rtfv2.py\
 
 python plot_result_edited.py \
   --hpcv2 results/hpcv2/vd1_fcfs_nodes_t30.csv \
+  --output plt/val/comparison_gantt_baseline.png
+
+python plot_result_edited.py \
+  --hpcv2 results/hpcv2/vd1_fcfs_nodes_t30.csv \
+  --batsimpy results/hpcv2/vd1_smart-fcfs_nodes_t30.csv \
   --output plt/val/comparison_gantt_baseline.png
 
 python plot_result_edited.py \

@@ -7,10 +7,10 @@
         "request": "launch",
         "program": "${workspaceFolder}/simulator_hpcv2.py",
         "args": [
-          "--out", "results/hpcv2/vd1",
-          "--scheduler", "fcfs",
-          "--workload", "workloads/wl_nj10_mn3.json",
-          "--platform", "platforms/HPCv2/platform_validate.json",
+          "--out", "vd1",
+          "--scheduler", "smart-easy",
+          "--workload", "workloads/validate_data_f1.json",
+          "--platform", "platforms/HPCv2/platform_validate_8.json",
           "--timeout", "30"
         ],
         "console": "integratedTerminal"

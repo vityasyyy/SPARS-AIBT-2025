@@ -4,6 +4,8 @@ import pandas as pd
 from HPCv2_Simulator.Simulator import SPSimulator
 from HPCv2_Scheduler.fcfs_scheduler import FCFSScheduler
 from HPCv2_Scheduler.easy_scheduler import EasyScheduler
+from HPCv2_Scheduler.smart_fcfs_scheduler import SmartFCFSScheduler
+from HPCv2_Scheduler.smart_easy_scheduler import SmartEasyScheduler
 from HPCv2_Utils.data_mapper import process_node_job_data
 
 def run_simulation(scheduler, platform_filepath, workload_filepath):
@@ -20,7 +22,7 @@ def main():
     parser.add_argument('--platform', type=str, default='platforms/spsim/platform_validate.json', help='Path to platform file (default: platforms/spsim/platform_validate.json)')
     parser.add_argument('--timeout', type=int, help='Simulation timeout in seconds')
     parser.add_argument('--out', type=str, required=True, help='Output directory (required)')
-    parser.add_argument('--scheduler', type=str, required=True, choices=['easy', 'fcfs'], help='Scheduler type: easy or fcfs (required)')
+    parser.add_argument('--scheduler', type=str, required=True, choices=['easy', 'fcfs', 'smart-fcfs', 'smart-easy'], help='Scheduler type: easy or fcfs (required)')
     
     args = parser.parse_args()
 
@@ -29,6 +31,10 @@ def main():
         scheduler = EasyScheduler(None, timeout=args.timeout)
     elif args.scheduler == 'fcfs':
         scheduler = FCFSScheduler(None , timeout=args.timeout)
+    elif args.scheduler == 'smart-fcfs':
+        scheduler = SmartFCFSScheduler(None , timeout=args.timeout)
+    elif args.scheduler == 'smart-easy':
+        scheduler = SmartEasyScheduler(None , timeout=args.timeout)
     else:
         raise ValueError("Unsupported scheduler")
 
@@ -51,9 +57,9 @@ def main():
     nodes_df = process_node_job_data(sim.nodes, jobs_df)
     
     
-    output_dir_jobs = f"results/hpcv2/{args.output}_{args.scheduler}_jobs_{'t'+str(args.timeout) if args.timeout else 'baseline'}.csv"
-    output_dir_hosts = f"results/hpcv2/{args.output}_{args.scheduler}_hosts_{'t'+str(args.timeout) if args.timeout else 'baseline'}.csv"
-    output_dir_nodes = f"results/hpcv2/{args.output}_{args.scheduler}_nodes_{'t'+str(args.timeout) if args.timeout else 'baseline'}.csv"
+    output_dir_jobs = f"results/hpcv2/{args.out}_{args.scheduler}_jobs_{'t'+str(args.timeout) if args.timeout else 'baseline'}.csv"
+    output_dir_hosts = f"results/hpcv2/{args.out}_{args.scheduler}_hosts_{'t'+str(args.timeout) if args.timeout else 'baseline'}.csv"
+    output_dir_nodes = f"results/hpcv2/{args.out}_{args.scheduler}_nodes_{'t'+str(args.timeout) if args.timeout else 'baseline'}.csv"
     
     jobs_df.to_csv(output_dir_jobs, index=False)
     sim.node_state_log.to_csv(output_dir_hosts, index=False)
