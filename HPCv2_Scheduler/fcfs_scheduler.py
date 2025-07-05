@@ -1,7 +1,3 @@
-from itertools import count
-from os import times
-
-
 class FCFSScheduler:
     def __init__(self, simulator, timeout=None):
         self.simulator = simulator

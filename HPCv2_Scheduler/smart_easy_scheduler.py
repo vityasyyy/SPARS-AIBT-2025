@@ -1,4 +1,3 @@
-from scheduler_batsim import fcfs
 from .smart_fcfs_scheduler import SmartFCFSScheduler
 
 class SmartEasyScheduler(SmartFCFSScheduler):
