@@ -7,9 +7,9 @@
         "request": "launch",
         "program": "${workspaceFolder}/simulator_hpcv2.py",
         "args": [
-          "--out", "vd1",
+          "--out", "nj100mn8",
           "--scheduler", "smart-easy",
-          "--workload", "workloads/validate_data_f1.json",
+          "--workload", "workloads/wl_nj100_mn8.json",
           "--platform", "platforms/HPCv2/platform_validate_8.json",
           "--timeout", "30"
         ],

@@ -1,3 +1,4 @@
+from itertools import count
 from os import times
 
 
@@ -24,11 +25,21 @@ class FCFSScheduler:
             self.simulator.jobs_manager.push_event(timestamp, e)
        
     def fcfs(self):
-         for job in self.simulator.jobs_manager.waiting_queue[:]:
-            not_allocated_resources = self.simulator.node_manager.get_not_allocated_resources()
- 
-            if job['res'] <= len(not_allocated_resources):
-                reserved_node, need_activation_node = self.simulator.node_manager.prioritize_lowest_node(job['res'])
-                self.simulator.execution_start(job, reserved_node, need_activation_node)
+        if self.simulator.current_time == 815:
+            print('here')
+            
+        for job in self.simulator.jobs_manager.waiting_queue[:]:
+            available_resources, inactive_resources = self.simulator.node_manager.get_not_allocated_resources()
+
+            if job['res'] <= len(available_resources) + len(inactive_resources):
+                if job['res'] <= len(available_resources):
+                    allocate_nodes = available_resources[:job['res']]
+                    self.simulator.execution_start(job, allocate_nodes, [])
+                else:
+                    count_available_nodes = len(available_resources)
+                    allocate_nodes = available_resources
+                    need_activation_count = job['res'] - count_available_nodes
+                    need_activation_node = inactive_resources[:need_activation_count]
+                    self.simulator.execution_start(job, allocate_nodes, need_activation_node)
             else:
                 break

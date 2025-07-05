@@ -44,3 +44,45 @@ python plot_result_edited.py \
   --batsimpy results/batsimpy/vd1_formatted_t30_nsv2.csv \
   --batsched results/batsched/vd1_formatted_t30_nsv2.csv \
   --output plt/val/comparison_gantt_baseline.png
+
+## VALIDATING SMARTIES FCFS
+
+python simulator_hpcv2.py \
+  --out nj100mn3 \
+  --scheduler fcfs \
+  --workload workloads/wl_nj100_mn3.json \
+  --platform platforms/HPCv2/platform_validate_8.json \
+  --timeout 30
+
+python simulator_hpcv2.py \
+  --out nj100mn3 \
+  --scheduler smart-fcfs \
+  --workload workloads/wl_nj100_mn3.json \
+  --platform platforms/HPCv2/platform_validate_8.json \
+  --timeout 30
+
+python plot_result_edited.py \
+  --hpcv2 results/hpcv2/nj100mn3_fcfs_nodes_t30.csv \
+  --batsimpy results/hpcv2/nj100mn3_smart-fcfs_nodes_t30.csv \
+  --output plt/val/comparison_gantt_baseline.png
+
+## VALIDATING SMARTIES EASY
+
+python simulator_hpcv2.py \
+  --out nj100mn8 \
+  --scheduler easy \
+  --workload workloads/wl_nj100_mn8.json \
+  --platform platforms/HPCv2/platform_validate_8.json \
+  --timeout 30
+
+python simulator_hpcv2.py \
+  --out nj100mn8 \
+  --scheduler smart-easy \
+  --workload workloads/wl_nj100_mn8.json \
+  --platform platforms/HPCv2/platform_validate_8.json \
+  --timeout 30
+
+python plot_result_edited.py \
+  --hpcv2 results/hpcv2/nj100mn8_easy_nodes_t30.csv \
+  --batsimpy results/hpcv2/nj100mn8_smart-easy_nodes_t30.csv \
+  --output plt/val/comparison_gantt_baseline.png

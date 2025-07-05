@@ -53,7 +53,7 @@ class SPSimulator:
             
         self.node_manager.reserved_resources = sorted(self.node_manager.reserved_resources, key=lambda x: x["node_index"])
 
-        job['reserved_nodes'] = reserved_node
+        job['reserved_nodes'] = reserved_node + need_activation_node
         job['type'] = 'execution_start'
 
         for index, _job in enumerate(self.jobs_manager.waiting_queue): 
@@ -64,12 +64,13 @@ class SPSimulator:
         self.jobs_manager.waiting_queue_ney.append(job)
         
         if len(need_activation_node) > 0:
+            ts, e = self.node_manager.switch_on(need_activation_node, self.current_time, job, self.workload_info)
+            # Switch on event will set release time to current_time + transition time
+            
+            # update the release time to current_time + transition time + job['walltime']
             for i in range(self.nb_res):
                 if i in need_activation_node or i in reserved_node:
                     self.node_manager.resources_agenda[i]['release_time'] = self.current_time + self.node_manager.transition_time[1] + job['walltime']
-
-            ts, e = self.node_manager.switch_on(need_activation_node, self.current_time, job, self.workload_info)
-        
             self.jobs_manager.push_event(ts, e) # Push turn on event
             self.jobs_manager.push_event(ts, job) # Push execution start event
 
@@ -81,8 +82,10 @@ class SPSimulator:
             self.jobs_manager.push_event(self.current_time, job)
             
     def proceed(self):
+
         self.current_time, events = self.jobs_manager.events.pop(0).values()
-  
+        if self.current_time == 244:
+            print('here')
         self.sim_monitor.update_energy_consumption(self.machines, self.current_time, self.last_event_time)
         self.node_manager.update_node_state_monitor(self.current_time, self.last_event_time)
         self.sim_monitor.update_idle_time(self.current_time, self.last_event_time)

@@ -1,3 +1,4 @@
+from matplotlib.style import available
 import pandas as pd
 import copy
 
@@ -16,11 +17,18 @@ class NodeManager:
         self.sim_monitor = sim_monitor
      
     def get_not_allocated_resources(self):
-        not_allocated_resources = self.available_resources + self.inactive_resources
         reserved_node_indices = [res["node_index"] for res in self.reserved_resources]
+        available_resources = self.available_resources
+        available_resources = [resource for resource in available_resources if resource not in reserved_node_indices]
+        
+        inactive_resources = self.inactive_resources
+        inactive_resources = [resource for resource in inactive_resources if resource not in reserved_node_indices]
+        
+        not_allocated_resources = self.available_resources + self.inactive_resources
         not_allocated_resources = [resource for resource in not_allocated_resources if resource not in reserved_node_indices]
         not_allocated_resources = sorted(not_allocated_resources)
-        return not_allocated_resources
+        
+        return available_resources, inactive_resources
         
     def update_node_state_monitor(self, current_time, last_event_time):
         for index, node_action in enumerate(self.sim_monitor.nodes_action):
@@ -169,7 +177,7 @@ class NodeManager:
         
         for i in range(self.nb_res):
             if i in node:
-                self.resources_agenda[i]['release_time'] = current_time + self.transition_time[0]
+                self.resources_agenda[i]['release_time'] = current_time
 
         self.update_node_action(node, event, 'turn_off', 'sleeping', current_time)
     
@@ -214,7 +222,7 @@ class NodeManager:
         
         for i in range(self.nb_res):
             if i in node:
-                self.resources_agenda[i]['release_time'] = 0
+                self.resources_agenda[i]['release_time'] = current_time
                 
         self.update_node_action(node, event, 'turn_on', 'idle', current_time)
 

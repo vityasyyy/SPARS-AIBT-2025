@@ -1,9 +1,10 @@
 import numpy as np
 import json
 import argparse
+import math
 
 class ProblemGenerator:
-    def __init__(self, lambda_arrival=0.08, mu_execution=20, sigma_execution=2,
+    def __init__(self, lambda_arrival=0.2, mu_execution=50, sigma_execution=2,
                  mu_noise=0, sigma_noise=1, num_jobs=None, max_node=8):
         self.lambda_arrival = lambda_arrival
         self.mu_execution = mu_execution
@@ -20,7 +21,7 @@ class ProblemGenerator:
         noise = np.random.normal(self.mu_noise, self.sigma_noise, self.num_jobs)
 
         actual_execution_times = np.maximum(0, requested_execution_times + noise)
-        num_nodes_required = np.clip(np.random.normal(5, 1, self.num_jobs), 1, self.max_node)
+        num_nodes_required = np.clip(np.random.normal(math.ceil(self.max_node/2), 1, self.num_jobs), 1, self.max_node)
         workloads = []
 
         for i in range(self.num_jobs):
