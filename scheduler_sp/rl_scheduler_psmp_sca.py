@@ -7,17 +7,11 @@ from .easy_scheduler import EasyScheduler
 import torch as T
 
 class RLScheduler(EasyScheduler):
-    def schedule(self):
-        # Disini switch on n off
-        
-        
+    def schedule(self):    
         super().schedule()
         if len(self.simulator.waiting_queue) >= 2:
             self.backfill()
             
-    
-        
-    
     def backfill(self):
         p_job = self.simulator.waiting_queue[0]
             
