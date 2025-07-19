@@ -1,20 +1,20 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-      {
-        "name": "Python Debugger: Run HPCv2 Timeout",
-        "type": "debugpy",
-        "request": "launch",
-        "program": "${workspaceFolder}/simulator_hpcv2.py",
-        "args": [
-          "--out", "nj100mn8",
-          "--scheduler", "smart-easy",
-          "--workload", "workloads/wl_nj100_mn8.json",
-          "--platform", "platforms/HPCv2/platform_validate_8.json",
-          "--timeout", "30"
-        ],
-        "console": "integratedTerminal"
-      }
-    ]
-  }
-  
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python Debugger: Run HPCv2 Timeout",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/simulator_hpcv2.py",
+      "cwd": "${workspaceFolder}",
+      "args": [
+        "--out", "nj40mn8",
+        "--scheduler", "smart-easy",
+        "--workload", "workloads/wl_nj40_mn8.json",
+        "--platform", "platforms/HPCv2/platform_validate_8.json",
+        "--timeout", "30"
+      ],
+      "console": "integratedTerminal"
+    }
+  ]
+}

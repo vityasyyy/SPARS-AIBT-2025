@@ -15,7 +15,14 @@ class NodeManager:
         self.transition_time = [platform_info['switch_off_time'], platform_info['switch_on_time']]
         
         self.sim_monitor = sim_monitor
-     
+    
+    def update_inactive_resources_agenda(self, current_time):
+        for agenda in self.resources_agenda:
+            node = agenda['node']
+            if node in self.inactive_resources:
+                agenda['release_time'] = current_time + self.transition_time[1]
+
+
     def get_not_allocated_resources(self):
         reserved_node_indices = [res["node_index"] for res in self.reserved_resources]
         available_resources = self.available_resources
@@ -147,7 +154,8 @@ class NodeManager:
             
             self.sim_monitor.node_state_log.at[row_idx, 'switching_on_nodes'] = [item for item in self.sim_monitor.node_state_log.at[row_idx, 'switching_on_nodes'] if item not in nodes]
             self.sim_monitor.node_state_log.at[row_idx, 'switching_on_nodes'] = sorted(self.sim_monitor.node_state_log.at[row_idx, 'switching_on_nodes'])
-    
+
+        
     def switch_off(self, node, current_time, event):
         valid_switch_off = [item for item in node if item in self.available_resources]
         
@@ -159,9 +167,10 @@ class NodeManager:
         self.on_off_resources = sorted(self.on_off_resources)
         self.update_node_action(valid_switch_off, event, 'switch_off', 'switching_off', current_time)
         
+
         for i in range(self.nb_res):
             if i in valid_switch_off:
-                self.resources_agenda[i]['release_time'] = current_time + self.transition_time[0]
+                self.resources_agenda[i]['release_time'] = current_time + self.transition_time[0] + self.transition_time[1]
 
         ts = current_time + self.transition_time[0]
         e = {'type': 'turn_off', 'node': copy.deepcopy(valid_switch_off)}
@@ -177,7 +186,7 @@ class NodeManager:
         
         for i in range(self.nb_res):
             if i in node:
-                self.resources_agenda[i]['release_time'] = current_time
+                self.resources_agenda[i]['release_time'] = current_time 
 
         self.update_node_action(node, event, 'turn_off', 'sleeping', current_time)
     

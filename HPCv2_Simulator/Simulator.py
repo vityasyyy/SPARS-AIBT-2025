@@ -84,12 +84,12 @@ class SPSimulator:
     def proceed(self):
 
         self.current_time, events = self.jobs_manager.events.pop(0).values()
-        if self.current_time == 244:
+        if self.current_time == 98:
             print('here')
         self.sim_monitor.update_energy_consumption(self.machines, self.current_time, self.last_event_time)
         self.node_manager.update_node_state_monitor(self.current_time, self.last_event_time)
         self.sim_monitor.update_idle_time(self.current_time, self.last_event_time)
-        
+        self.node_manager.update_inactive_resources_agenda(self.current_time)
         num_job_in_queue = len(self.jobs_manager.waiting_queue) + len(self.jobs_manager.waiting_queue_ney)
         self.sim_monitor.update_total_waiting_time(num_job_in_queue, self.current_time, self.last_event_time)
 
@@ -222,8 +222,6 @@ class SPSimulator:
         if self.jobs_manager.num_jobs_finished < self.jobs_manager.num_jobs:
             self.scheduler.schedule()
             
-
-
         if self.jobs_manager.num_jobs_finished == self.jobs_manager.num_jobs:
             for x in self.sim_monitor.nodes:
                 if x[len(x)-1]['finish_time'] != self.current_time:
