@@ -17,17 +17,17 @@ python simulator_batsimpy.py \
   --timeout 30
 
 python batsimpy_data_rtfv1.py \
-  --machine_events results/batsimpy/vd1_fcfs_hosts_t30.csv \
-  --jobs results/batsimpy/vd1_fcfs_jobs_t30.csv \
-  --result results/batsimpy/vd1_formatted_t30_nsv1.csv
+  --machine_events result_validate/batsim_easybffast_v3_hpss_baseline.csv \
+  --jobs result_validate/batsim_easybffast_v3_jobs_baseline.csv \
+  --result result_validate/vd3_formatted_ebf_baseline_nsv1.csv
 
 python batsimpy_data_rtfv2.py\
-  --input results/batsimpy/vd1_formatted_t30_nsv1.csv \
-  --output results/batsimpy/vd1_formatted_t30_nsv2.csv
+  --input result_validate/vd3_formatted_ebf_baseline_nsv1.csv\
+  --output result_validate/vd3_formatted_ebf_baseline_nsv2.csv
 
 python plot_result_edited.py \
-  --hpcv2 results/hpcv2/vd1_fcfs_nodes_t30.csv \
-  --output plt/val/comparison_gantt_baseline.png
+  --hpcv2 result_validate/vd3_formatted_ebf_baseline_nsv2.csv \
+  --output plt/val/batsim_easybffast_gantt_baseline_case3.png
 
 python plot_result_edited.py \
   --hpcv2 results/hpcv2/vd1_fcfs_nodes_t30.csv \
@@ -171,3 +171,24 @@ python plot_result_edited.py \
   --hpcv2 results/hpcv2/nj40mn8_easy_nodes_t30.csv \
   --batsimpy results/hpcv2/nj40mn8_smart-easy_nodes_t30.csv \
   --output plt/val/comparison_nj40mn8.png
+
+## VALIDATE CUSTOM
+
+python simulator_hpcv2.py \
+  --out custom \
+  --scheduler easy \
+  --workload workloads/custom.json \
+  --platform platforms/HPCv2/platform_validate_8.json \
+  --timeout 30
+
+python simulator_hpcv2.py \
+  --out custom \
+  --scheduler smart-easy \
+  --workload workloads/custom.json \
+  --platform platforms/HPCv2/platform_validate_8.json \
+  --timeout 30
+
+python plot_result_edited.py \
+  --hpcv2 results/hpcv2/custom_easy_nodes_t30.csv \
+  --batsimpy results/hpcv2/custom_smart-easy_nodes_t30.csv \
+  --output plt/val/comparison_custom.png

@@ -1,7 +1,0 @@
-time,nb_sleeping,nb_switching_on,nb_switching_off,nb_idle,nb_computing
-3,0,0,0,6,2
-30,0,0,6,0,2
-35,6,0,0,0,2
-155,6,0,0,2,0
-155,4,2,0,2,0
-160,4,0,0,4,0

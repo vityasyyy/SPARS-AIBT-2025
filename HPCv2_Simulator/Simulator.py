@@ -27,6 +27,16 @@ class SPSimulator:
         self.total_req_res = 0
         self.is_running = False
     
+    def print_energy_waste(self):
+        index = 0
+        sum = 0
+        for node_energy_waste in self.sim_monitor.energy_waste:
+            print(f'Energy wasted on node {index}: ', node_energy_waste)
+            sum+=node_energy_waste
+            index += 1
+            
+        print(f'Total energy consumption: {sum}')    
+        
     def print_energy_consumption(self):
         index = 0
         sum = 0
@@ -82,10 +92,17 @@ class SPSimulator:
             self.jobs_manager.push_event(self.current_time, job)
             
     def proceed(self):
+        if len(self.jobs_manager.waiting_queue) > 0 and len(self.jobs_manager.events) == 0:
+            self.jobs_manager.num_terminated_jobs = len(self.jobs_manager.waiting_queue)
+            while self.jobs_manager.waiting_queue:
+                job = self.jobs_manager.waiting_queue.pop(0)
+                print(f"Job {job['id']} is terminated")
+            return
 
         self.current_time, events = self.jobs_manager.events.pop(0).values()
-        if self.current_time == 98:
-            print('here')
+        self.store_events = events
+        # print(events)
+        
         self.sim_monitor.update_energy_consumption(self.machines, self.current_time, self.last_event_time)
         self.node_manager.update_node_state_monitor(self.current_time, self.last_event_time)
         self.sim_monitor.update_idle_time(self.current_time, self.last_event_time)
@@ -232,6 +249,7 @@ class SPSimulator:
     def on_finish(self):
         self.is_running = False
         self.print_energy_consumption()
+        self.print_energy_waste()
 
         for node_index, node in enumerate(self.sim_monitor.node_state_monitor):
             print('Node', node_index, ': ', node)

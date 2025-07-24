@@ -2,7 +2,8 @@ from .smart_fcfs_scheduler import SmartFCFSScheduler
 
 class SmartEasyScheduler(SmartFCFSScheduler):
     def schedule(self):
-
+        if self.simulator.current_time == 10:
+            print('here')
         super().smart_fcfs_switch_on()
         super().fcfs()
         if len(self.simulator.jobs_manager.waiting_queue) >= 2:

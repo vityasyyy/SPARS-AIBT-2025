@@ -28,20 +28,20 @@ class ProblemGenerator:
             workloads.append({
                 "id": i + 1,
                 'res': int(num_nodes_required[i]),
-                'subtime': round(float(arrival_times[i])),
+                'subtime': 0,
                 'walltime': round(float(requested_execution_times[i])),
                 'profile': '100',
                 'user_id': 0
             })
 
-        for i in range(len(workloads) - 1):
-            id_current = workloads[i]['id']
-            id_next = workloads[i + 1]['id']
-            subtime_current = workloads[i]['subtime']
-            subtime_next = workloads[i + 1]['subtime']
+        # for i in range(len(workloads) - 1):
+        #     id_current = workloads[i]['id']
+        #     id_next = workloads[i + 1]['id']
+        #     subtime_current = workloads[i]['subtime']
+        #     subtime_next = workloads[i + 1]['subtime']
 
-            if str(id_current) > str(id_next) and subtime_current == subtime_next:
-                workloads[i + 1]['subtime'] += 1
+        #     if str(id_current) > str(id_next) and subtime_current == subtime_next:
+        #         workloads[i + 1]['subtime'] += 1
 
         return workloads
 

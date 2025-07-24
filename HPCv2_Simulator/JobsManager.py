@@ -10,6 +10,7 @@ class JobsManager:
         self.reserved_count = 0
         self.total_req_res = 0
         self.events = []
+        self.num_terminated_jobs = 0
         
         for job in workload_info['jobs']:
             job['type'] = 'arrival'

@@ -49,7 +49,7 @@ class SmartFCFSScheduler:
             
         if len(need_activation_node) > 0:
             
-            if self.simulator.current_time == 201:  # Debugging line
+            if self.simulator.current_time == 201:
                 print('here')
             self.simulator.jobs_manager.push_event(self.simulator.current_time, {'type': 'switch_on', 'node': need_activation_node})
                 
@@ -60,8 +60,6 @@ class SmartFCFSScheduler:
             self.simulator.jobs_manager.push_event(timestamp, e)
         
     def switch_off_nodes(self):
-        if self.simulator.current_time == 2036:  # Debugging line
-            print('here')
         switch_off_nodes = []
         for node_index, node in enumerate(self.simulator.sim_monitor.nodes_action):
             if node['state'] == 'idle' and self.simulator.current_time - node['time'] >= self.timeout:
@@ -95,8 +93,6 @@ class SmartFCFSScheduler:
                     break
                 
         if len(switch_off_nodes) > 0:
-            if self.simulator.current_time == 1644 and 5 in switch_off_nodes:  # Debugging line
-                print('here')
             e = {'type': 'switch_off', 'node': switch_off_nodes}
             timestamp = self.simulator.current_time
             self.simulator.jobs_manager.push_event(timestamp, e)

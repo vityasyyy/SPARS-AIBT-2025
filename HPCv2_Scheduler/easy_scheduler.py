@@ -6,25 +6,24 @@ class EasyScheduler(FCFSScheduler):
         if len(self.simulator.jobs_manager.waiting_queue) >= 2:
             self.backfill()
         
-        if self.simulator.current_time == 110:
-            print('here')
+
             
         if len(self.simulator.node_manager.available_resources) > 0 and self.timeout is not None:
             e = {'type': 'call_me_later'}
             timestamp = self.simulator.current_time + self.timeout
             self.simulator.jobs_manager.push_event(timestamp, e)
         
-        switch_off_nodes = []
-        for node_index, node in enumerate(self.simulator.sim_monitor.nodes_action):
-            if node['state'] == 'idle' and self.simulator.current_time - node['time'] >= self.timeout:
-                switch_off_nodes.append(node_index)
+            switch_off_nodes = []
+            for node_index, node in enumerate(self.simulator.sim_monitor.nodes_action):
+                if node['state'] == 'idle' and self.simulator.current_time - node['time'] >= self.timeout:
+                    switch_off_nodes.append(node_index)
 
-        reserved_indices = {reserved_node['node_index'] for reserved_node in self.simulator.node_manager.reserved_resources}
-        switch_off_nodes = [node for node in switch_off_nodes if node not in reserved_indices]
-        if len(switch_off_nodes) > 0:
-            e = {'type': 'switch_off', 'node': switch_off_nodes}
-            timestamp = self.simulator.current_time
-            self.simulator.jobs_manager.push_event(timestamp, e)
+            reserved_indices = {reserved_node['node_index'] for reserved_node in self.simulator.node_manager.reserved_resources}
+            switch_off_nodes = [node for node in switch_off_nodes if node not in reserved_indices]
+            if len(switch_off_nodes) > 0:
+                e = {'type': 'switch_off', 'node': switch_off_nodes}
+                timestamp = self.simulator.current_time
+                self.simulator.jobs_manager.push_event(timestamp, e)
             
     def backfill(self):
         p_job = self.simulator.jobs_manager.waiting_queue[0]

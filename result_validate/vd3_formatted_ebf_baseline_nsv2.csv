@@ -1,0 +1,57 @@
+type,starting_time,finish_time,allocated_resources,job_id
+idle,0,3,0 1 2 3 4 5 6 7,-1
+computing,3,155,0 1,1
+idle,3,30,2 3 4 5 6 7,-1
+switching_off,30,35,2 3 4 5 6 7,-2
+sleeping,35,155,2 3 4 5 6 7,-4
+computing,35,183,2 3 4 5,2
+switching_on,155,160,0 1 6 7,-3
+computing,155,306,0 1 6 7,3
+sleeping,155,160,2 3 4 5,-4
+sleeping,160,183,2 3 4 5,-4
+sleeping,183,306,2 3 4 5,-4
+computing,183,334,2 3 4,4
+computing,306,455,0 1 5,5
+sleeping,306,334,2 3 4 5,-4
+idle,306,334,6 7,-1
+sleeping,334,455,2 3 4 5,-4
+computing,334,481,2 3 4 6,6
+idle,334,455,7,-1
+computing,455,604,0 1 5 7,7
+sleeping,455,481,2 3 4 5,-4
+sleeping,481,604,2 3 4 5,-4
+computing,481,633,2 3 4,8
+idle,481,604,6,-1
+computing,604,750,0 1 5,9
+sleeping,604,633,2 3 4 5,-4
+idle,604,633,6 7,-1
+sleeping,633,750,2 3 4 5,-4
+computing,633,781,2 3 4 6,10
+idle,633,750,7,-1
+computing,750,900,0 1 5 7,11
+sleeping,750,781,2 3 4 5,-4
+sleeping,781,900,2 3 4 5,-4
+computing,781,931,2 3 4 6,12
+computing,900,1047,0 1 5,13
+sleeping,900,931,2 3 4 5,-4
+idle,900,931,7,-1
+sleeping,931,1047,2 3 4 5,-4
+computing,931,1079,2 3,14
+computing,931,1082,4 6 7,15
+computing,1047,1195,0 1 5,16
+sleeping,1047,1079,2 3 4 5,-4
+sleeping,1079,1082,2 3 4 5,-4
+computing,1079,1229,2 3,19
+sleeping,1082,1195,2 3 4 5,-4
+computing,1082,1235,4 6 7,17
+idle,1195,1229,0 1,-1
+sleeping,1195,1229,2 3 4 5,-4
+computing,1229,1380,0 1 2 3,18
+sleeping,1229,1235,2 3 4 5,-4
+sleeping,1235,1380,2 3 4 5,-4
+computing,1235,1386,4 5 6,20
+idle,1235,1380,7,-1
+idle,1380,1386,0 1 7,-1
+sleeping,1380,1386,2 3 4 5,-4
+idle,1386,1386,0 1 6 7,-1
+sleeping,1386,1386,2 3 4 5,-4

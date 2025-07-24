@@ -16,7 +16,8 @@ def get_scheduler_class(name):
 def run_simulation(scheduler_class, shutdown_policy_class, platform_path, workload_path):
     simulator = SimulatorHandler()
     scheduler = scheduler_class(simulator)
-    policy = shutdown_policy_class(simulator)
+    if shutdown_policy_class is not None:
+        policy = shutdown_policy_class(simulator)
 
     jobs_mon = JobMonitor(simulator)
     sim_mon = SimulationMonitor(simulator)
@@ -24,11 +25,17 @@ def run_simulation(scheduler_class, shutdown_policy_class, platform_path, worklo
     e_mon = ConsumedEnergyMonitor(simulator)
     hpss_mon = HostPowerStateSwitchMonitor(simulator)
 
+    ct = simulator._SimulatorHandler__current_time
+
+    
     simulator.start(platform=platform_path,
                     workload=workload_path,
                     verbosity="information")
 
     while simulator.is_running:
+        if simulator._SimulatorHandler__current_time == ct:
+            input('Press Enter to continue...')
+        ct = simulator._SimulatorHandler__current_time
         scheduler.schedule()
         simulator.proceed_time()
 
@@ -38,7 +45,7 @@ def run_simulation(scheduler_class, shutdown_policy_class, platform_path, worklo
 def parse_args():
     parser = argparse.ArgumentParser(description="Run Batsim simulation with given scheduler and config.")
     parser.add_argument('--scheduler', type=str, required=True, help="Scheduler name (e.g., easy)")
-    parser.add_argument('--timeout', type=int, default=30, help="Shutdown timeout (default: 30)")
+    parser.add_argument('--timeout', type=int, default=None, help="Shutdown timeout in seconds (optional)")
     parser.add_argument('--platform', type=str, required=True, help="Path to platform XML")
     parser.add_argument('--workload', type=str, required=True, help="Path to workload JSON")
     parser.add_argument('--output', type=str, required=True, help="Output identifier for directory structure")
@@ -51,7 +58,10 @@ def main():
     if scheduler_class is None:
         raise ValueError(f"Unknown scheduler: {args.scheduler}")
 
-    shutdown_policy = lambda sim: TimeoutPolicy(args.timeout, sim)
+    if args.timeout is not None:
+        shutdown_policy = lambda sim: TimeoutPolicy(args.timeout, sim)
+    else:
+        shutdown_policy = lambda sim: None
 
     jobs_mon, sim_mon, host_mon, e_mon, hpss_mon = run_simulation(
         scheduler_class,

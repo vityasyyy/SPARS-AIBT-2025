@@ -18,7 +18,7 @@ class SimMonitor:
     
     def update_energy_waste(self):
         for node_index, node in enumerate(self.node_state_monitor):
-            self.energy_waste[node_index] = (node["idle"] * 190) + (node["switching_off"] * 9) + (node["switching_on"] * 190)
+            self.energy_waste[node_index] = (node["idle"] * 190) + (node["switching_off"] * 9) + (node["switching_on"] * 190) + (node["sleeping"] * 9)
     
     def update_energy_consumption(self, machines, current_time, last_event_time):
         for index, node_action in enumerate(self.nodes_action):

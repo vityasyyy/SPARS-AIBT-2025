@@ -160,6 +160,9 @@ class NodeManager:
         valid_switch_off = [item for item in node if item in self.available_resources]
         
         if len(valid_switch_off) == 0:
+            print('cant switch off')
+            print(self.available_resources)
+            print(self.sim_monitor.nodes_action)
             return
         
         self.available_resources = [item for item in self.available_resources if item not in valid_switch_off]
@@ -192,6 +195,9 @@ class NodeManager:
     
     def switch_on(self, node, current_time, event, workload_info):
         self.inactive_resources = [item for item in self.inactive_resources if item not in node]
+        already_switching_on = [node for node in node if node in self.off_on_resources]
+        node = [node for node in node if node not in already_switching_on]
+        
         self.off_on_resources.extend(node)
         self.off_on_resources = sorted(self.off_on_resources)
         self.update_node_action(node, event, 'switch_on', 'switching_on', current_time)

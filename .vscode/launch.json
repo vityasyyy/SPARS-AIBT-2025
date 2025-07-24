@@ -5,14 +5,12 @@
       "name": "Python Debugger: Run HPCv2 Timeout",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/simulator_hpcv2.py",
+      "program": "${workspaceFolder}/batsimpy_data_rtfv1.py",
       "cwd": "${workspaceFolder}",
       "args": [
-        "--out", "nj40mn8",
-        "--scheduler", "smart-easy",
-        "--workload", "workloads/wl_nj40_mn8.json",
-        "--platform", "platforms/HPCv2/platform_validate_8.json",
-        "--timeout", "30"
+        "--result", "result_validate/vd3_formatted_ebf_baseline_nsv1.csv",
+        "--machine_events", "result_validate/batsim_easybffast_v3_hosts_baseline.csv",
+        "--jobs", "result_validate/batsim_easybffast_v3_jobs_baseline.csv",
       ],
       "console": "integratedTerminal"
     }

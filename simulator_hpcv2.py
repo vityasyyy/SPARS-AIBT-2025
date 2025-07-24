@@ -1,5 +1,7 @@
 import argparse
 import pandas as pd
+import torch
+import sys
 
 from HPCv2_Simulator.Simulator import SPSimulator
 from HPCv2_Scheduler.fcfs_scheduler import FCFSScheduler
@@ -7,7 +9,9 @@ from HPCv2_Scheduler.easy_scheduler import EasyScheduler
 from HPCv2_Scheduler.smart_fcfs_scheduler import SmartFCFSScheduler
 from HPCv2_Scheduler.smart_easy_scheduler import SmartEasyScheduler
 from HPCv2_Utils.data_mapper import process_node_job_data
-from scheduler_sp.rl_scheduler import RLScheduler
+from HPCv2_Scheduler.easy_rl_scheduler import RLScheduler
+from nn_generator.model_generator_2 import HPCNodeManager
+
 
 def run_simulation(scheduler, platform_filepath, workload_filepath):
     simulator = SPSimulator(scheduler, platform_path=platform_filepath, workload_path=workload_filepath)
@@ -24,14 +28,21 @@ def main():
     parser.add_argument('--timeout', type=int, help='Simulation timeout in seconds')
     parser.add_argument('--out', type=str, required=True, help='Output directory (required)')
     parser.add_argument('--scheduler', type=str, required=True, choices=['easy', 'fcfs', 'easy-rl', 'smart-fcfs', 'smart-easy'], help='Scheduler type: easy or fcfs (required)')
-    
-    args = parser.parse_args()
+    parser.add_argument('--node_manager', type=str, help='Path to node manager file (required if scheduler=easy-rl)')
 
+    args = parser.parse_args()
+    if args.scheduler == 'easy-rl' and args.node_manager is None:
+        print("Error: --node_manager is required when --scheduler is 'easy-rl'")
+        sys.exit(1)
+    
+    if args.node_manager:
+        node_manager = torch.load(args.node_manager, map_location=torch.device('cpu'))
+    
     # Pilih scheduler
     if args.scheduler == 'easy':
         scheduler = EasyScheduler(None, timeout=args.timeout)
     elif args.scheduler == 'easy-rl':
-        scheduler = RLScheduler(None , timeout=args.timeout)
+        scheduler = RLScheduler(None, node_manager=node_manager)
     elif args.scheduler == 'fcfs':
         scheduler = FCFSScheduler(None , timeout=args.timeout)
     elif args.scheduler == 'smart-fcfs':
