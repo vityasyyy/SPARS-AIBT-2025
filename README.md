@@ -57,7 +57,7 @@ pip install -r requirements_windows.txt
 
 ## 🪟 Panduan Penggunaan Windows
 
-> ⚠️ Hanya simulasi CSSP yang bisa dijalankan. Batsim membutuhkan `nix-shell` yang tidak tersedia di Windows.
+> ⚠️ Hanya simulasi HPCv2 yang bisa dijalankan. Batsim membutuhkan `nix-shell` yang tidak tersedia di Windows.
 
 1. **Aktifkan virtual environment**:
 
@@ -65,11 +65,10 @@ pip install -r requirements_windows.txt
    myenv\Scripts\activate
    ```
 
-2. **Jalankan simulasi CSSP**:
+2. **Jalankan simulasi HPCv2**:
 
    ```bash
-   python batsim_cssp_baseline.py
-   python batsim_cssp_timeout.py  # dengan timeout policy
+   python simulator_hpcv2.py
    ```
 
 ## 💡 Baseline Policy
@@ -86,18 +85,6 @@ Terdapat dua scheduler yang bisa digunakan dalam simulasi:
 
 1. **Easy backfilling Scheduler**
 2. **FCFS (First-Come, First-Served) Scheduler**
-
-### Memilih Scheduler pada CSSP
-
-Untuk memilih scheduler yang akan digunakan, cukup tentukan scheduler pada argumen `run_simulation()` seperti berikut:
-
-```python
-fcfs_scheduler = FCFSScheduler(None)
-easy_scheduler = EasyScheduler(None)
-
-# Untuk menjalankan simulator dengan penjadwalan easy backfilling
-jobs_e, sim_e = run_simulation(easy_scheduler, platform_filepath, workload_filepath)
-```
 
 ### Memilih Scheduler pada Batsim-Py
 
