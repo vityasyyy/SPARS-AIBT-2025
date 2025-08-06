@@ -2,17 +2,113 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Python Debugger: Run HPCv2 Timeout",
+      "name": "Python Debugger: Run HPCv3_runner.py (easy)",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/batsimpy_data_rtfv1.py",
+      "program": "${workspaceFolder}/HPCv3_runner.py",
       "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
       "args": [
-        "--result", "result_validate/vd3_formatted_ebf_baseline_nsv1.csv",
-        "--machine_events", "result_validate/batsim_easybffast_v3_hosts_baseline.csv",
-        "--jobs", "result_validate/batsim_easybffast_v3_jobs_baseline.csv",
-      ],
-      "console": "integratedTerminal"
+        "--workload_path", "workloads/hpcv3.json",
+        "--platform_path", "platforms/HPCv3/platform.json",
+        "--algorithm", "easy"
+      ]
+    },
+    {
+      "name": "Python Debugger: Run HPCv3_runner.py (smart-fcfs)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/HPCv3_runner.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": [
+        "--workload_path", "workloads/hpcv3.json",
+        "--platform_path", "platforms/HPCv3/platform.json",
+        "--algorithm", "smart-fcfs",
+        "--timeout", "30",
+        "--start_time", "2025-08-01 16:19:12"
+      ]
+    },
+    {
+      "name": "Python Debugger: Run HPCv3_runner.py (smart-fcfs) V2",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/HPCv3_runner.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": [
+        "--workload_path", "workloads/hpcv3.json",
+        "--platform_path", "platforms/HPCv3/platform.json",
+        "--algorithm", "smart-fcfs",
+        "--timeout", "30"
+      ]
+    },
+    {
+      "name": "Python Debugger: Run simulator_hpcv2.py (fcfs)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/simulator_hpcv2.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": [
+        "--out", "vd1",
+        "--scheduler", "easy",
+        "--workload", "workloads/simple_data_10.json",
+        "--platform", "platforms/HPCv2/platform_validate_8.json",
+      ]
+    },
+    {
+      "name": "Python Debugger: Run simulator_hpcv2.py (smart-fcfs)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/simulator_hpcv2.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": [
+        "--out", "vdhpc23",
+        "--scheduler", "smart-fcfs",
+        "--workload", "workloads/simple_data_10.json",
+        "--platform", "platforms/HPCv2/platform_validate_8.json",
+        "--timeout", "30"
+      ]
+    },
+    {
+      "name": "Python Debugger: Run plot_result_edited.py",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/plot_result_edited.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": [
+        "--hpcv2", "results/hpcv2/vd1_easy_nodes_baseline.csv",
+        "--batsimpy", "results/hpcv3/node_log.csv",
+        "--output", "plt/val/comparison_hpcv2_3.png",
+      ]
+    },
+    {
+      "name": "Python Debugger: Compare smart-fcfs Run plot_result_edited.py",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/plot_result_edited.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": [
+        "--hpcv2", "results/hpcv2/vdhpc23_smart-fcfs_nodes_t30.csv",
+        "--batsimpy", "results/hpcv3/node_log.csv",
+        "--output", "plt/val/comparison_hpcv2_3.png",
+      ]
+    },
+    {
+      "name": "Python Debugger: Execute converter swf_to_json.py",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/swf_to_json.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": [
+        "--input", "workloads/swf/NASA-iPSC-1993-3.swf",
+        "--output", "workloads/json/NASA-iPSC-1993-3.json"
+      ]
     }
   ]
 }

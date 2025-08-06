@@ -6,7 +6,7 @@ import copy
 from collections import defaultdict
 
 class SPSimulator:
-    def __init__(self, scheduler, platform_path, workload_path):        
+    def __init__(self, scheduler, platform_path, workload_path, start_time):        
         self.scheduler = scheduler
         with open(platform_path, 'r') as file:
             self.platform_info = json.load(file)
@@ -21,8 +21,8 @@ class SPSimulator:
         self.jobs_manager = JobsManager(self.workload_info)
         self.node_manager = NodeManager(self.nb_res, self.sim_monitor, self.platform_info)
         
-        self.current_time = 0
-        self.last_event_time = 0
+        self.current_time = start_time
+        self.last_event_time = start_time
         self.event = None    
         self.total_req_res = 0
         self.is_running = False
@@ -230,10 +230,6 @@ class SPSimulator:
                 self.node_manager.update_node_action(allocated, self.event, 'release', 'idle', self.current_time)
                 
                 self.jobs_manager.active_jobs = [active_job for active_job in self.jobs_manager.active_jobs if active_job['id'] != self.event['id']]
-        
-        for nsl in self.sim_monitor.node_state_monitor:
-            if nsl['sleeping'] + nsl['switching_on'] + nsl['switching_off'] + nsl['idle'] + nsl['computing'] != self.current_time:
-                print('?')
                 
                 
         if self.jobs_manager.num_jobs_finished < self.jobs_manager.num_jobs:

@@ -64,12 +64,12 @@ def read_timeline(file_path):
     timeline = []
     has_submission = 'submission_time' in data.columns
     for _, row in data.iterrows():
-        nodes = list(map(int, row['allocated_resources'].split()))
+        nodes = list(map(int, row.get('allocated_resources', row.get('nodes')).split()))
         entry = {
-            'starting_time': float(row['starting_time']),
+            'starting_time': float(row.get('starting_time', row.get('start_time'))),
             'finish_time': float(row['finish_time']),
             'allocated_resources': nodes,
-            'type': row['type'],
+            'type': row.get('type', row.get('state')),
             'job_id': int(row['job_id'])
         }
         if has_submission:

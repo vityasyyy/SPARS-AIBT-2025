@@ -66,8 +66,12 @@ def main():
 
     # Simpan hasil
     jobs_df = pd.DataFrame(jobs.monitor_jobs)
+    sn_df = pd.DataFrame(sim.nodes)
+    jobs_df.to_csv('idkjobs.csv')
+    sn_df.to_csv('idksn.csv')
     jobs_df['allocated_resources'] = jobs_df['allocated_resources'].apply(lambda x: ' '.join(map(str, x)))
 
+    
     nodes_df = process_node_job_data(sim.nodes, jobs_df)
     
     
