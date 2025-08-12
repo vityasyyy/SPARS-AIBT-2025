@@ -2,6 +2,33 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Python Debugger: Run HPCv3_runner.py (fcfs)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/HPCv3_runner.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": [
+        "--workload_path", "workloads/hpcv3.json",
+        "--platform_path", "platforms/HPCv3/platform.json",
+        "--algorithm", "fcfs"
+      ]
+    },
+    {
+      "name": "Python Debugger: Run HPCv3_runner.py (fcfs) with Start_Time",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/HPCv3_runner.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": [
+        "--workload_path", "workloads/hpcv3.json",
+        "--platform_path", "platforms/HPCv3/platform.json",
+        "--algorithm", "fcfs",
+        "--start_time", "2025-08-01 16:19:12"
+      ]
+    },
+    {
       "name": "Python Debugger: Run HPCv3_runner.py (easy)",
       "type": "debugpy",
       "request": "launch",
@@ -15,7 +42,21 @@
       ]
     },
     {
-      "name": "Python Debugger: Run HPCv3_runner.py (smart-fcfs)",
+      "name": "Python Debugger: Run HPCv3_runner.py (easy) with Start_Time",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/HPCv3_runner.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": [
+        "--workload_path", "workloads/hpcv3.json",
+        "--platform_path", "platforms/HPCv3/platform.json",
+        "--algorithm", "easy",
+        "--start_time", "2025-08-01 16:19:12"
+      ]
+    },
+    {
+      "name": "Python Debugger: Run HPCv3_runner.py (smart-fcfs) with Start_Time",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/HPCv3_runner.py",

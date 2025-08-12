@@ -44,6 +44,7 @@ class Machine:
                     raise RuntimeError(f"Node {node['id']} must be in 'active' state to change DVFS mode")
                 if mode not in self.machines[node['id']]['dvfs_profiles']:
                     raise ValueError(f"Invalid DVFS mode '{mode}' for node {node['id']}")
+                    
                 node['dvfs_mode'] = mode
                 profile = self.machines[node['id']]['dvfs_profiles'][mode]
                 node['power'] = profile['power']

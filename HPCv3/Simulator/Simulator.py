@@ -10,7 +10,7 @@ class Simulator:
         with open(platform_path, 'r') as file:
             self.platform_info = json.load(file)
         self.PlatformControl = PlatformControl(self.platform_info, start_time)
-        self.Monitor = Monitor(self.platform_info)
+        self.Monitor = Monitor(self.platform_info, start_time)
         self.current_time = start_time
         self.events = []
         self.is_running = False
@@ -96,7 +96,11 @@ class Simulator:
                 self.PlatformControl.release(self.event['nodes'])
                 self.num_finished_jobs += 1
                 record_job_execution.append(self.event)
-
+            
+            elif self.event['type'] == 'change_dvfs_mode':
+                event = self.PlatformControl.change_dvfs_mode(self.event['node'], self.event['mode'])
+                
+                
         self.Monitor.record(mode='after', machines=self.PlatformControl.machines, current_time=self.current_time, record_job_execution=record_job_execution)
         
         if self.num_finished_jobs == self.num_jobs:

@@ -1,7 +1,7 @@
 import pandas as pd
 
 class Monitor:
-    def __init__(self, platform_info):
+    def __init__(self, platform_info, start_time):
         self.ecr = [
             {
                 "id": m["id"],
@@ -20,12 +20,12 @@ class Monitor:
         self.num_nodes = len(platform_info['machines'])
         self.node_ids = [node['id'] for node in platform_info['machines']]
         self.energy = [
-            {'id': i, 'energy_consumption': 0, 'energy_waste': 0, 'last_update': 0}
+            {'id': i, 'energy_consumption': 0, 'energy_waste': 0, 'last_update': start_time}
             for i in range(self.num_nodes)
         ]
-        self.nodes_state = [{'id': i, 'state': 'active', 'dvfs_mode': 'base', 'start_time': 0, 'duration': 0, 'job_id': None} for i in range(self.num_nodes)]
+        self.nodes_state = [{'id': i, 'state': 'active', 'dvfs_mode': 'base', 'start_time': start_time, 'duration': 0, 'job_id': None} for i in range(self.num_nodes)]
         
-        self.states_hist = [{'id': i, 'state_history': [{'state': 'active', 'dvfs_mode': 'base', 'start_time': 0, 'finish_time': 0}]} for i in range(self.num_nodes)]
+        self.states_hist = [{'id': i, 'state_history': [{'state': 'active', 'dvfs_mode': 'base', 'start_time': start_time, 'finish_time': 0}]} for i in range(self.num_nodes)]
         self.states_dur = []
         
         self.jobs_execution_log = []
@@ -129,21 +129,24 @@ class Monitor:
         # Build a quick lookup of machine states by ID
         machine_state_by_id = {node['id']: node['state'] for node in machines.nodes}
         machine_job_id_by_id = {node['id']: node['job_id'] for node in machines.nodes}
+        machine_dvfs_mode_by_id = {node['id']: node['dvfs_mode'] for node in machines.nodes}
         for node_state in self.nodes_state:
             node_id = node_state['id']
             new_state = machine_state_by_id.get(node_id)
             new_job_id = machine_job_id_by_id.get(node_id)
-            if new_state is None:
+            new_dvfs_mode = machine_dvfs_mode_by_id.get(node_id)
+            if new_state is None and new_dvfs_mode is None:
                 continue 
 
-            if node_state['state'] != new_state or node_state['job_id'] != new_job_id:
+            if node_state['state'] != new_state or node_state['job_id'] != new_job_id or node_state['dvfs_mode'] != new_dvfs_mode:
                 # Append to state history
                 state_hist = next((h for h in self.states_hist if h['id'] == node_id), None)
-                if state_hist is not None:
+                if state_hist is not None or new_dvfs_mode is not None:
                     state_hist['state_history'].append({
                         'state': node_state['state'],
                         'start_time': node_state['start_time'],
-                        'finish_time': node_state['start_time'] + node_state['duration']
+                        'finish_time': node_state['start_time'] + node_state['duration'],
+                        'dvfs_mode': node_state['dvfs_mode']
                     })
 
                 # Update current state
@@ -152,6 +155,7 @@ class Monitor:
                 node_state['job_id'] = new_job_id
                 node_state['start_time'] = current_time
                 node_state['duration'] = 0
+                node_state['dvfs_mode'] = new_dvfs_mode
 
             
         

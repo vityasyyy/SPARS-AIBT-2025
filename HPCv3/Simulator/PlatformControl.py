@@ -15,6 +15,10 @@ class PlatformControl:
         event = {'job_id': job['job_id'], 'type': 'execution_finished', 'nodes': node_ids, 'start_time': current_time}
         return finish_time, event
     
+    def change_dvfs_mode(self, node_ids, mode):
+        self.machines.change_dvfs_mode(node_ids, mode)
+        return {'type': 'change_dvfs_mode', 'node': node_ids, 'mode': mode}
+    
     def release(self, node_ids):
         self.machines.release(node_ids)
         

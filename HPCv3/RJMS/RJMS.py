@@ -39,6 +39,10 @@ class RJMS:
                     while waiting_queue:
                         job = waiting_queue[0]
                         self.JobsManager.remove_job_from_waiting_queue(job['job_id'], 'terminated')
+                elif event['type'] == 'change_dvfs_mode':
+                    self.ResourceManager.change_dvfs_mode(event['node'], event['mode'])
+        
+            
         self.ResourceManager.renew_resources_agenda(self.current_time)
         events = self.Scheduler.schedule(self.current_time)
         message = {'timestamp': self.current_time, 'event_list': events}
