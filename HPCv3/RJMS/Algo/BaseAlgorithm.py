@@ -29,9 +29,7 @@ class BaseAlgorithm():
 
     def prep_schedule(self):
         self.events = []
-        if self.current_time == 0 and self.do_once == False:
-            self.push_event(self.current_time, {'type': 'change_dvfs_mode', 'node': [0,1,2,3,4,5,6,7], 'mode': 'overclock_1'})
-            self.do_once = True
+W
         self.compute_speeds = [node['compute_speed'] for node in self.ResourceManager.nodes]
         self.resources_agenda = copy.deepcopy(self.ResourceManager.resources_agenda)
         next_releases = self.resources_agenda
