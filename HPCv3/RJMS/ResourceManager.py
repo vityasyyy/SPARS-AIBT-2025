@@ -1,5 +1,4 @@
 import json
-import resource
 
 class ResourceManager:
     def __init__(self, platform_path):
@@ -10,7 +9,22 @@ class ResourceManager:
         self.resources_agenda = [{'release_time': 0, 'node_id': i} for i in range(len(self.machines))]
         
         self.nodes = []
-
+        
+        self.machines_transition = []
+        for machine in self.machines:
+            node_transitions = []
+            for from_state, data in machine["states"].items():
+                for trans in data.get("transitions", []):
+                    node_transitions.append({
+                        "from": from_state,
+                        "to": trans["state"],
+                        "transition_time": trans["transition_time"]
+                    })
+            self.machines_transition.append({
+                "node_id": machine["id"],
+                "transitions": node_transitions
+            })
+        
         for machine in self.machines:
             dvfs_mode = machine['dvfs_mode']
             active_state = machine['states']['active']
@@ -58,6 +72,11 @@ class ResourceManager:
                 
     def reserve_nodes(self, job_id, node_ids):
         self.reserved_nodes.append({'job_id': job_id, 'nodes': node_ids})
+    
+    def remove_reserved_nodes(self, job_id):
+        self.reserved_nodes = [
+        rn for rn in self.reserved_nodes if rn['job_id'] != job_id
+    ]
         
     def get_available_nodes(self):
         available_nodes = []
@@ -67,6 +86,13 @@ class ResourceManager:
                 available_nodes.append(node['id'])
         
         return available_nodes
+    
+    def get_reserved_nodes(self):
+        reserved_nodes = []
+        for reserved_node in self.reserved_nodes:
+            reserved_nodes.extend(reserved_node['nodes'])
+            
+        return reserved_nodes
     
     def get_sleeping_nodes(self):
         sleeping_nodes = []
@@ -127,10 +153,12 @@ class ResourceManager:
                     
                     resource_agenda = next((ra for ra in self.resources_agenda if ra['node_id'] == node_id), None)
 
-                    machine = next((m for m in self.machines if m['id'] == node_id), None)
-
-                    if resource_agenda and machine:
-                        resource_agenda['release_time'] = current_time + machine['transition_time'][1]
+                    for machine_transition in self.machines_transition:
+                        if machine_transition['node_id'] == node_id:
+                            for transition in machine_transition['transitions']:
+                                if transition['from'] == 'switching_off' and transition['to'] == 'sleeping':
+                                    transition_time = transition['transition_time']
+                            resource_agenda['release_time'] = current_time + transition_time
 
                 else:
                     raise RuntimeError(f"Node {node['id']} cannot be switched on — state is not sleeping")
@@ -143,12 +171,13 @@ class ResourceManager:
         for node in self.nodes:
             if node['id'] in node_ids:
                 if node['state'] == 'switching on':
-                    node['state'] = 'idle'
+                    node['state'] = 'active'
                     node['job_id'] = None
                     node['start_time'] = current_time
                     node['duration'] = 0
+                    node['can_run_jobs'] = True
                     
-                    resource_agenda = next((ra for ra in self.resources_agenda if ra['id'] == node_id), None)
+                    resource_agenda = next((ra for ra in self.resources_agenda if ra['node_id'] == node_id), None)
 
                     if resource_agenda:
                         resource_agenda['release_time'] = current_time
@@ -168,7 +197,7 @@ class ResourceManager:
                     node['start_time'] = current_time
                     node['duration'] = 0
                     
-                    resource_agenda = next((ra for ra in self.resources_agenda if ra['id'] == node_id), None)
+                    resource_agenda = next((ra for ra in self.resources_agenda if ra['node_id'] == node_id), None)
 
                     if resource_agenda:
                         resource_agenda['release_time'] = current_time
@@ -182,24 +211,29 @@ class ResourceManager:
             
         for node in self.nodes:
             if node['id'] in node_ids:
-                if node['state'] == 'idle':
+                if node['state'] == 'active':
                     node['state'] = 'switching off'
                     node['job_id'] = None
                     node['start_time'] = current_time
                     node['duration'] = 0
+                    node['can_run_jobs'] = False
                     node_id = node['id']
                     
-
-                    resource_agenda = next((ra for ra in self.resources_agenda if ra['id'] == node_id), None)
+                    resource_agenda = next((ra for ra in self.resources_agenda if ra['node_id'] == node_id), None)
 
                     machine = next((m for m in self.machines if m['id'] == node_id), None)
 
                     if resource_agenda and machine:
-                        resource_agenda['release_time'] = current_time + machine['transition_time'][0]
+                        machine_switching_off_transitions = machine['states']['switching_off']['transitions']
+                        for machine_switching_off_transition in machine_switching_off_transitions:
+                            if machine_switching_off_transition['state'] == 'sleeping':
+                                transition_time = machine_switching_off_transition['transition_time']
+                                break
+                        resource_agenda['release_time'] = current_time + transition_time
 
-                elif node['state'] != 'computing':
+                elif node['state'] == 'active' and node['job_id'] is not None:
                     raise RuntimeError(f"Node {node['id']} cannot be switched off — it is computing")
-                else:
+                elif node['state'] != 'active':
                     raise RuntimeError(f"Node {node['id']} cannot be switched off — state is not 'idle'") 
 
     def allocate(self, node_ids, job_id, walltime, current_time):

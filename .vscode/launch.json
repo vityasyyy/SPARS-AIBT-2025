@@ -16,7 +16,7 @@
       ]
     },
     {
-      "name": "Python Debugger: Run HPCv3_runner.py (fcfs) with Start_Time",
+      "name": "Python Debugger: Run HPCv3_runner.py (fcfs) with Start_Time + To",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/HPCv3_runner.py",
@@ -26,11 +26,12 @@
         "--workload_path", "workloads/hpcv3.json",
         "--platform_path", "platforms/HPCv3/platform.json",
         "--algorithm", "fcfs",
-        "--start_time", "2025-08-01 16:19:12"
+        "--start_time", "2025-08-01 16:19:12",
+        "--timeout", "30"
       ]
     },
     {
-      "name": "Python Debugger: Run HPCv3_runner.py (easy)",
+      "name": "Python Debugger: Run HPCv3_runner.py (easy) with Timeout",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/HPCv3_runner.py",
@@ -39,7 +40,8 @@
       "args": [
         "--workload_path", "workloads/hpcv3.json",
         "--platform_path", "platforms/HPCv3/platform.json",
-        "--algorithm", "easy"
+        "--algorithm", "easy",
+        "--timeout", "30"
       ]
     },
     {
@@ -115,28 +117,26 @@
       ]
     },
     {
-      "name": "Python Debugger: Run plot_result_edited.py",
+      "name": "Python Debugger: Run create_ganttchart.py",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/plot_result_edited.py",
+      "program": "${workspaceFolder}/create_ganttchart.py",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "args": [
         "--hpcv2", "results/hpcv2/vd1_easy_nodes_baseline.csv",
-        "--batsimpy", "results/hpcv3/node_log.csv",
         "--output", "plt/val/comparison_hpcv2_3.png",
       ]
     },
     {
-      "name": "Python Debugger: Compare smart-fcfs Run plot_result_edited.py",
+      "name": "Python Debugger: Run create_ganttchart.py",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/plot_result_edited.py",
+      "program": "${workspaceFolder}/create_ganttchart.py",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "args": [
         "--hpcv2", "results/hpcv2/vdhpc23_smart-fcfs_nodes_t30.csv",
-        "--batsimpy", "results/hpcv3/node_log.csv",
         "--output", "plt/val/comparison_hpcv2_3.png",
       ]
     },

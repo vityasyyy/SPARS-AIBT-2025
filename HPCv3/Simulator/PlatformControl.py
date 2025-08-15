@@ -6,6 +6,8 @@ class PlatformControl:
         self.machines = Machine(platform_info, start_time)
 
         self.active_jobs = []
+        
+        
 
     def compute(self, node_ids, job, current_time):
         self.machines.allocate(node_ids, job['job_id'])
@@ -34,9 +36,12 @@ class PlatformControl:
         timestamp_map = {}
 
         for node_id in node_ids:
-            for machine in self.machines.machines:
-                if machine['id'] == node_id:
-                    transition_time = machine['transition_time'][0]
+            for machine_transition in self.machines.machines_transition:
+                if machine_transition['node_id'] == node_id:
+                    for transition in machine_transition['transitions']:
+                        if transition['from'] == 'switching_off' and transition['to'] == 'sleeping':
+                            transition_time = transition['transition_time']
+                    
                     timestamp = current_time + transition_time
 
                     if timestamp not in timestamp_map:
@@ -47,7 +52,7 @@ class PlatformControl:
         result = []
         for timestamp, nodes in timestamp_map.items():
             result.append({
-                'event': {'type': 'turn_off', 'node': nodes},
+                'event': {'type': 'turn_off', 'nodes': nodes},
                 'timestamp': timestamp
             })
 
@@ -59,9 +64,11 @@ class PlatformControl:
         timestamp_map = {}
 
         for node_id in node_ids:
-            for machine in self.machines.machines:
-                if machine['id'] == node_id:
-                    transition_time = machine['transition_time'][1]
+            for machine_transition in self.machines.machines_transition:
+                if machine_transition['node_id'] == node_id:
+                    for transition in machine_transition['transitions']:
+                        if transition['from'] == 'switching_off' and transition['to'] == 'sleeping':
+                            transition_time = transition['transition_time']
                     timestamp = current_time + transition_time
 
                     if timestamp not in timestamp_map:
@@ -72,7 +79,7 @@ class PlatformControl:
         result = []
         for timestamp, nodes in timestamp_map.items():
             result.append({
-                'event': {'type': 'turn_on', 'node': nodes},
+                'event': {'type': 'turn_on', 'nodes': nodes},
                 'timestamp': timestamp
             })
 

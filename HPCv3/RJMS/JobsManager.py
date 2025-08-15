@@ -1,3 +1,6 @@
+from networkx import nodes
+
+
 class JobsManager:
     def __init__(self):
         self.waiting_queue = []
@@ -25,9 +28,11 @@ class JobsManager:
                 del self.waiting_queue[i]
                 break
 
-    def add_job_to_scheduled_queue(self, job_id):
+    def add_job_to_scheduled_queue(self, job_id, nodes, predicted_time):
         for job in self.waiting_queue:
             if job['job_id'] == job_id:
+                job['nodes'] = nodes
+                job['predicted_time'] = predicted_time
                 self.waiting_queue.remove(job)
                 self.scheduled_queue.append(job)
                 break

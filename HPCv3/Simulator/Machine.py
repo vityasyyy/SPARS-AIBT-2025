@@ -4,14 +4,12 @@ class Machine:
     def __init__(self, platform_info, start_time):        
        
         self.platform_info = platform_info
-
         self.machines = self.platform_info['machines']
-
         self.current_time = start_time
         self.is_running = False
-        
         self.nodes = []
-
+        self.machines_transition = []
+        
         for machine in self.machines:
             dvfs_mode = machine['dvfs_mode']
             active_state = machine['states']['active']
@@ -32,6 +30,19 @@ class Machine:
             }
 
             self.nodes.append(node)
+            
+            node_transitions = []
+            for from_state, data in machine["states"].items():
+                for trans in data.get("transitions", []):
+                    node_transitions.append({
+                        "from": from_state,
+                        "to": trans["state"],
+                        "transition_time": trans["transition_time"]
+                    })
+            self.machines_transition.append({
+                "node_id": machine["id"],
+                "transitions": node_transitions
+            })
     
     def change_dvfs_mode(self, nodes, mode):
         for node_id in nodes:

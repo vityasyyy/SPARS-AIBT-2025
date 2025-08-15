@@ -102,7 +102,7 @@ class Monitor:
                 dvfs_mode = node['dvfs_mode']
                 ecr_value = ecr_entry['dvfs_profiles'][dvfs_mode]
                 
-            if node_state == 'active' and node['job_id'] is None:
+            if node['job_id'] is None:
                 """" Node is active but not computing"""
                 energy_entry['energy_waste'] += ecr_value * timespan
             else:

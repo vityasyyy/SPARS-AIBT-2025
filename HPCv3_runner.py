@@ -6,25 +6,24 @@ import ast
 from datetime import datetime
 
 def process_node_job_data(nodes_data, jobs):
-    # Define mapping for non-active states
+    """ MAP DATA"""
+
     mapping_non_active = {
         'switching_off': -2,
         'switching_on': -3,
         'sleeping': -4
     }
     
-    # Process node logs: propagate dvfs_mode and collect intervals
     node_intervals = []
     for node in nodes_data:
         node_id = node['id']
         state_history = node['state_history']
         current_dvfs = None
         for interval in state_history:
-            # Propagate dvfs_mode: use last known if not present
             if 'dvfs_mode' in interval:
                 current_dvfs = interval['dvfs_mode']
             interval['dvfs_mode'] = current_dvfs
-            # Skip zero-length intervals
+
             if interval['start_time'] < interval['finish_time']:
                 node_intervals.append({
                     'node_id': node_id,
@@ -36,16 +35,14 @@ def process_node_job_data(nodes_data, jobs):
     
     node_intervals_df = pd.DataFrame(node_intervals)
     
-    # Explode job logs to one row per node
     jobs_exploded = jobs.copy()
     jobs_exploded['nodes'] = jobs_exploded['nodes'].apply(
         lambda x: ast.literal_eval(x) if isinstance(x, str) else x
-    ) # Convert string to list
+    )
     jobs_exploded = jobs_exploded.explode('nodes')
     jobs_exploded = jobs_exploded.rename(columns={'nodes': 'node_id'})
     jobs_exploded = jobs_exploded[['job_id', 'node_id', 'start_time', 'finish_time']]
     
-    # Process active intervals: merge with job logs to assign job_id
     active_df = node_intervals_df[node_intervals_df['state'] == 'active'].copy()
     active_merged = pd.merge(
         active_df, 
@@ -53,26 +50,22 @@ def process_node_job_data(nodes_data, jobs):
         on=['node_id', 'start_time', 'finish_time'], 
         how='left'
     )
-    active_merged['job_id'] = active_merged['job_id'].fillna(-1)  # Idle if no matching job
+    active_merged['job_id'] = active_merged['job_id'].fillna(-1)
     
-    # Process non-active intervals: map states to job_id
     non_active_df = node_intervals_df[node_intervals_df['state'] != 'active'].copy()
     non_active_df['job_id'] = non_active_df['state'].map(mapping_non_active).fillna(-1)
     
-    # Combine active and non-active intervals
     combined = pd.concat([active_merged, non_active_df])
     
-    # Group by state, dvfs_mode, time interval, and job_id; aggregate nodes
-    combined['node_id'] = combined['node_id'].astype(int)  # Ensure node_id is int for sorting
+    combined['node_id'] = combined['node_id'].astype(int)  
     grouped = combined.groupby(
         ['state', 'dvfs_mode', 'start_time', 'finish_time', 'job_id']
     ).agg(
         nodes=('node_id', lambda x: ' '.join(map(str, sorted(x))))
-    )  # <- this was missing
+    ) 
     grouped = grouped.reset_index()
 
     
-    # Sort by start_time and select columns
     grouped = grouped.sort_values(by=['start_time', 'finish_time'])
     result = grouped[['dvfs_mode', 'state', 'start_time', 'finish_time', 'nodes', 'job_id']]
     
@@ -120,6 +113,10 @@ def run_simulation(simulator, rjms, human_readable):
             )
         else:
             print("[RJMS send message to simulator]", scheduler_message)
+        
+        """ 
+        THIS SHOULD'VE BEEN PART OF SIMULATOR
+        """
         for _data in scheduler_message['event_list']:
             timestamp = _data['timestamp']
             events = _data['events']

@@ -8,12 +8,9 @@ import pandas as pd
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Plot Gantt chart for HPCv2, BatsimPy (optional), and optionally Batsched.")
-    parser.add_argument('--hpcv2', required=True, help="CSV file for HPCv2 schedule (NSV2 format)")
-    parser.add_argument('--batsimpy', required=False, help="CSV file for BatsimPy schedule (NSV2 format, optional)")
-    parser.add_argument('--batsched', required=False, help="CSV file for Batsched schedule (NSV2 format, optional)")
+    parser.add_argument('--hpc', required=True, help="CSV file for HPCv2 schedule (NSV2 format)")
     parser.add_argument('--output', default="plt/val/comparison_gantt.png", help="Output PNG file path (default: plt/val/comparison_gantt.png)")
     return parser.parse_args()
-
 
 
 def plot_timeline(ax, timeline, title, xticks, max_time):
@@ -81,16 +78,11 @@ def main():
     args = parse_arguments()
 
     timeline_hpcv2 = read_timeline(args.hpcv2)
-    timeline_batsim = read_timeline(args.batsimpy) if args.batsimpy else None
-    timeline_batsched = read_timeline(args.batsched) if args.batsched else None
 
     max_time = max([ev['finish_time'] for ev in timeline_hpcv2])
-    if timeline_batsim:
-        max_time = max(max_time, max([ev['finish_time'] for ev in timeline_batsim]))
-    if timeline_batsched:
-        max_time = max(max_time, max([ev['finish_time'] for ev in timeline_batsched]))
 
-    num_plots = 1 + int(timeline_batsim is not None) + int(timeline_batsched is not None)
+
+    num_plots = 1 
     fig, axes = plt.subplots(num_plots, 1, figsize=(150, 4 * num_plots))
 
     if num_plots == 1:
@@ -101,16 +93,6 @@ def main():
                   max_time)
 
     idx = 1
-    if timeline_batsim:
-        plot_timeline(axes[idx], timeline_batsim, "Batsimpy Schedule",
-                      sorted(set(e['starting_time'] for e in timeline_batsim) | set(e['finish_time'] for e in timeline_batsim)),
-                      max_time)
-        idx += 1
-
-    if timeline_batsched:
-        plot_timeline(axes[idx], timeline_batsched, "Batsched Schedule",
-                      sorted(set(e['starting_time'] for e in timeline_batsched) | set(e['finish_time'] for e in timeline_batsched)),
-                      max_time)
 
     axes[-1].set_xlabel("Time")
 

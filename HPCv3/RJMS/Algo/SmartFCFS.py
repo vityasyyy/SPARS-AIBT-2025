@@ -67,8 +67,7 @@ class SmartFCFS(BaseAlgorithm):
         
     def switch_off_nodes(self):
         switch_off_nodes = []
-        if self.current_time == 30:
-            print('here')
+
         for node_index, node in enumerate(self.ResourceManager.nodes):
             if node['state'] == 'active' and node['job_id'] == None and node['duration'] >= self.timeout:
                 switch_off_nodes.append(node_index)

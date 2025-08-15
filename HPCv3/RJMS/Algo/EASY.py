@@ -7,6 +7,10 @@ class EASY(FCFS):
         super().FCFS()
         
         self.backfill()
+        
+        if self.timeout is not None:
+            super().timeout_policy()
+            
         return self.events
     
     def find_node_combination(self, p_start_t, compute_demand, nodes, next_releases, x):
@@ -35,13 +39,15 @@ class EASY(FCFS):
         return best_combo
      
     def backfill(self):
+
         waiting_queue = [job for job in self.JobsManager.waiting_queue if job['job_id'] not in self.scheduled]
         if len(waiting_queue) > 2:
             p_job = waiting_queue[0]
                 
             backfilling_queue = waiting_queue[1:]
             
-            reserved_nodes = self.ResourceManager.reserved_nodes
+            reserved_nodes = self.ResourceManager.get_reserved_nodes()
+            
             not_reserved_nodes = [node for node in self.ResourceManager.nodes if node['id'] not in reserved_nodes]
             
             next_releases = self.resources_agenda
@@ -69,8 +75,6 @@ class EASY(FCFS):
             not_reserved_nodes = [r for r in not_reserved_nodes if r not in head_job_reservation]
 
             for job in backfilling_queue:
-                if self.current_time == 9 and job['job_id'] == 3:
-                    print('here')
                 not_computing_resources = [node['id'] for node in self.ResourceManager.nodes if node['job_id'] is None and node['id'] not in self.allocated]
                 not_reserved = [h for h in not_computing_resources if h not in head_job_reservation]
 
@@ -102,7 +106,17 @@ class EASY(FCFS):
                         super().push_event(self.current_time, {'type': 'switch_on', 'nodes': to_activate})
                         self.available = [node for node in self.available if node not in allocated_nodes]
                         self.inactive = self.inactive[num_need_activation:]
-                        self.JobsManager.add_job_to_scheduled_queue(job['job_id'])
+                        
+                        highest_transition_time = 0
+                        for machine_transition in self.ResourceManager.machines_transition:
+                            if machine_transition['node_id'] in reserved_nodes:
+                                for transition in machine_transition['transitions']:
+                                    if transition['from'] == 'switching_off' and transition['to'] == 'sleeping' and transition['transition_time'] > highest_transition_time:
+                                        highest_transition_time = transition['transition_time']
+                                        
+                        compute_demand = job['walltime'] * job['res']
+                        
+                        self.JobsManager.add_job_to_scheduled_queue(job['job_id'], reserved_nodes, highest_transition_time)
                         self.ResourceManager.reserve_nodes(job['job_id'], reserved_nodes)
                 else:
                     not_computing_resources = [node['id'] for node in self.ResourceManager.nodes if node['job_id'] is None and node['id'] not in self.allocated]
