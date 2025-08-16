@@ -1,5 +1,0 @@
-batsim -p platform.xml \
-       -w validate_data_f1.json \
-       -e "out"
-
-batsched -v easy_bf
