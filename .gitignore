@@ -153,6 +153,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+hpcv3-venv/
 
 # Spyder project settings
 .spyderproject
