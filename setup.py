@@ -1,6 +1,6 @@
 # setup.py
 from venv import create as create_venv
-from os import getcwd, name as os_name
+from os import getcwd, makedirs, name as os_name
 from os.path import join, abspath, exists
 from subprocess import run
 from pathlib import Path
@@ -34,6 +34,11 @@ def main():
         print(rf"  CMD      : .\hpcv3-venv\Scripts\activate.bat")
     else:
         print(rf"  Bash/Zsh : source ./hpcv3-venv/bin/activate")
+        
+    makedirs(join(getcwd(), "workloads"), exist_ok=True)
+    makedirs(join(getcwd(), "platforms"), exist_ok=True)
+    makedirs(join(getcwd(), "plt"), exist_ok=True)
+    makedirs(join(getcwd(), "results"), exist_ok=True)
 
 if __name__ == "__main__":
     try:
