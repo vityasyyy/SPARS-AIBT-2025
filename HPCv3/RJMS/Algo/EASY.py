@@ -86,6 +86,7 @@ class EASY(FCFS):
                         allocated_nodes = available_resources_not_reserved[:job['res']]
                         event = {
                             'job_id': job['job_id'],
+                            'subtime': job['subtime'],
                             'walltime': job['walltime'],
                             'res': job['res'],
                             'type': 'execution_start',
@@ -134,6 +135,7 @@ class EASY(FCFS):
                         allocated_nodes = self.available[:job['res']]
                         event = {
                             'job_id': job['job_id'],
+                            'subtime': job['subtime'],
                             'walltime': job['walltime'],
                             'res': job['res'],
                             'type': 'execution_start',

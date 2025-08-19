@@ -14,7 +14,8 @@ class PlatformControl:
         compute_demand = job['walltime'] * job['res']
         compute_power = sum(node['compute_speed'] for node in self.machines.nodes if node['id'] in node_ids)
         finish_time = current_time + (compute_demand / compute_power)
-        event = {'job_id': job['job_id'], 'type': 'execution_finished', 'nodes': node_ids, 'start_time': current_time}
+        print(job)
+        event = {'job_id': job['job_id'], 'type': 'execution_finished', 'nodes': node_ids, 'start_time': current_time, 'submission_time': job['subtime']}
         return finish_time, event
     
     def change_dvfs_mode(self, node_ids, mode):

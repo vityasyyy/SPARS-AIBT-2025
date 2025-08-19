@@ -99,6 +99,7 @@ class BaseAlgorithm():
                     self.JobsManager.scheduled_queue.remove(scheduled_job)
                     event = {
                         'job_id': scheduled_job['job_id'],
+                        'subtime': scheduled_job['subtime'],
                         'walltime': scheduled_job['walltime'],
                         'res': scheduled_job['res'],
                         'type': 'execution_start',

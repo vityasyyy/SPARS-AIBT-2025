@@ -39,7 +39,11 @@ def process_node_job_data(nodes_data, jobs):
     )
     jobs_exploded = jobs_exploded.explode('nodes')
     jobs_exploded = jobs_exploded.rename(columns={'nodes': 'node_id'})
-    jobs_exploded = jobs_exploded[['job_id', 'node_id', 'start_time', 'finish_time']]
+    
+    if 'submission_time' not in jobs_exploded.columns:
+        jobs_exploded['submission_time'] = pd.NA    
+        
+    jobs_exploded = jobs_exploded[['job_id', 'node_id', 'submission_time', 'start_time', 'finish_time']]
     
     active_df = node_intervals_df[node_intervals_df['state'] == 'active'].copy()
     active_merged = pd.merge(
@@ -52,12 +56,13 @@ def process_node_job_data(nodes_data, jobs):
     
     non_active_df = node_intervals_df[node_intervals_df['state'] != 'active'].copy()
     non_active_df['job_id'] = non_active_df['state'].map(mapping_non_active).fillna(-1)
+    non_active_df['submission_time'] = pd.NA
     
     combined = pd.concat([active_merged, non_active_df])
     
     combined['node_id'] = combined['node_id'].astype(int)  
     grouped = combined.groupby(
-        ['state', 'dvfs_mode', 'start_time', 'finish_time', 'job_id']
+        ['state', 'dvfs_mode', 'submission_time', 'start_time', 'finish_time', 'job_id']
     ).agg(
         nodes=('node_id', lambda x: ' '.join(map(str, sorted(x))))
     ) 
@@ -65,7 +70,7 @@ def process_node_job_data(nodes_data, jobs):
 
     
     grouped = grouped.sort_values(by=['start_time', 'finish_time'])
-    result = grouped[['dvfs_mode', 'state', 'start_time', 'finish_time', 'nodes', 'job_id']]
+    result = grouped[['dvfs_mode', 'state', 'submission_time', 'start_time', 'finish_time', 'nodes', 'job_id']]
     
     return result
 
