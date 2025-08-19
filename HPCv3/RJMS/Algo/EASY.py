@@ -72,7 +72,7 @@ class EASY(FCFS):
             candidates = [r['node_id'] for r in next_releases if r['release_time'] <= p_start_t]
             head_job_reservation = candidates[-p_job['res']:]
             
-            not_reserved_nodes = [r for r in not_reserved_nodes if r not in head_job_reservation]
+            not_reserved_nodes = [r for r in not_reserved_nodes if r['id'] not in head_job_reservation]
 
             for job in backfilling_queue:
                 not_computing_resources = [node['id'] for node in self.ResourceManager.nodes if node['job_id'] is None and node['id'] not in self.allocated]
@@ -96,7 +96,7 @@ class EASY(FCFS):
                         super().push_event(self.current_time, event)
                         """should update releases agenda, do the same for others'
                         """
-                    else:
+                    elif job['res'] <= len(available_resources_not_reserved) + len(inactive_resources_not_reserved):
                         count_avail = len(available_resources_not_reserved)
                         allocated_nodes = available_resources_not_reserved
                         num_need_activation = job['res'] - count_avail

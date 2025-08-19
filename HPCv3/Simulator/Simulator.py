@@ -114,9 +114,6 @@ class Simulator:
         message = {'timestamp': self.current_time, 'events': events}
         return {'now': self.current_time, 'event_list': [message]}
 
-
-
-
 def run_simulation(simulator, rjms, human_readable, output_folder):
     simulator.start_simulator()
     while simulator.is_running:
