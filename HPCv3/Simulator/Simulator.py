@@ -3,6 +3,10 @@ import json
 from numpy import record
 from HPCv3.Simulator.MachineMonitor import Monitor
 from HPCv3.Simulator.PlatformControl import PlatformControl
+from HPCv3.Utils import log_output
+
+from datetime import datetime
+
 class Simulator:
     def __init__(self, workload_path, platform_path, start_time):
         with open(workload_path, 'r') as file:
@@ -109,3 +113,57 @@ class Simulator:
 
         message = {'timestamp': self.current_time, 'events': events}
         return {'now': self.current_time, 'event_list': [message]}
+
+
+
+
+def run_simulation(simulator, rjms, human_readable, output_folder):
+    simulator.start_simulator()
+    while simulator.is_running:
+        simulator_message = simulator.proceed()
+        if human_readable:
+            print(
+                "[simulator send message to RJMS]",
+                {
+                    'now': datetime.fromtimestamp(simulator_message['now']).strftime("%Y-%m-%d %H:%M:%S"),
+                    'event_list': [
+                        {
+                            **event,
+                            'timestamp': datetime.fromtimestamp(event['timestamp']).strftime("%Y-%m-%d %H:%M:%S")
+                        }
+                        for event in simulator_message['event_list']
+                    ]
+                }
+            )
+        else:
+            print("[simulator send message to RJMS]", simulator_message)
+
+        
+        scheduler_message = rjms.schedule(simulator_message)
+        if human_readable:
+            print(
+                "[RJMS send message to simulator]",
+                {
+                    **scheduler_message,
+                    'timestamp': datetime.fromtimestamp(scheduler_message['timestamp']).strftime("%Y-%m-%d %H:%M:%S")
+                    if 'timestamp' in scheduler_message else None,
+                    'event_list': [
+                        {
+                            **event,
+                            'timestamp': datetime.fromtimestamp(event['timestamp']).strftime("%Y-%m-%d %H:%M:%S")
+                        }
+                        for event in scheduler_message['event_list']
+                    ]
+                }
+            )
+        else:
+            print("[RJMS send message to simulator]", scheduler_message)
+        
+        for _data in scheduler_message['event_list']:
+            timestamp = _data['timestamp']
+            events = _data['events']
+            for event in events:
+                simulator.push_event(timestamp, event)
+                
+    log_output(simulator, output_folder)
+    print("Simulation completed. Logs saved to:", output_folder)
