@@ -1,22 +1,24 @@
 import json
 
+
 class Machine:
-    def __init__(self, platform_info, start_time):        
-       
+    def __init__(self, platform_info, start_time):
+
         self.platform_info = platform_info
         self.machines = self.platform_info['machines']
         self.current_time = start_time
         self.is_running = False
         self.nodes = []
         self.machines_transition = []
-        
+
         for machine in self.machines:
             dvfs_mode = machine['dvfs_mode']
             active_state = machine['states']['active']
             dvfs_profile = machine['dvfs_profiles'][dvfs_mode]
 
             power = dvfs_profile['power'] if active_state['power'] == 'from_dvfs' else active_state['power']
-            compute_speed = dvfs_profile['compute_speed'] if active_state['compute_speed'] == 'from_dvfs' else active_state['compute_speed']
+            compute_speed = dvfs_profile['compute_speed'] if active_state[
+                'compute_speed'] == 'from_dvfs' else active_state['compute_speed']
 
             node = {
                 'id': machine['id'],
@@ -26,11 +28,13 @@ class Machine:
                 'compute_speed': compute_speed,
                 'transitions': active_state['transitions'],
                 'can_run_jobs': active_state['can_run_jobs'],
-                'job_id': None
+                'job_id': None,
+                'release_time': 0,
+                'reserved': False
             }
 
             self.nodes.append(node)
-            
+
             node_transitions = []
             for from_state, data in machine["states"].items():
                 for trans in data.get("transitions", []):
@@ -43,7 +47,7 @@ class Machine:
                 "node_id": machine["id"],
                 "transitions": node_transitions
             })
-    
+
     def change_dvfs_mode(self, nodes, mode):
         for node_id in nodes:
             if not any(n['id'] == node_id for n in self.nodes):
@@ -52,23 +56,26 @@ class Machine:
         for node in self.nodes:
             if node['id'] in nodes:
                 if node['state'] != 'active':
-                    raise RuntimeError(f"Node {node['id']} must be in 'active' state to change DVFS mode")
+                    raise RuntimeError(
+                        f"Node {node['id']} must be in 'active' state to change DVFS mode")
                 if mode not in self.machines[node['id']]['dvfs_profiles']:
-                    raise ValueError(f"Invalid DVFS mode '{mode}' for node {node['id']}")
-                    
+                    raise ValueError(
+                        f"Invalid DVFS mode '{mode}' for node {node['id']}")
+
                 node['dvfs_mode'] = mode
                 profile = self.machines[node['id']]['dvfs_profiles'][mode]
                 node['power'] = profile['power']
                 node['compute_speed'] = profile['compute_speed']
 
-
     def _update_node_state(self, node, new_state):
         if new_state not in [t['state'] for t in node['transitions']]:
-            raise RuntimeError(f"Invalid state transition from '{node['state']}' to '{new_state}' on node {node['id']}")
+            raise RuntimeError(
+                f"Invalid state transition from '{node['state']}' to '{new_state}' on node {node['id']}")
         node['state'] = new_state
         state_def = self.machines[node['id']]['states'][new_state]
         if state_def['power'] == 'from_dvfs':
-            dvfs_profile = self.machines[node['id']]['dvfs_profiles'][node['dvfs_mode']]
+            dvfs_profile = self.machines[node['id']
+                                         ]['dvfs_profiles'][node['dvfs_mode']]
             node['power'] = dvfs_profile['power']
             node['compute_speed'] = dvfs_profile['compute_speed']
         else:
@@ -77,50 +84,48 @@ class Machine:
         node['transitions'] = state_def['transitions']
         node['can_run_jobs'] = state_def['can_run_jobs']
 
-
     def switch_on(self, nodes):
         for node in self._get_nodes_by_ids(nodes):
             self._update_node_state(node, 'switching_on')
             node['job_id'] = None
 
-
     def turn_on(self, nodes):
         for node in self._get_nodes_by_ids(nodes):
             self._update_node_state(node, 'active')
-
 
     def switch_off(self, nodes):
         for node in self._get_nodes_by_ids(nodes):
             self._update_node_state(node, 'switching_off')
             node['job_id'] = None
 
-
     def turn_off(self, nodes):
         for node in self._get_nodes_by_ids(nodes):
             self._update_node_state(node, 'sleeping')
             node['job_id'] = None
 
-
     def allocate(self, nodes, job_id):
         for node in self._get_nodes_by_ids(nodes):
             if node['state'] != 'active':
-                raise RuntimeError(f"Node {node['id']} cannot be allocated — state is not 'active'")
+                raise RuntimeError(
+                    f"Node {node['id']} cannot be allocated — state is not 'active'")
             if job_id is None:
-                raise RuntimeError(f"Node {node['id']} cannot be allocated — job_id is None")
+                raise RuntimeError(
+                    f"Node {node['id']} cannot be allocated — job_id is None")
             if node['job_id'] is not None:
-                raise RuntimeError(f"Node {node['id']} cannot be allocated for {job_id} — node is already allocated for {node['job_id']}")
-                
-            node['job_id'] = job_id
+                raise RuntimeError(
+                    f"Node {node['id']} cannot be allocated for {job_id} — node is already allocated for {node['job_id']}")
 
+            node['job_id'] = job_id
 
     def release(self, nodes):
         for node in self._get_nodes_by_ids(nodes):
             if node['state'] != 'active':
-                raise RuntimeError(f"Node {node['id']} cannot be released — state is not 'active'")
+                raise RuntimeError(
+                    f"Node {node['id']} cannot be released — state is not 'active'")
             elif node['state'] == 'active' and node['job_id'] == None:
-                raise RuntimeError(f"Node {node['id']} cannot be released — state is 'active' but not computing")
+                raise RuntimeError(
+                    f"Node {node['id']} cannot be released — state is 'active' but not computing")
             node['job_id'] = None
-
 
     def _get_nodes_by_ids(self, node_ids):
         found = [n for n in self.nodes if n['id'] in node_ids]
@@ -129,7 +134,3 @@ class Machine:
             missing = [nid for nid in node_ids if nid not in existing_ids]
             raise ValueError(f"Node IDs not found: {missing}")
         return found
-
-        
-
-                

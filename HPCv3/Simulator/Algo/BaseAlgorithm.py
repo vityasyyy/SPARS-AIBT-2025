@@ -2,9 +2,9 @@ import copy
 
 
 class BaseAlgorithm():
-    def __init__(self, ResourceManager, JobsManager, start_time, timeout=None):
-        self.ResourceManager = ResourceManager
-        self.JobsManager = JobsManager
+    def __init__(self, state, waiting_queue, start_time, timeout=None):
+        self.state = state
+        self.waiting_queue = waiting_queue
         self.events = []
         self.current_time = start_time
         self.timeout = timeout
@@ -31,7 +31,7 @@ class BaseAlgorithm():
 
     def timeout_policy(self):
         add_event = False
-        for node in self.ResourceManager.nodes:
+        for node in self.state:
             if node['job_id'] == None and node['state'] == 'active' and node['id'] not in [t['node_id'] for t in self.timeout_list]:
                 self.timeout_list.append(
                     {'node_id': node['id'], 'time': self.current_time + self.timeout})
@@ -42,7 +42,7 @@ class BaseAlgorithm():
                             {'type': 'call_me_later'})
 
         switch_off = []
-        for node in self.ResourceManager.nodes:
+        for node in self.state:
             for timeout_info in self.timeout_list:
                 if node['id'] == timeout_info['node_id']:
 
@@ -55,37 +55,38 @@ class BaseAlgorithm():
             self.push_event(self.current_time, {
                             'type': 'switch_off', 'nodes': switch_off})
 
-    def prep_schedule(self):
+    def prep_schedule(self, new_state, waiting_queue, scheduled_queue):
+        self.state = new_state
+        self.waiting_queue = waiting_queue
+        self.scheduled_queue = scheduled_queue
+
+        for node in self.state:
+            if node['state'] == 'sleeping':
+                node['release_time'] += node['transition_time']
+
         self.events = []
         self.compute_speeds = [node['compute_speed']
-                               for node in self.ResourceManager.nodes]
-        self.resources_agenda = copy.deepcopy(
-            self.ResourceManager.resources_agenda)
-        next_releases = self.resources_agenda
-        machines = {m['id']: m['states']['switching_on']['transitions']
-                    for m in self.ResourceManager.machines}
-
-        for next_release in next_releases:
-            for t in machines[next_release['node_id']]:
-                if t['state'] == 'sleeping':
-                    next_release['release_time'] += t['transition_time']
-
-        self.resources_agenda = sorted(
-            next_releases,
-            key=lambda x: (x['release_time'], x['node_id'])
-        )
+                               for node in self.state]
 
         """ 
         GET ALL AVAILABLE NODES (INCLUDES THE RESERVED NODES)
         THEN CHECK IF A SCHEDULED JOB CAN BE EXECUTED
         """
-        self.available = self.ResourceManager.get_available_nodes()
-        self.inactive = self.ResourceManager.get_sleeping_nodes()
+        self.available = [
+            node for node in self.state
+            if node['state'] == 'active' and node['job_id'] is None
+        ]
+
+        self.inactive = [
+            node for node in self.state
+            if node['state'] == 'sleeping'
+        ]
+
         self.allocated = []
         self.scheduled = []
 
-        if len(self.JobsManager.scheduled_queue) > 0:
-            for scheduled_job in self.JobsManager.scheduled_queue:
+        if len(self.scheduled_queue) > 0:
+            for scheduled_job in self.scheduled_queue:
                 executable = True
                 for reserved_nodes in scheduled_job['nodes']:
                     if reserved_nodes not in self.available:
@@ -102,10 +103,10 @@ class BaseAlgorithm():
                         self.compute_speeds[i] for i in allocated_nodes)
                     finish_time = self.current_time + \
                         (compute_demand / compute_power)
-                    for node in self.resources_agenda:
-                        if node['node_id'] in allocated_nodes:
+                    for node in self.state:
+                        if node['id'] in allocated_nodes:
                             node['release_time'] = finish_time
-                    self.JobsManager.scheduled_queue.remove(scheduled_job)
+                    self.scheduled_queue.remove(scheduled_job)
                     event = {
                         'job_id': scheduled_job['job_id'],
                         'subtime': scheduled_job['subtime'],
@@ -118,7 +119,10 @@ class BaseAlgorithm():
         """ 
         CONTINUE EXECUTE SCHEDULING LOGIC WITHOUT CONSIDERING THE RESERVED NODES
         """
-        reserved_nodes = self.ResourceManager.get_reserved_nodes()
+        reserved_nodes = [
+            node for node in self.state
+            if node['reserved']
+        ]
 
         self.available = [
             node for node in self.available if node not in reserved_nodes
