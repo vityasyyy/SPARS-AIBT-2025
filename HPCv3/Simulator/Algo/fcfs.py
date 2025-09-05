@@ -78,6 +78,7 @@ class FCFS(BaseAlgorithm):
                         'type': 'execution_start',
                         'nodes': reserved_nodes
                     }
+                    to_activate = [node['id'] for node in to_activate]
                     super().push_event(self.current_time, {
                         'type': 'switch_on', 'nodes': to_activate})
                     super().push_event(start_predict_time, event)

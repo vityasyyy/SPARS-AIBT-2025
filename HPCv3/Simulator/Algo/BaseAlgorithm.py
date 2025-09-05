@@ -62,7 +62,9 @@ class BaseAlgorithm():
 
         for node in self.state:
             if node['state'] == 'sleeping':
-                node['release_time'] += node['transition_time']
+                for transition in node['transitions']:
+                    if transition['state'] == 'switching_on':
+                        node['release_time'] += transition['transition_time']
 
         self.events = []
         self.compute_speeds = [node['compute_speed']

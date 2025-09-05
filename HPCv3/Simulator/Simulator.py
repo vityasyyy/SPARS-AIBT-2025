@@ -33,10 +33,6 @@ class Simulator:
 
         self.rl = rl
 
-        if rl and agent is None:
-            raise ValueError(
-                "Agent, must be provided if rl=True")
-
         self.agent = agent
 
         self.push_event(start_time, {'type': 'simulation_start'})
@@ -146,11 +142,13 @@ class Simulator:
                     need_rl = True
 
             elif self.event['type'] == 'execution_start':
-                finish_time, event = self.PlatformControl.compute(
+                result = self.PlatformControl.compute(
                     self.event['nodes'], self.event, self.current_time)
-                self.jobs_manager.remove_job_from_waiting_queue(
-                    self.event['job_id'], 'execution_start')
-                self.push_event(finish_time, event)
+                if result is not None:
+                    finish_time, event = result
+                    self.jobs_manager.remove_job_from_waiting_queue(
+                        self.event['job_id'], 'execution_start')
+                    self.push_event(finish_time, event)
 
             elif self.event['type'] == 'execution_finished':
                 self.PlatformControl.release(self.event['nodes'])

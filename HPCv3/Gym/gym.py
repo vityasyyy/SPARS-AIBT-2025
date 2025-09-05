@@ -77,39 +77,30 @@ class HPCGymEnv(gym.Env):
 
         return switch_off, switch_on
 
-    def step(self, rl_agent):
-        memory = {}
-        need_rl = False
+    def advance(self):
 
-        while not need_rl and self.simulator.is_running:
+        while self.simulator.is_running:
             events = self.simulator.proceed()
+            scheduler_message = self.simulator.scheduler.schedule(self.simulator.current_time, self.simulator.PlatformControl.get_state(
+            ), self.simulator.jobs_manager.waiting_queue, self.simulator.jobs_manager.scheduled_queue)
+
+            for _data in scheduler_message:
+                timestamp = _data['timestamp']
+                _events = _data['events']
+                for event in _events:
+                    self.simulator.push_event(timestamp, event)
+
             for event_list in events['event_list']:
                 for event in event_list['events']:
                     if event['type'] == 'CALL_RL':
-                        need_rl = True
-                        break
-                if need_rl:
-                    break
+                        return
 
+    def step(self, actions):
         state = self.simulator.PlatformControl.get_state()
-        features = feature_extraction(self.simulator)
-        features = np.concatenate(features)
-        features = features.reshape(1, 16, 11)
-        mask = get_feasible_mask(state)
-        mask = np.asanyarray(mask)
-        mask = mask.reshape(1, 16, 2)
-
-        features_ = T.from_numpy(features).to(rl_agent.device).float()
-        mask_ = T.from_numpy(mask).to(rl_agent.device).float()
-        memory['features'] = features_
-        memory['mask'] = mask_
-
-        actions, entropy = rl_agent(features_, mask_)
-        memory['actions'] = actions
         logger.info(f"Action taken: {actions}")
         switch_off, switch_on = self.action_translator(state, actions)
-        logger.info(f"Switch off: {switch_off}")
-        logger.info(f"Switch on: {switch_on}")
+        # logger.info(f"Switch off: {switch_off}")
+        # logger.info(f"Switch on: {switch_on}")
 
         self.simulator.push_event(self.simulator.current_time, {
                                   'type': 'switch_off', 'nodes': switch_off})
@@ -120,6 +111,15 @@ class HPCGymEnv(gym.Env):
 
         while not need_rl and self.simulator.is_running:
             events = self.simulator.proceed()
+            scheduler_message = self.simulator.scheduler.schedule(self.simulator.current_time, self.simulator.PlatformControl.get_state(
+            ), self.simulator.jobs_manager.waiting_queue, self.simulator.jobs_manager.scheduled_queue)
+
+            for _data in scheduler_message:
+                timestamp = _data['timestamp']
+                _events = _data['events']
+                for event in _events:
+                    self.simulator.push_event(timestamp, event)
+
             for event_list in events['event_list']:
                 for event in event_list['events']:
                     if event['type'] == 'CALL_RL':
@@ -127,19 +127,16 @@ class HPCGymEnv(gym.Env):
                         break
                 if need_rl:
                     break
-        next_state = self.simulator.PlatformControl.get_state()
-        reward = Reward.calculate_reward(next_state)
-        memory['reward'] = reward
+
+        reward = Reward.calculate_reward(self.simulator.Monitor)
         done = not self.simulator.is_running
-        memory['done'] = done
         next_features = feature_extraction(self.simulator)
 
         # Reshape for Critic (add batch dimension)
         next_features = np.concatenate(next_features)
         next_features = next_features.reshape(1, 16, 11)
-        next_features = T.from_numpy(next_features).to(rl_agent.device).float()
 
-        return next_features, reward, done, memory
+        return next_features, reward, done
 
     def reset(self, workload_path, platform_path,
               start_time, algorithm, agent):

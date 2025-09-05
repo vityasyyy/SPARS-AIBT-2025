@@ -1,4 +1,6 @@
 from HPCv3.Simulator.Machine import Machine
+import logging
+logger = logging.getLogger("runner")
 
 
 class PlatformControl:
@@ -11,7 +13,10 @@ class PlatformControl:
         return self.machines.nodes
 
     def compute(self, node_ids, job, current_time):
-        self.machines.allocate(node_ids, job['job_id'])
+        success = self.machines.allocate(node_ids, job['job_id'])
+        if not success:
+            logger.info(f'Job {job} failed to execute')
+            return None
         compute_demand = job['walltime'] * job['res']
         compute_power = sum(node['compute_speed']
                             for node in self.machines.nodes if node['id'] in node_ids)

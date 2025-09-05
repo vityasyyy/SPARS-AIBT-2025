@@ -1,4 +1,5 @@
 import numpy as np
+import torch as T
 
 
 class PPOMemory:
@@ -6,7 +7,7 @@ class PPOMemory:
         self.features = []
         self.masks = []
         self.actions = []
-        self.rewards = []
+        self.rewards = None
 
         self.batch_size = batch_size
 
@@ -30,7 +31,10 @@ class PPOMemory:
         self.features += [features.tolist()]
         self.masks += [mask.tolist()]
         self.actions += [action.tolist()]
-        self.rewards += [reward]
+        if self.rewards is None:
+            self.rewards = reward.unsqueeze(0)
+        else:
+            self.rewards = T.cat((self.rewards, reward.unsqueeze(0)), dim=0)
 
     def get_memory(self):
         return self.features, self.masks, self.actions, self.rewards

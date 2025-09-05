@@ -77,37 +77,47 @@ class Machine:
             dvfs_profile = self.machines[node['id']
                                          ]['dvfs_profiles'][node['dvfs_mode']]
             node['power'] = dvfs_profile['power']
-            node['compute_speed'] = dvfs_profile['compute_speed']
         else:
             node['power'] = state_def['power']
+
+        if state_def['compute_speed'] == 'from_dvfs':
+            dvfs_profile = self.machines[node['id']
+                                         ]['dvfs_profiles'][node['dvfs_mode']]
+            node['compute_speed'] = dvfs_profile['compute_speed']
+        else:
             node['compute_speed'] = state_def['compute_speed']
+
         node['transitions'] = state_def['transitions']
         node['can_run_jobs'] = state_def['can_run_jobs']
 
     def switch_on(self, nodes):
+        print('swtich on', nodes)
         for node in self._get_nodes_by_ids(nodes):
             self._update_node_state(node, 'switching_on')
             node['job_id'] = None
 
     def turn_on(self, nodes):
+        print('turn on', nodes)
         for node in self._get_nodes_by_ids(nodes):
             self._update_node_state(node, 'active')
 
     def switch_off(self, nodes):
+        print('switch_off', nodes)
         for node in self._get_nodes_by_ids(nodes):
             self._update_node_state(node, 'switching_off')
             node['job_id'] = None
 
     def turn_off(self, nodes):
+        print('turn_off', nodes)
         for node in self._get_nodes_by_ids(nodes):
             self._update_node_state(node, 'sleeping')
             node['job_id'] = None
 
     def allocate(self, nodes, job_id):
+        print('allocate', nodes)
         for node in self._get_nodes_by_ids(nodes):
             if node['state'] != 'active':
-                raise RuntimeError(
-                    f"Node {node['id']} cannot be allocated — state is not 'active'")
+                return False
             if job_id is None:
                 raise RuntimeError(
                     f"Node {node['id']} cannot be allocated — job_id is None")
@@ -118,6 +128,7 @@ class Machine:
             node['job_id'] = job_id
 
     def release(self, nodes):
+        print('release', nodes)
         for node in self._get_nodes_by_ids(nodes):
             if node['state'] != 'active':
                 raise RuntimeError(
@@ -128,6 +139,7 @@ class Machine:
             node['job_id'] = None
 
     def _get_nodes_by_ids(self, node_ids):
+        print(node_ids)
         found = [n for n in self.nodes if n['id'] in node_ids]
         if len(found) != len(node_ids):
             existing_ids = {n['id'] for n in self.nodes}

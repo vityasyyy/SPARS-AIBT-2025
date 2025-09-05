@@ -2,65 +2,112 @@ import numpy as np
 from typing import Tuple
 import torch as T
 from torch.func import vmap
+import logging
+from HPCv3.Simulator.MachineMonitor import Monitor
+from torchviz import make_dot
+logger = logging.getLogger("runner")
 
 
 class Reward():
-    def calculate_reward(state):
-        reward = -state[0]['power']
-        return reward
+    def __init__(self):
+        self.alpha = 0.5
+        self.beta = 0.5
+
+    def calculate_reward(monitor: Monitor):
+        wasted_energy = [-energy['energy_waste']
+                         for energy in monitor.energy]
+        wasted_energy = T.tensor(
+            wasted_energy, dtype=T.float32, requires_grad=True, device='cuda')
+        # logger.info(f"Wasted energy: {wasted_energy}")
+        return wasted_energy
 
 
-def learn(agent, agent_opt, critic, critic_opt, done, saved_experiences, next_state, discount_factor=0.99):
-    saved_features, masks, saved_actions, saved_rewards = saved_experiences
-    saved_features = T.tensor(
-        saved_features, requires_grad=True).to(agent.device)
+def discounted_returns(rewards, gamma, time_dim=-1):
+    """
+    rewards: tensor with time along `time_dim`
+    gamma: float or 0-D tensor (can require_grad)
+    returns: discounted-to-go along `time_dim` (same shape as rewards)
+    """
+    assert T.is_tensor(rewards), "rewards must be a tensor"
+    dtype, device = rewards.dtype, rewards.device
 
+    # Move time axis to the end for convenience
+    if time_dim != -1:
+        rewards = rewards.transpose(time_dim, -1)  # shape: [..., seq_len]
+
+    seq_len = rewards.size(-1)
+
+    # gamma as tensor
+    if T.is_tensor(gamma):
+        gamma = gamma.to(device=device, dtype=dtype)
+    else:
+        gamma = T.tensor(gamma, device=device, dtype=dtype)
+
+    # steps = T.arange(seq_len, device=device, dtype=dtype)  # [seq_len]
+    print(rewards.shape)
+    print(gamma.shape)
+    # print(steps.shape)
+    # factors = gamma ** steps                                    # [seq_len]
+    # factors = factors.view(*([1] * (rewards.dim() - 1)),
+    #                        seq_len)  # [..., seq_len]
+
+    weighted = rewards.view(-1, 1) * gamma
+    flipped = T.flip(weighted, dims=[-1])
+    csum = T.cumsum(flipped, dim=-1)
+    disc = T.flip(csum, dims=[-1]) / gamma
+
+    # Put time axis back
+    if time_dim != -1:
+        disc = disc.transpose(-1, time_dim)
+
+    return disc
+
+
+def learn(agent, agent_opt, critic, critic_opt, done, advantage, saved_experiences):
+    saved_logprobs, saved_states, saved_masks, saved_rewards, next_state = saved_experiences
     # prepare returns
     if done:
         R = 0
     else:
         next_state = next_state.to(agent.device)
         R = critic(next_state).detach().item()
-    saved_logprobs = T.tensor([np.log(prob)
-                              for prob in saved_actions], requires_grad=True).to(agent.device)
+    returns = [0 for _ in range(len(saved_logprobs))]
+    critic_vals = [0. for _ in range(len(saved_logprobs))]
+    new_logprobs = []
+    for i in range(len(returns)):
+        actions, entropy = (agent(saved_states[i], saved_masks[i]))
+        new_logprobs.append(actions)
 
-    rewards = T.tensor(saved_rewards, dtype=T.float32,
-                       device=agent.device, requires_grad=True)
+    for i in range(len(returns)):
+        R = saved_rewards[-i] + 0.9*R
+        returns[-i] = R
+        critic_vals[-i] = critic(saved_states[-i]).squeeze(0)
 
-    # Compute discounted returns
-    R = 0.
-    returns = T.zeros_like(rewards)
-    for i in reversed(range(len(rewards))):
-        R = rewards[i] + discount_factor * R
-        returns[i] = R
-
-    # Compute critic values in one batch (if saved_features is a tensor)
-
-    critic_values_list = [critic(T.tensor(f, dtype=T.float32, device=agent.device)).squeeze(-1)
-                          for f in saved_features]
-
-
-# Convert list to tensor
-    critic_values = T.stack(critic_values_list)
-
-    # returns = T.tensor(returns, dtype=T.float32).to(agent.device)
-    advantage = (returns - critic_values).detach()
-    print(advantage.shape)
-    print(saved_logprobs.shape)
+    new_logprobs = T.stack(new_logprobs)
+    critic_vals = T.stack(critic_vals)
     # update actor
-    saved_logprobs = saved_logprobs.view(-1, 1, 1, 1)  # [T,1,1,1]
-    agent_loss = -(saved_logprobs*advantage).sum()
+    new_logprobs = new_logprobs.view(1, 1, -1, 1)
+    agent_loss = -(new_logprobs*advantage).sum()
     agent_opt.zero_grad(set_to_none=True)
+
+    # assume agent_loss is your scalar tensor
+    dot = make_dot(agent_loss, params=dict(agent.named_parameters()))
+
+    # render to file (PDF/PNG/SVG)
+    dot.render("agent_loss_graph", format="pdf")
+
     agent_loss.backward()
-    T.nn.utils.clip_grad_norm_(agent.parameters(), max_norm=1)
+    # T.nn.utils.clip_grad_norm_(agent.parameters(), max_norm="inf")
     agent_opt.step()
+    returns = T.stack(returns, dim=0)
+    returns = returns.view(1, 1, -1, 1)
 
     # update critic
-    critic_loss = (returns-critic_values)**2
+    critic_loss = (returns-critic_vals)**2
     critic_loss = critic_loss.mean()
     critic_opt.zero_grad(set_to_none=True)
     critic_loss.backward()
-    T.nn.utils.clip_grad_norm_(critic.parameters(), max_norm=1)
+    # T.nn.utils.clip_grad_norm_(critic.parameters(), max_norm=args.grad_norm)
     critic_opt.step()
 
 
@@ -78,7 +125,7 @@ def feature_extraction(simulator) -> Tuple[np.ndarray, np.ndarray]:
     simulator_features[1] = arrival_rate
 
     mean_runtime_jobs_in_queue = sum(
-        job["walltime"] for job in simulator.jobs_manager.waiting_queue) / len(simulator.jobs_manager.waiting_queue)
+        job["walltime"] for job in simulator.jobs_manager.waiting_queue) / (len(simulator.jobs_manager.waiting_queue) + 1e-8)
 
     simulator_features[2] = mean_runtime_jobs_in_queue
 
