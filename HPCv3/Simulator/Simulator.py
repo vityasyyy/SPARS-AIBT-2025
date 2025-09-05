@@ -164,7 +164,7 @@ class Simulator:
                     self.event['node'], self.event['mode'])
 
         self.Monitor.record(mode='after', machines=self.PlatformControl.machines,
-                            current_time=self.current_time, record_job_execution=record_job_execution)
+                            current_time=self.current_time, record_job_execution=record_job_execution, record_job_arrival=record_job_arrival)
 
         if self.num_finished_jobs == self.num_jobs:
             message = self.on_finish()

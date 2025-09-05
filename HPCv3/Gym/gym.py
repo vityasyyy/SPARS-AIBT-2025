@@ -5,13 +5,47 @@ import gymnasium as gym
 from gymnasium import spaces
 from datetime import datetime
 import logging
+import torch as T
+from typing import Tuple
 
 # import your real Simulator and RJMS
+from HPCv3.Gym.utils import Reward
 from HPCv3.Simulator.Simulator import Simulator
 from HPCv3.RJMS.RJMS import RJMS
 
+from HPCv3.Gym.utils import feature_extraction
+
 
 logger = logging.getLogger("runner")
+
+
+def get_feasible_mask(states):
+    # fm[:, 0] = dibiarkan, dummy
+    # fm[:, 1] = boleh matikan/tidak
+    # fm[:, 2] = boleh hidupkan/tidak
+    feasible_mask = np.ones((len(states), 3), dtype=np.float32)
+    is_switching_off = np.asarray(
+        [host['state'] == 'switching_off' for host in states])
+    is_switching_on = np.asarray(
+        [host['state'] == 'switching_on' for host in states])
+    is_switching = np.logical_or(is_switching_off, is_switching_on)
+    is_idle = np.asarray(
+        [host['state'] == 'active' and host['job_id'] is None for host in states])
+    is_sleeping = np.asarray(
+        [host['state'] == 'sleeping' for host in states])
+    is_allocated = np.asarray(
+        [host['state'] == 'active' and host['job_id'] is None for host in states])
+
+    # can it be switched off
+    is_really_idle = np.logical_and(is_idle, np.logical_not(is_allocated))
+    feasible_mask[:, 1] = np.logical_and(
+        np.logical_not(is_switching), is_really_idle)
+
+    # can it be switched on
+    feasible_mask[:, 2] = np.logical_and(
+        np.logical_not(is_switching), is_sleeping)
+    # return cuma 2 action, update 15-09-2022
+    return feasible_mask[:, 1:]
 
 
 class HPCGymEnv(gym.Env):
@@ -30,7 +64,21 @@ class HPCGymEnv(gym.Env):
 
         self.simulator = simulator
 
+    def action_translator(self, state, actions):
+
+        binary_actions = [0 if pair[0] > pair[1] else 1 for pair in actions[0]]
+        switch_off = []
+        switch_on = []
+        for _, action in enumerate(binary_actions):
+            if action == 0 and state[_]['state'] == 'active' and state[_]['job_id'] is None:
+                switch_off.append(_)
+            elif action == 1 and state[_]['state'] == 'sleeping':
+                switch_on.append(_)
+
+        return switch_off, switch_on
+
     def step(self, rl_agent):
+        memory = {}
         need_rl = False
 
         while not need_rl and self.simulator.is_running:
@@ -44,70 +92,56 @@ class HPCGymEnv(gym.Env):
                     break
 
         state = self.simulator.PlatformControl.get_state()
-        features = self.feature_extraction(state)
+        features = feature_extraction(self.simulator)
+        features = np.concatenate(features)
+        features = features.reshape(1, 16, 11)
+        mask = get_feasible_mask(state)
+        mask = np.asanyarray(mask)
+        mask = mask.reshape(1, 16, 2)
+
+        features_ = T.from_numpy(features).to(rl_agent.device).float()
+        mask_ = T.from_numpy(mask).to(rl_agent.device).float()
+        memory['features'] = features_
+        memory['mask'] = mask_
+
+        actions, entropy = rl_agent(features_, mask_)
+        memory['actions'] = actions
+        logger.info(f"Action taken: {actions}")
+        switch_off, switch_on = self.action_translator(state, actions)
+        logger.info(f"Switch off: {switch_off}")
+        logger.info(f"Switch on: {switch_on}")
+
+        self.simulator.push_event(self.simulator.current_time, {
+                                  'type': 'switch_off', 'nodes': switch_off})
+        self.simulator.push_event(self.simulator.current_time, {
+                                  'type': 'switch_on', 'nodes': switch_on})
+
+        need_rl = False
+
+        while not need_rl and self.simulator.is_running:
+            events = self.simulator.proceed()
+            for event_list in events['event_list']:
+                for event in event_list['events']:
+                    if event['type'] == 'CALL_RL':
+                        need_rl = True
+                        break
+                if need_rl:
+                    break
+        next_state = self.simulator.PlatformControl.get_state()
+        reward = Reward.calculate_reward(next_state)
+        memory['reward'] = reward
+        done = not self.simulator.is_running
+        memory['done'] = done
+        next_features = feature_extraction(self.simulator)
+
+        # Reshape for Critic (add batch dimension)
+        next_features = np.concatenate(next_features)
+        next_features = next_features.reshape(1, 16, 11)
+        next_features = T.from_numpy(next_features).to(rl_agent.device).float()
+
+        return next_features, reward, done, memory
 
     def reset(self, workload_path, platform_path,
               start_time, algorithm, agent):
         self.simulator = Simulator(workload_path, platform_path,
                                    start_time, algorithm, rl=True, agent=agent)
-
-    def feature_extraction(self, state):
-        # === GLOBAL FEATURES ===
-        # print("1. jumlah jobs di queue:", len(self.simulator.queue))
-        # print("2. arrival rate:")
-        # submission_time = self.job_monitor.info["submission_time"]
-        # print("---overall arrival rate (not&normalized):",get_arrival_rate(submission_time, False), get_arrival_rate(submission_time, True))
-        # print("---last 100 jobs arrival rate (not&normalized):",get_arrival_rate(submission_time[-100:], False), get_arrival_rate(submission_time[-100:], True) )
-        # hosts = self.simulator.platform.hosts
-        # print("3. mean runtime jobs di queue:", get_mean_runtime_nodes_in_queue(self.simulator, normalized=False), get_mean_runtime_nodes_in_queue(self.simulator, normalized=False))
-        # exit()
-        # queue = self.simulator.queue
-        # print("3. current mean waiting time:", get_mean_waittime_queue(queue, current_time, False), get_mean_waittime_queue(queue, current_time, True))
-        # print("4. Wasted energy (Joule):", get_wasted_energy(self.energy_monitor, self.host_monitor, False), get_wasted_energy(self.energy_monitor, self.host_monitor, True))
-        # print("5. mean requested walltime jobs in queue:", get_mean_walltime_in_queue(queue, False), get_mean_walltime_in_queue(queue,True))
-        job_num = len(self.simulator.jobs_manager.waiting_queue)
-        arrival_rate = self.simulator.Monitor.jobs_submission_log / \
-            (self.simulator.current_time - self.simulator.start_time)
-        mean_runtime_jobs_in_queue = sum(
-            self.simulator.jobs_manager.waiting_queue['walltime']) / len(self.simulator.jobs_manager.waiting_queue)
-        total_energy_waste = sum(self.simulator.Monitor.energy['energy_waste'])
-        mean_requested_walltime_jobs_in_queue = mean_runtime_jobs_in_queue
-
-        # === NODE FEATURES ===
-        # print("NODE FEATURES")
-        # print("1. ON/OFF")
-        host_on_off = -
-        # print("2. ACTIVE/IDLE")
-        host_active_idle = get_host_active_idle(self.simulator.platform)
-        node_features[:, 1] = host_active_idle
-        # print("3. Running Idle TIME")
-        current_idle_time = get_current_idle_time(self.host_monitor)
-        node_features[:, 2] = current_idle_time
-        # print("4. remaining time (percent) of job in nodes")
-        remaining_runtime_percent = get_remaining_runtime_percent(
-            list(self.simulator.platform.hosts), self.job_infos, self.simulator.current_time)
-        node_features[:, 3] = remaining_runtime_percent
-        # print("5. wasted energy / consumed joules")
-        wasted_energy, normalized_wasted_energy = get_host_wasted_energy(
-            self.host_monitor, False), get_host_wasted_energy(self.host_monitor, True)
-        node_features[:, 4] = normalized_wasted_energy
-        # print("6. time switching state/ time computing? or total time perhaps?")
-        switching_time, normalized_switching_time = get_switching_time(
-            self.host_monitor, False), get_switching_time(self.host_monitor, True, self.simulator.current_time)
-        node_features[:, 5] = normalized_switching_time
-        return simulator_features, node_features
-        num_nodes = len(state)
-        num_active = sum(
-            1 for node in state if node['state'] == 'active' and node['job_id'] is not None)
-        num_idle = sum(
-            1 for node in state if node['state'] == 'idle' and node['job_id'] is not None)
-        num_sleeping = sum(1 for node in state if node['state'] == 'sleeping')
-        num_switching_on = sum(
-            1 for node in state if node['state'] == 'switching_on')
-        num_switching_off = sum(
-            1 for node in state if node['state'] == 'switching_off')
-
-        features = np.array([num_nodes, num_active, num_idle,
-                             num_sleeping, num_switching_on, num_switching_off], dtype=np.float32)
-
-        return features
