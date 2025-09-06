@@ -1,8 +1,9 @@
-from HPCv3.Simulator.Algo.fcfs import FCFS
-
+from HPCv3.Simulator.Algo.fcfs_auto_switch_on import FCFSAuto
+from HPCv3.Simulator.Algo.fcfs_normal import FCFSNormal
 
 ALGO_MAP = {
-    'fcfs': FCFS,
+    'fcfs_auto': FCFSAuto,
+    'fcfs_normal': FCFSNormal
 }
 
 

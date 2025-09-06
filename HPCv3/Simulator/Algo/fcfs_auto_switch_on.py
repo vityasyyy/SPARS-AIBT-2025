@@ -1,15 +1,15 @@
 from HPCv3.Simulator.Algo.BaseAlgorithm import BaseAlgorithm
 
 
-class FCFS(BaseAlgorithm):
+class FCFSAuto(BaseAlgorithm):
     def schedule(self, new_state, waiting_queue, scheduled_queue):
         super().prep_schedule(new_state, waiting_queue, scheduled_queue)
-        self.FCFS()
+        self.FCFSAuto()
         if self.timeout is not None:
             super().timeout_policy()
         return self.events
 
-    def FCFS(self):
+    def FCFSAuto(self):
         waiting_queue = [
             job for job in self.waiting_queue if job['job_id'] not in self.scheduled]
         for job in waiting_queue:
