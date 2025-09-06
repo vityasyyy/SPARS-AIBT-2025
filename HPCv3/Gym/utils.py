@@ -1,3 +1,4 @@
+import random
 import numpy as np
 from typing import Tuple
 import torch as T
@@ -31,7 +32,6 @@ def discounted_returns(rewards, gamma, time_dim=-1):
     assert T.is_tensor(rewards), "rewards must be a tensor"
     dtype, device = rewards.dtype, rewards.device
 
-    # Move time axis to the end for convenience
     if time_dim != -1:
         rewards = rewards.transpose(time_dim, -1)  # shape: [..., seq_len]
 
@@ -42,14 +42,6 @@ def discounted_returns(rewards, gamma, time_dim=-1):
         gamma = gamma.to(device=device, dtype=dtype)
     else:
         gamma = T.tensor(gamma, device=device, dtype=dtype)
-
-    # steps = T.arange(seq_len, device=device, dtype=dtype)  # [seq_len]
-    print(rewards.shape)
-    print(gamma.shape)
-    # print(steps.shape)
-    # factors = gamma ** steps                                    # [seq_len]
-    # factors = factors.view(*([1] * (rewards.dim() - 1)),
-    #                        seq_len)  # [..., seq_len]
 
     weighted = rewards.view(-1, 1) * gamma
     flipped = T.flip(weighted, dims=[-1])
@@ -63,52 +55,123 @@ def discounted_returns(rewards, gamma, time_dim=-1):
     return disc
 
 
-def learn(agent, agent_opt, critic, critic_opt, done, advantage, saved_experiences):
-    saved_logprobs, saved_states, saved_masks, saved_rewards, next_state = saved_experiences
-    # prepare returns
-    if done:
-        R = 0
-    else:
-        next_state = next_state.to(agent.device)
-        R = critic(next_state).detach().item()
-    returns = [0 for _ in range(len(saved_logprobs))]
-    critic_vals = [0. for _ in range(len(saved_logprobs))]
-    new_logprobs = []
-    for i in range(len(returns)):
-        actions, entropy = (agent(saved_states[i], saved_masks[i]))
-        new_logprobs.append(actions)
+def learn(agent, agent_opt, critic, critic_opt, done, saved_experiences, next_observation,
+          gamma: float = 0.99, entropy_coef: float = 0.0):
+    """
+    Single-pass (reverse) loop, no batching (TorchScript-safe).
+    - No Graphviz in hot path
+    - Per-timestep returns, values, advantages
+    - Avoids Python-scalar conversions
+    """
+    memory_actions, memory_features, memory_masks, memory_rewards = saved_experiences
+    next_features, _next_masks = next_observation
 
-    for i in range(len(returns)):
-        R = saved_rewards[-i] + 0.9*R
-        returns[-i] = R
-        critic_vals[-i] = critic(saved_states[-i]).squeeze(0)
+    device = next(agent.parameters()).device
+    Tlen = len(memory_rewards)
 
-    new_logprobs = T.stack(new_logprobs)
-    critic_vals = T.stack(critic_vals)
-    # update actor
-    new_logprobs = new_logprobs.view(1, 1, -1, 1)
-    agent_loss = -(new_logprobs*advantage).sum()
+    # Helper: make any tensor -> scalar tensor on device (mean if it has >1 element)
+    def _scalar(t):
+        if isinstance(t, T.Tensor):
+            return t.to(device).float().view(-1).mean()
+        return T.tensor(float(t), device=device)
+
+    # --- Bootstrap from next state (single critic call) ---
+    with T.no_grad():
+        bootstrap = T.zeros((), device=device) if done else _scalar(
+            critic(next_features))
+
+    # --- Allocate per-timestep arrays on device ---
+    rewards = T.empty(Tlen, device=device)
+    returns = T.empty(Tlen, device=device)
+    values = T.empty(Tlen, device=device)
+    logprobs = T.empty(Tlen, device=device)
+    entropies = T.empty(Tlen, device=device)
+
+    have_entropy = False
+
+    # --- Single reverse pass: compute returns, values, logprobs ---
+    R = bootstrap
+    for t in range(Tlen - 1, -1, -1):
+        # reward_t as scalar tensor
+        rewards[t] = _scalar(memory_rewards[t])
+
+        # critic value (scalar tensor)
+        v_t = critic(memory_features[t]).float().view(-1).mean()
+        values[t] = v_t
+
+        # agent outputs
+        out = agent(memory_features[t].to(device), memory_masks[t].to(device))
+        if isinstance(out, (tuple, list)):
+            lp_t = out[0]
+            ent_t = out[1]
+        else:
+            lp_t, ent_t = out, None
+
+        logprobs[t] = _scalar(lp_t)
+        if ent_t is not None:
+            entropies[t] = _scalar(ent_t)
+            have_entropy = True
+
+        # discounted return
+        R = rewards[t] + gamma * R
+        returns[t] = R
+
+    # --- Losses ---
+    advantage = (returns - values).detach()       # [T]
+    actor_loss = -(logprobs * advantage).mean()
+    if entropy_coef and have_entropy:
+        actor_loss = actor_loss - entropy_coef * entropies.mean()
+
+    critic_loss = T.nn.functional.mse_loss(values, returns)
+
+    # --- Optimize actor ---
     agent_opt.zero_grad(set_to_none=True)
-
-    # assume agent_loss is your scalar tensor
-    dot = make_dot(agent_loss, params=dict(agent.named_parameters()))
-
-    # render to file (PDF/PNG/SVG)
-    dot.render("agent_loss_graph", format="pdf")
-
-    agent_loss.backward()
-    # T.nn.utils.clip_grad_norm_(agent.parameters(), max_norm="inf")
+    actor_loss.backward()
+    # T.nn.utils.clip_grad_norm_(agent.parameters(), max_norm=...)
     agent_opt.step()
-    returns = T.stack(returns, dim=0)
-    returns = returns.view(1, 1, -1, 1)
 
-    # update critic
-    critic_loss = (returns-critic_vals)**2
-    critic_loss = critic_loss.mean()
+    # --- Optimize critic ---
     critic_opt.zero_grad(set_to_none=True)
     critic_loss.backward()
-    # T.nn.utils.clip_grad_norm_(critic.parameters(), max_norm=args.grad_norm)
+    # T.nn.utils.clip_grad_norm_(critic.parameters(), max_norm=...)
     critic_opt.step()
+
+    return {
+        "actor_loss": float(actor_loss.detach().cpu()),
+        "critic_loss": float(critic_loss.detach().cpu()),
+        "returns_mean": float(returns.mean().detach().cpu()),
+        "adv_mean": float(advantage.mean().detach().cpu()),
+        "entropy": float(entropies.mean().detach().cpu()) if have_entropy else None,
+    }
+
+
+def get_feasible_mask(states):
+    # fm[:, 0] = dibiarkan, dummy
+    # fm[:, 1] = boleh matikan/tidak
+    # fm[:, 2] = boleh hidupkan/tidak
+    feasible_mask = np.ones((len(states), 3), dtype=np.float32)
+    is_switching_off = np.asarray(
+        [host['state'] == 'switching_off' for host in states])
+    is_switching_on = np.asarray(
+        [host['state'] == 'switching_on' for host in states])
+    is_switching = np.logical_or(is_switching_off, is_switching_on)
+    is_idle = np.asarray(
+        [host['state'] == 'active' and host['job_id'] is None for host in states])
+    is_sleeping = np.asarray(
+        [host['state'] == 'sleeping' for host in states])
+    is_allocated = np.asarray(
+        [host['state'] == 'active' and host['job_id'] is None for host in states])
+
+    # can it be switched off
+    is_really_idle = np.logical_and(is_idle, np.logical_not(is_allocated))
+    feasible_mask[:, 1] = np.logical_and(
+        np.logical_not(is_switching), is_really_idle)
+
+    # can it be switched on
+    feasible_mask[:, 2] = np.logical_and(
+        np.logical_not(is_switching), is_sleeping)
+    # return cuma 2 action, update 15-09-2022
+    return feasible_mask[:, 1:]
 
 
 def feature_extraction(simulator) -> Tuple[np.ndarray, np.ndarray]:
@@ -140,26 +203,22 @@ def feature_extraction(simulator) -> Tuple[np.ndarray, np.ndarray]:
     # expand simulator features for concatenation
     simulator_features = simulator_features[np.newaxis, ...]
 
-    # === NODE FEATURES ===
+# === NODE FEATURES ===
     num_node_features = 6
     hosts = list(simulator.PlatformControl.get_state())
-    node_features = np.zeros(
-        (len(hosts), num_node_features), dtype=np.float32)
+    num_hosts = len(hosts)
 
-    node_features[:, 0] = 0  # host_on_off
-    node_features[:, 1] = 0  # host_active_idle
-    node_features[:, 2] = 0  # current_idle_time
-    node_features[:, 3] = 0  # remaining_runtime_percent
-    node_features[:, 4] = 0  # normalized_wasted_energy
-    node_features[:, 5] = 0  # normalized_switching_time
+    # Generate random values per node per feature
+    node_features = np.random.uniform(0.0, 10.0, size=(
+        num_hosts, num_node_features)).astype(np.float32)
 
-    # broadcast simulator features to match node_features rows
-    simulator_features = np.broadcast_to(
-        simulator_features, (node_features.shape[0],
-                             simulator_features.shape[1])
+    # Broadcast simulator features to match node_features rows
+    simulator_features_broadcast = np.broadcast_to(
+        simulator_features, (num_hosts, simulator_features.shape[1])
     )
 
-    # concatenate along features axis
-    features = np.concatenate((simulator_features, node_features), axis=1)
+    # Concatenate along features axis
+    features = np.concatenate(
+        (simulator_features_broadcast, node_features), axis=1)
 
     return features
