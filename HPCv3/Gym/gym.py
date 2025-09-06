@@ -108,8 +108,8 @@ class HPCGymEnv(gym.Env):
                         break
                 if need_rl:
                     break
-
-        reward = Reward.calculate_reward(self.simulator.Monitor)
+        reward_function = Reward()
+        reward = reward_function.calculate_reward(self.simulator.Monitor)
         done = not self.simulator.is_running
         observation = self.get_observation()
 

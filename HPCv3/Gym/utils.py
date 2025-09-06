@@ -9,18 +9,83 @@ from torchviz import make_dot
 logger = logging.getLogger("runner")
 
 
-class Reward():
-    def __init__(self):
-        self.alpha = 0.5
-        self.beta = 0.5
+class Reward:
+    """
+    reward_per_node = α * (-energy_waste_per_node) + β * (-waiting_time_metric)
+    where waiting_time_metric is a scalar (mean wait of finished jobs) broadcast to all nodes.
+    """
 
-    def calculate_reward(monitor: Monitor):
-        wasted_energy = [-energy['energy_waste']
-                         for energy in monitor.energy]
+    def __init__(self, alpha: float = 0.5, beta: float = 0.5,
+                 # mean wait per finished job (True) or sum (False)
+                 use_mean_wait: bool = True,
+                 device: str = "cuda",
+                 require_grad: bool = True):   # keep True to match your current pipeline
+        self.alpha = alpha
+        self.beta = beta
+        self.use_mean_wait = use_mean_wait
+        self.device = T.device(device)
+        self.require_grad = require_grad
+
+    @staticmethod
+    def _get_first_key(d: dict, keys):
+        for k in keys:
+            if k in d:
+                return d[k]
+        return None
+
+    def _compute_waiting_time_scalar(self, monitor) -> float:
+        """
+        Compute a scalar waiting-time metric from monitor logs:
+        wait_j = max(0, start_time_j - submit_time_j) for each job with both times available.
+        Returns 0.0 if no valid pairs found.
+        """
+        # Build lookup: submit time per job_id (or unique job dict key)
+        submit_by_id = {}
+        for job in monitor.jobs_submission_log:
+            # Try several likely key names to be robust
+            jid = self._get_first_key(job, ["job_id", "id", "jid"])
+            submit = self._get_first_key(
+                job, ["submit_time", "arrival_time", "arrival", "queued_time", "time"])
+            if jid is not None and submit is not None:
+                submit_by_id[jid] = float(submit)
+
+        waits = []
+        for job in monitor.jobs_execution_log:
+            jid = self._get_first_key(job, ["job_id", "id", "jid"])
+            # start_time should be part of the job dict when it started; try common aliases
+            start = self._get_first_key(
+                job, ["start_time", "dispatch_time", "begin_time"])
+            submit = submit_by_id.get(jid, None)
+            if submit is not None and start is not None:
+                wait = float(start) - float(submit)
+                if wait > 0:
+                    waits.append(wait)
+
+        if not waits:
+            return 0.0
+        if self.use_mean_wait:
+            return float(sum(waits) / len(waits))
+        else:
+            return float(sum(waits))
+
+    def calculate_reward(self, monitor):
+        # 1) Energy-waste (per-node); keep your original sign convention (negative is bad)
+        wasted_energy = [-entry['energy_waste'] for entry in monitor.energy]
         wasted_energy = T.tensor(
-            wasted_energy, dtype=T.float32, requires_grad=True, device='cuda')
-        # logger.info(f"Wasted energy: {wasted_energy}")
-        return wasted_energy
+            wasted_energy, dtype=T.float32, device=self.device, requires_grad=self.require_grad
+        )  # shape: [num_nodes]
+
+        # 2) Waiting-time (scalar) → broadcast to all nodes, negative sign to penalize large waits
+        wait_scalar = self._compute_waiting_time_scalar(
+            monitor)   # python float
+        waiting_vec = T.full(
+            (len(monitor.energy),), -wait_scalar,
+            dtype=T.float32, device=self.device, requires_grad=self.require_grad
+        )
+
+        # 3) Weighted combination (per-node vector)
+        reward = self.alpha * wasted_energy + self.beta * waiting_vec
+        return reward
 
 
 def discounted_returns(rewards, gamma, time_dim=-1):
@@ -221,7 +286,8 @@ def feature_extraction(simulator) -> Tuple[np.ndarray, np.ndarray]:
 
     arrival_rate = len(simulator.Monitor.jobs_submission_log) / (
         simulator.current_time - simulator.start_time
-    )
+        + 1e-8)
+
     simulator_features[1] = arrival_rate
 
     mean_runtime_jobs_in_queue = sum(
