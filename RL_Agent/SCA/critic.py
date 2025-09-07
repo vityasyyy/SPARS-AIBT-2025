@@ -1,7 +1,7 @@
 import torch as T
 import torch.nn as nn
 
-from agent.graph_encoder import GraphAttentionEncoder
+from RL_Agent.SCA.graph_encoder import GraphAttentionEncoder
 
 CPU_DEVICE = T.device("cpu")
 

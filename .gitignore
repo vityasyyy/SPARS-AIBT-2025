@@ -154,7 +154,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-hpcv3-venv/
+SPARS-venv/
 
 # Spyder project settings
 .spyderproject

@@ -9,11 +9,11 @@ import torch as T
 from typing import Tuple
 
 # import your real Simulator and RJMS
-from HPCv3.Gym.utils import Reward, get_feasible_mask
-from HPCv3.Simulator.Simulator import Simulator
-from HPCv3.RJMS.RJMS import RJMS
+from SPARS.Gym.utils import Reward, get_feasible_mask
+from SPARS.Simulator.Simulator import Simulator
+from SPARS.RJMS.RJMS import RJMS
 
-from HPCv3.Gym.utils import feature_extraction
+from SPARS.Gym.utils import feature_extraction
 
 CPU_DEVICE = T.device("cpu")
 
@@ -37,16 +37,49 @@ class HPCGymEnv(gym.Env):
         self.simulator = simulator
         self.device = device
 
-    def action_translator(self, state, actions):
+    def action_translator(self, state, logits):
+        """
+        Decide which nodes to switch on/off to reach the desired active count.
 
-        binary_actions = [0 if pair[0] > pair[1] else 1 for pair in actions[0]]
-        switch_off = []
-        switch_on = []
-        for _, action in enumerate(binary_actions):
-            if action == 0 and state[_]['state'] == 'active' and state[_]['job_id'] is None:
-                switch_off.append(_)
-            elif action == 1 and state[_]['state'] == 'sleeping':
-                switch_on.append(_)
+        Args:
+            state: iterable of dicts with keys at least {'id', 'state', 'job_id'}
+                - state['state'] in {'active', 'sleeping', ...}
+                - state['job_id'] is None if the active node is idle
+            num_active_nodes: desired number of active nodes (int)
+
+        Returns:
+            (switch_off_ids, switch_on_ids) as two lists of node ids.
+            If not enough eligible nodes are found, returns as many as possible.
+        """
+        # Current active count
+        #
+        logits = T.sigmoid(
+            logits)
+        num_active_nodes = logits * self.simulator.Monitor.num_nodes
+        current_active = sum(1 for n in state if n.get('state') == 'active')
+
+        # Positive => need to turn on `delta` sleeping nodes.
+        # Negative => need to turn off `-delta` idle active nodes.
+        delta = current_active - num_active_nodes
+
+        switch_on, switch_off = [], []
+        delta = int(delta)
+        if delta > 0:
+            # Need more active nodes: wake sleeping nodes
+            for n in state:
+                if n.get('state') == 'active' and n.get('job_id') is None:
+                    switch_off.append(n['id'])
+                    if len(switch_off) == delta:
+                        break
+
+        elif delta < 0:
+            # Too many active nodes: put idle active nodes to sleep
+            need = -delta
+            for n in state:
+                if n.get('state') == 'sleeping':
+                    switch_on.append(n['id'])
+                    if len(switch_on) == need:
+                        break
 
         return switch_off, switch_on
 
@@ -109,7 +142,8 @@ class HPCGymEnv(gym.Env):
                 if need_rl:
                     break
         reward_function = Reward()
-        reward = reward_function.calculate_reward(self.simulator.Monitor)
+        reward = reward_function.calculate_reward(
+            self.simulator.Monitor, self.simulator.jobs_manager.waiting_queue, self.simulator.current_time)
         done = not self.simulator.is_running
         observation = self.get_observation()
 
@@ -127,8 +161,7 @@ class HPCGymEnv(gym.Env):
         mask = get_feasible_mask(states)
         features = feature_extraction(self.simulator)
 
-        features = np.concatenate(features)
-        features = features.reshape(1, num_nodes, 11)
+        features = features.reshape(1, 11)
         features_ = T.from_numpy(features).to(self.device).float()
 
         mask = np.asanyarray(mask)

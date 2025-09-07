@@ -1,4 +1,4 @@
-from HPCv3.Simulator.Algo.BaseAlgorithm import BaseAlgorithm
+from SPARS.Simulator.Algo.BaseAlgorithm import BaseAlgorithm
 
 
 class FCFSNormal(BaseAlgorithm):

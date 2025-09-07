@@ -1,5 +1,5 @@
-from HPCv3.Simulator.Algo.fcfs_auto_switch_on import FCFSAuto
-from HPCv3.Simulator.Algo.fcfs_normal import FCFSNormal
+from SPARS.Simulator.Algo.fcfs_auto_switch_on import FCFSAuto
+from SPARS.Simulator.Algo.fcfs_normal import FCFSNormal
 
 ALGO_MAP = {
     'fcfs_auto': FCFSAuto,

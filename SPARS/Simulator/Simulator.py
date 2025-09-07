@@ -2,11 +2,11 @@ import json
 import logging
 
 from numpy import nonzero, record
-from HPCv3.Simulator.JobsManager import JobsManager
-from HPCv3.Simulator.Scheduler import Scheduler
-from HPCv3.Simulator.MachineMonitor import Monitor
-from HPCv3.Simulator.PlatformControl import PlatformControl
-from HPCv3.Utils import log_output
+from SPARS.Simulator.JobsManager import JobsManager
+from SPARS.Simulator.Scheduler import Scheduler
+from SPARS.Simulator.MachineMonitor import Monitor
+from SPARS.Simulator.PlatformControl import PlatformControl
+from SPARS.Utils import log_output
 
 from datetime import datetime
 

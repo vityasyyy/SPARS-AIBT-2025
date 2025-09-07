@@ -1,4 +1,4 @@
-from HPCv3.Simulator.Machine import Machine
+from SPARS.Simulator.Machine import Machine
 import logging
 logger = logging.getLogger("runner")
 

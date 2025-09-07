@@ -1,12 +1,13 @@
-from HPCv3.RJMS.Algo.SmartFCFS import SmartFCFS
-from HPCv3.RJMS.Algo.FCFS import FCFS
-from HPCv3.RJMS.Algo.EASY import EASY
+from SPARS.RJMS.Algo.SmartFCFS import SmartFCFS
+from SPARS.RJMS.Algo.FCFS import FCFS
+from SPARS.RJMS.Algo.EASY import EASY
 
 ALGO_MAP = {
     'fcfs': FCFS,
     'easy': EASY,
     'smart-fcfs': SmartFCFS
 }
+
 
 class Scheduler:
     def __init__(self, ResourceManager, JobsManager, algorithm_name, start_time, timeout=None):

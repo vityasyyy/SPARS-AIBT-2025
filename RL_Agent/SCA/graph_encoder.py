@@ -1,6 +1,5 @@
-from typing import Optional, Tuple
-import torch
-import numpy as np
+from typing import Optional
+import torch as T
 from torch import nn
 import math
 
@@ -10,15 +9,15 @@ class SkipConnection(nn.Module):
         super(SkipConnection, self).__init__()
         self.module = module
 
-    def forward(self, input: torch.Tensor):
+    def forward(self, input: T.Tensor):
         return input + self.module(input)
 
 
-class MultiHeadAttention(torch.jit.ScriptModule):
+class MultiHeadAttention(T.jit.ScriptModule):
     def __init__(
         self,
         n_heads: int,
-        input_dim: int,
+        features_dim: int,
         embed_dim: int,
         val_dim: Optional[int] = None,
         key_dim: Optional[int] = None,
@@ -31,18 +30,18 @@ class MultiHeadAttention(torch.jit.ScriptModule):
             key_dim = val_dim
 
         self.n_heads = n_heads
-        self.input_dim = input_dim
+        self.features_dim = features_dim
         self.embed_dim = embed_dim
         self.val_dim = val_dim
         self.key_dim = key_dim
 
         self.norm_factor = 1.0 / math.sqrt(float(key_dim))
 
-        self.W_query = nn.Parameter(torch.Tensor(n_heads, input_dim, key_dim))
-        self.W_key = nn.Parameter(torch.Tensor(n_heads, input_dim, key_dim))
-        self.W_val = nn.Parameter(torch.Tensor(n_heads, input_dim, val_dim))
+        self.W_query = nn.Parameter(T.Tensor(n_heads, features_dim, key_dim))
+        self.W_key = nn.Parameter(T.Tensor(n_heads, features_dim, key_dim))
+        self.W_val = nn.Parameter(T.Tensor(n_heads, features_dim, val_dim))
 
-        self.W_out = nn.Parameter(torch.Tensor(n_heads, val_dim, embed_dim))
+        self.W_out = nn.Parameter(T.Tensor(n_heads, val_dim, embed_dim))
 
         self.init_parameters()
 
@@ -51,39 +50,39 @@ class MultiHeadAttention(torch.jit.ScriptModule):
             stdv = 1.0 / math.sqrt(float(param.size(-1)))
             param.data.uniform_(-stdv, stdv)
 
-    @torch.jit.script_method
+    @T.jit.script_method
     def forward(
         self,
-        q: torch.Tensor,                             # [B, n_query, input_dim]
-        # [B, graph_size, input_dim]
-        h: Optional[torch.Tensor] = None,
+        q: T.Tensor,                             # [B, n_query, features_dim]
+        # [B, graph_size, features_dim]
+        h: Optional[T.Tensor] = None,
         # unused here; kept for API parity
-        mask: Optional[torch.Tensor] = None,
-    ) -> torch.Tensor:
+        mask: Optional[T.Tensor] = None,
+    ) -> T.Tensor:
         if h is None:
             h = q  # self-attention
 
         B = q.size(0)
         n_query = q.size(1)
         graph_size = h.size(1)
-        input_dim = h.size(2)
+        features_dim = h.size(1)
 
-        hflat = h.contiguous().view(-1, input_dim)   # [B*G, D]
-        qflat = q.contiguous().view(-1, input_dim)   # [B*Q, D]
+        hflat = h.contiguous().view(-1, features_dim)   # [B*G, D]
+        qflat = q.contiguous().view(-1, features_dim)   # [B*Q, D]
 
         shp = (self.n_heads, B, graph_size, -1)
         shp_q = (self.n_heads, B, n_query,    -1)
 
-        Q = torch.matmul(qflat, self.W_query).view(shp_q)   # [H, B, Q, K]
-        K = torch.matmul(hflat, self.W_key).view(shp)       # [H, B, G, K]
-        V = torch.matmul(hflat, self.W_val).view(shp)       # [H, B, G, V]
+        Q = T.matmul(qflat, self.W_query).view(shp_q)   # [H, B, Q, K]
+        K = T.matmul(hflat, self.W_key).view(shp)       # [H, B, G, K]
+        V = T.matmul(hflat, self.W_val).view(shp)       # [H, B, G, V]
 
         # compat: [H, B, Q, G]
-        compatibility = self.norm_factor * torch.matmul(Q, K.transpose(2, 3))
-        attn = torch.softmax(compatibility, dim=-1)         # [H, B, Q, G]
+        compatibility = self.norm_factor * T.matmul(Q, K.transpose(2, 3))
+        attn = T.softmax(compatibility, dim=-1)         # [H, B, Q, G]
 
-        heads = torch.matmul(attn, V)                       # [H, B, Q, V]
-        out = torch.mm(
+        heads = T.matmul(attn, V)                       # [H, B, Q, V]
+        out = T.mm(
             heads.permute(1, 2, 0, 3).contiguous(
             ).view(-1, self.n_heads * self.val_dim),
             self.W_out.view(-1, self.embed_dim)
@@ -102,7 +101,7 @@ class Normalization(nn.Module):
             stdv = 1.0 / math.sqrt(float(param.size(-1)))
             param.data.uniform_(-stdv, stdv)
 
-    def forward(self, input: torch.Tensor) -> torch.Tensor:
+    def forward(self, input: T.Tensor) -> T.Tensor:
         # input: [B, N, E] -> IN on channels E
         return self.normalizer(input.permute(0, 2, 1)).permute(0, 2, 1)
 
@@ -118,7 +117,7 @@ class MultiHeadAttentionLayer(nn.Sequential):
             SkipConnection(
                 MultiHeadAttention(
                     n_heads,
-                    input_dim=embed_dim,
+                    features_dim=embed_dim,
                     embed_dim=embed_dim
                 )
             ),
@@ -134,34 +133,34 @@ class MultiHeadAttentionLayer(nn.Sequential):
         )
 
 
-class GraphAttentionEncoder(torch.jit.ScriptModule):
+class GraphAttentionEncoder(T.jit.ScriptModule):
     def __init__(
         self,
         n_heads: int,
         embed_dim: int,
         n_layers: int,
-        node_dim: Optional[int] = None,
+        features_dim: Optional[int] = None,
         feed_forward_hidden: int = 512,
     ):
         super(GraphAttentionEncoder, self).__init__()
 
         self.init_embed = nn.Linear(
-            node_dim, embed_dim) if node_dim is not None else None
+            features_dim, embed_dim) if features_dim is not None else None
         self.layers = nn.Sequential(*(
             MultiHeadAttentionLayer(n_heads, embed_dim, feed_forward_hidden)
             for _ in range(n_layers)
         ))
 
-    @torch.jit.script_method
-    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    @T.jit.script_method
+    def forward(self, x: T.Tensor) -> T.Tensor:
         """
-        x: [B, N, node_dim]
+        x: [B, features_dim]
         returns:
-          node_emb : [B, N, E]
-          graph_emb: [B, E] (mean across N)
+          node_emb : [B, E]
         """
         h = x
         if self.init_embed is not None:
             h = self.init_embed(x)
-        h_ = self.layers(h)                 # [B, N, E]
-        return h_, h_.mean(dim=1)          # per-graph embedding [B, E]
+        h_ = self.layers(h)
+
+        return h_
