@@ -2,8 +2,8 @@ from SPARS.Simulator.Algo.BaseAlgorithm import BaseAlgorithm
 
 
 class FCFSNormal(BaseAlgorithm):
-    def schedule(self, new_state, waiting_queue, scheduled_queue):
-        super().prep_schedule(new_state, waiting_queue, scheduled_queue)
+    def schedule(self, new_state, waiting_queue, scheduled_queue, resources_agenda):
+        super().prep_schedule(new_state, waiting_queue, scheduled_queue, resources_agenda)
         self.FCFSNormal()
         if self.timeout is not None:
             super().timeout_policy()
@@ -19,8 +19,8 @@ class FCFSNormal(BaseAlgorithm):
 
                     self.available = self.available[job['res']:]
                     self.allocated.extend(allocated_nodes)
-                    compute_demand = job['walltime'] * job['res']
-                    compute_power = sum(
+                    compute_demand = job['reqtime']
+                    compute_power = min(
                         node['compute_speed'] for node in self.state if node in allocated_nodes)
                     finish_time = self.current_time + \
                         (compute_demand / compute_power)
@@ -33,7 +33,8 @@ class FCFSNormal(BaseAlgorithm):
                     event = {
                         'job_id': job['job_id'],
                         'subtime': job['subtime'],
-                        'walltime': job['walltime'],
+                        'runtime': job['runtime'],
+                        'reqtime': job['reqtime'],
                         'res': job['res'],
                         'type': 'execution_start',
                         'nodes': allocated_nodes

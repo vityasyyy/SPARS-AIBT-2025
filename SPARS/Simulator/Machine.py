@@ -102,7 +102,9 @@ class Machine:
     def switch_off(self, nodes):
         for node in self._get_nodes_by_ids(nodes):
             self._update_node_state(node, 'switching_off')
-            node['job_id'] = None
+            if node['job_id'] is not None:
+                raise RuntimeError(
+                    f"Node {node['id']} cannot be switched off — node is currently allocated for {node['job_id']}")
 
     def turn_off(self, nodes):
         for node in self._get_nodes_by_ids(nodes):

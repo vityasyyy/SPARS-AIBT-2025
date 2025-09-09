@@ -239,7 +239,7 @@ def feature_extraction(simulator) -> np.ndarray:
 
     job_num = float(len(tq))
     arrival_rate = float(len(simulator.Monitor.jobs_submission_log)) / dt
-    mean_runtime_q = (sum(job.get("walltime", 0.0) for job in tq) /
+    mean_runtime_q = (sum(job.get("runtime", 0.0) for job in tq) /
                       max(len(tq), 1e-8))
     total_waste = float(sum(e.get("energy_waste", 0.0)
                         for e in simulator.Monitor.energy))

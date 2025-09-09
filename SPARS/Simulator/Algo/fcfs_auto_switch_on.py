@@ -2,8 +2,8 @@ from SPARS.Simulator.Algo.BaseAlgorithm import BaseAlgorithm
 
 
 class FCFSAuto(BaseAlgorithm):
-    def schedule(self, new_state, waiting_queue, scheduled_queue):
-        super().prep_schedule(new_state, waiting_queue, scheduled_queue)
+    def schedule(self, new_state, waiting_queue, scheduled_queue, resources_agenda):
+        super().prep_schedule(new_state, waiting_queue, scheduled_queue, resources_agenda)
         self.FCFSAuto()
         if self.timeout is not None:
             super().timeout_policy()
@@ -19,7 +19,7 @@ class FCFSAuto(BaseAlgorithm):
 
                     self.available = self.available[job['res']:]
                     self.allocated.extend(allocated_nodes)
-                    compute_demand = job['walltime'] * job['res']
+                    compute_demand = job['reqtime'] * job['res']
                     compute_power = sum(
                         node['compute_speed'] for node in self.state if node in allocated_nodes)
                     finish_time = self.current_time + \
@@ -33,7 +33,8 @@ class FCFSAuto(BaseAlgorithm):
                     event = {
                         'job_id': job['job_id'],
                         'subtime': job['subtime'],
-                        'walltime': job['walltime'],
+                        'runtime': job['runtime'],
+                        'reqtime': job['reqtime'],
                         'res': job['res'],
                         'type': 'execution_start',
                         'nodes': allocated_nodes
@@ -43,6 +44,7 @@ class FCFSAuto(BaseAlgorithm):
                     count_avail = len(self.available)
                     num_need_activation = job['res'] - count_avail
                     to_activate = self.inactive[:num_need_activation]
+
                     reserved_nodes = self.available + to_activate
 
                     allocated_nodes = reserved_nodes
@@ -51,17 +53,19 @@ class FCFSAuto(BaseAlgorithm):
                     self.inactive = self.inactive[num_need_activation:]
 
                     """should consider activation delay"""
-                    highest_transition_time = 0
-                    for node in self.state:
-                        if node['id'] in reserved_nodes:
-                            for transition in node['transitions']:
-                                if transition['from'] == 'switching_off' and transition['to'] == 'sleeping' and transition['transition_time'] > highest_transition_time:
-                                    highest_transition_time = transition['transition_time']
+                    allocated_ids = {
+                        d["id"] for d in allocated_nodes}  # use set for faster lookup
 
-                    compute_demand = job['walltime'] * job['res']
-                    compute_power = sum(
+                    highest_release_time = max(
+                        (ra["release_time"]
+                         for ra in self.resources_agenda if ra["id"] in allocated_ids),
+                        default=0
+                    )
+
+                    compute_demand = job['reqtime']
+                    compute_power = min(
                         node['compute_speed'] for node in self.state if node in reserved_nodes)
-                    start_predict_time = self.current_time + highest_transition_time
+                    start_predict_time = highest_release_time
                     finish_time = start_predict_time + \
                         (compute_demand / compute_power)
 
@@ -73,7 +77,8 @@ class FCFSAuto(BaseAlgorithm):
                     event = {
                         'job_id': job['job_id'],
                         'subtime': job['subtime'],
-                        'walltime': job['walltime'],
+                        'runtime': job['runtime'],
+                        'reqtime': job['reqtime'],
                         'res': job['res'],
                         'type': 'execution_start',
                         'nodes': reserved_nodes

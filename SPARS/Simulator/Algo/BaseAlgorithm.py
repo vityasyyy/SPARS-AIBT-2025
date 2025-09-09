@@ -30,6 +30,7 @@ class BaseAlgorithm():
         self.current_time = current_time
 
     def timeout_policy(self):
+
         add_event = False
         for node in self.state:
             if node['job_id'] == None and node['state'] == 'active' and node['id'] not in [t['node_id'] for t in self.timeout_list]:
@@ -48,6 +49,7 @@ class BaseAlgorithm():
 
                     if self.current_time >= timeout_info['time'] and node['id'] not in self.allocated and node['job_id'] is None and node['state'] == 'active':
                         switch_off.append(node['id'])
+                        self.timeout_list.remove(timeout_info)
                     elif self.current_time >= timeout_info['time'] and node['job_id'] is not None and node['state'] == 'active':
                         self.timeout_list.remove(timeout_info)
 
@@ -55,16 +57,16 @@ class BaseAlgorithm():
             self.push_event(self.current_time, {
                             'type': 'switch_off', 'nodes': switch_off})
 
-    def prep_schedule(self, new_state, waiting_queue, scheduled_queue):
+    def prep_schedule(self, new_state, waiting_queue, scheduled_queue, resources_agenda):
+
         self.state = new_state
         self.waiting_queue = waiting_queue
         self.scheduled_queue = scheduled_queue
-
-        for node in self.state:
-            if node['state'] == 'sleeping':
-                for transition in node['transitions']:
-                    if transition['state'] == 'switching_on':
-                        node['release_time'] += transition['transition_time']
+        self.resources_agenda = copy.deepcopy(resources_agenda)
+        self.resources_agenda = sorted(
+            self.resources_agenda,
+            key=lambda x: (x['release_time'], x['id'])
+        )
 
         self.events = []
         self.compute_speeds = [node['compute_speed']
@@ -99,7 +101,7 @@ class BaseAlgorithm():
                     self.available = [
                         node for node in self.available if node not in scheduled_job['nodes']]
                     self.allocated.extend(scheduled_job['nodes'])
-                    compute_demand = scheduled_job['walltime'] * \
+                    compute_demand = scheduled_job['runtime'] * \
                         scheduled_job['res']
                     compute_power = sum(
                         self.compute_speeds[i] for i in allocated_nodes)
@@ -112,7 +114,7 @@ class BaseAlgorithm():
                     event = {
                         'job_id': scheduled_job['job_id'],
                         'subtime': scheduled_job['subtime'],
-                        'walltime': scheduled_job['walltime'],
+                        'runtime': scheduled_job['runtime'],
                         'res': scheduled_job['res'],
                         'type': 'execution_start',
                         'nodes': allocated_nodes

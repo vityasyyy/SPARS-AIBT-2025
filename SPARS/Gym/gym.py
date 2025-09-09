@@ -57,6 +57,7 @@ class HPCGymEnv(gym.Env):
             logits)
         num_active_nodes = logits * self.simulator.Monitor.num_nodes
         current_active = sum(1 for n in state if n.get('state') == 'active')
+        logger.info(f'Translated Actions: {num_active_nodes} active nodes')
 
         # Positive => need to turn on `delta` sleeping nodes.
         # Negative => need to turn off `-delta` idle active nodes.
@@ -112,8 +113,6 @@ class HPCGymEnv(gym.Env):
         state = self.simulator.PlatformControl.get_state()
         logger.info(f"Action taken: {actions}")
         switch_off, switch_on = self.action_translator(state, actions)
-        # logger.info(f"Switch off: {switch_off}")
-        # logger.info(f"Switch on: {switch_on}")
         if len(switch_off) > 0:
             self.simulator.push_event(self.simulator.current_time, {
                 'type': 'switch_off', 'nodes': switch_off})

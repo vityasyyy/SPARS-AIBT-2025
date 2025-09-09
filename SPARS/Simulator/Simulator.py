@@ -14,7 +14,7 @@ logger = logging.getLogger("runner")
 
 
 class Simulator:
-    def __init__(self, workload_path, platform_path, start_time, algorithm, agent=None, rl=False):
+    def __init__(self, workload_path, platform_path, start_time, algorithm, agent=None, rl=False, timeout=None):
         with open(workload_path, 'r') as file:
             self.workload_info = json.load(file)
         with open(platform_path, 'r') as file:
@@ -29,7 +29,7 @@ class Simulator:
         self.jobs_manager = JobsManager()
         self.start_time = start_time
         self.scheduler = Scheduler(self.PlatformControl.get_state(
-        ), self.jobs_manager.waiting_queue, algorithm, start_time)
+        ), self.jobs_manager.waiting_queue, algorithm, start_time, timeout)
 
         self.rl = rl
 
@@ -61,6 +61,7 @@ class Simulator:
     def on_finish(self):
         self.is_running = False
         logger.info(f"Simulation finished at time {self.current_time}.")
+        self.jobs_manager.on_finish()
         self.Monitor.on_finish()
         message = {'now': self.current_time, 'event_list': [
             {'timestamp': self.current_time, 'events': [{'type': 'simulation_finished'}]}]}
@@ -72,7 +73,6 @@ class Simulator:
             return message
 
         self.current_time, events = self.events.pop(0).values()
-
         for e in events:
             row = [f"[Time={self.current_time:.2f}]"]
 
@@ -142,8 +142,14 @@ class Simulator:
                     need_rl = True
 
             elif self.event['type'] == 'execution_start':
+                if self.event['job_id'] in self.jobs_manager.active_jobs_id:
+                    logger.info(
+                        f"Job {self.event['job_id']} is already started")
+                    continue
+
                 result = self.PlatformControl.compute(
                     self.event['nodes'], self.event, self.current_time)
+
                 if result is not None:
                     finish_time, event = result
                     self.jobs_manager.remove_job_from_waiting_queue(
@@ -151,8 +157,11 @@ class Simulator:
                     self.push_event(finish_time, event)
 
             elif self.event['type'] == 'execution_finished':
-                self.PlatformControl.release(self.event['nodes'])
+                terminated = self.PlatformControl.release(
+                    self.event, self.current_time)
                 self.num_finished_jobs += 1
+                self.event['terminated'] = terminated
+                self.event['finish_time'] = self.current_time
                 record_job_execution.append(self.event)
                 if self.rl:
                     need_rl = True
@@ -160,7 +169,7 @@ class Simulator:
             elif self.event['type'] == 'change_dvfs_mode':
                 event = self.PlatformControl.change_dvfs_mode(
                     self.event['node'], self.event['mode'])
-
+        self.PlatformControl.update_resources_agenda_global(self.current_time)
         self.Monitor.record(mode='after', machines=self.PlatformControl.machines,
                             current_time=self.current_time, record_job_execution=record_job_execution, record_job_arrival=record_job_arrival)
 
@@ -180,8 +189,7 @@ class Simulator:
             self.proceed()
 
             scheduler_message = self.scheduler.schedule(self.current_time, self.PlatformControl.get_state(
-            ), self.jobs_manager.waiting_queue, self.jobs_manager.scheduled_queue)
-
+            ), self.jobs_manager.waiting_queue, self.jobs_manager.scheduled_queue, self.PlatformControl.resources_agenda)
             for _data in scheduler_message:
                 timestamp = _data['timestamp']
                 _events = _data['events']

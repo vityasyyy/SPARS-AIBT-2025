@@ -17,8 +17,8 @@ class Scheduler:
             timeout
         )
 
-    def schedule(self, current_time, new_state, waiting_queue, scheduled_queue):
+    def schedule(self, current_time, new_state, waiting_queue, scheduled_queue, resources_agenda):
         self.algorithm.set_time(current_time)
         events = self.algorithm.schedule(
-            new_state, waiting_queue, scheduled_queue)
+            new_state, waiting_queue, scheduled_queue, resources_agenda)
         return events
