@@ -16,7 +16,7 @@ class FCFSAuto(BaseAlgorithm):
             if job['res'] <= len(self.available) + len(self.inactive):
                 if job['res'] <= len(self.available):
                     allocated_nodes = self.available[:job['res']]
-
+                    allocated_ids = [node['id'] for node in allocated_nodes]
                     self.available = self.available[job['res']:]
                     self.allocated.extend(allocated_nodes)
                     compute_demand = job['reqtime'] * job['res']
@@ -24,12 +24,15 @@ class FCFSAuto(BaseAlgorithm):
                         node['compute_speed'] for node in self.state if node in allocated_nodes)
                     finish_time = self.current_time + \
                         (compute_demand / compute_power)
+
+                    agenda_map = {ra["id"]: ra for ra in self.resources_agenda}
+
                     for node in self.state:
-                        if node['id'] in allocated_nodes:
-                            node['release_time'] = finish_time
+                        if node["id"] in allocated_ids:
+                            agenda_map[node["id"]
+                                       ]["release_time"] = finish_time
                     self.scheduled.append(job['job_id'])
 
-                    allocated_nodes = [node['id'] for node in allocated_nodes]
                     event = {
                         'job_id': job['job_id'],
                         'subtime': job['subtime'],
@@ -37,7 +40,7 @@ class FCFSAuto(BaseAlgorithm):
                         'reqtime': job['reqtime'],
                         'res': job['res'],
                         'type': 'execution_start',
-                        'nodes': allocated_nodes
+                        'nodes': allocated_ids
                     }
                     super().push_event(self.current_time, event)
                 else:
@@ -48,13 +51,12 @@ class FCFSAuto(BaseAlgorithm):
                     reserved_nodes = self.available + to_activate
 
                     allocated_nodes = reserved_nodes
+                    allocated_ids = [node['id'] for node in allocated_nodes]
                     self.allocated.extend(reserved_nodes)
                     self.available = []
                     self.inactive = self.inactive[num_need_activation:]
 
                     """should consider activation delay"""
-                    allocated_ids = {
-                        d["id"] for d in allocated_nodes}  # use set for faster lookup
 
                     highest_release_time = max(
                         (ra["release_time"]
@@ -69,11 +71,15 @@ class FCFSAuto(BaseAlgorithm):
                     finish_time = start_predict_time + \
                         (compute_demand / compute_power)
 
+                    agenda_map = {ra["id"]: ra for ra in self.resources_agenda}
+
                     for node in self.state:
-                        if node['id'] in allocated_nodes:
-                            node['release_time'] = finish_time
+                        if node["id"] in allocated_ids:
+                            agenda_map[node["id"]
+                                       ]["release_time"] = finish_time
 
                     reserved_nodes = [node['id'] for node in reserved_nodes]
+
                     event = {
                         'job_id': job['job_id'],
                         'subtime': job['subtime'],

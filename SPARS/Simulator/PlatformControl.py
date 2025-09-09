@@ -32,7 +32,11 @@ class PlatformControl:
                 resource_agenda['release_time'] = release_time
 
     def compute(self, node_ids, job, current_time):
+        if len(node_ids) < job['res']:
+            raise RuntimeError(
+                f"Allocated nodes {node_ids} is not sufficient for job {job['job_id']}, requested resources={job['res']}")
         success = self.machines.allocate(node_ids, job['job_id'])
+
         if not success:
             logger.info(f'Job {job} failed to execute')
             return None

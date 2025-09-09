@@ -1,9 +1,13 @@
+from SPARS.Simulator.Algo.easy_auto_switch_on import EASYAuto
+from SPARS.Simulator.Algo.easy_normal import EASYNormal
 from SPARS.Simulator.Algo.fcfs_auto_switch_on import FCFSAuto
 from SPARS.Simulator.Algo.fcfs_normal import FCFSNormal
 
 ALGO_MAP = {
     'fcfs_auto': FCFSAuto,
-    'fcfs_normal': FCFSNormal
+    'fcfs_normal': FCFSNormal,
+    'easy_normal': EASYNormal,
+    'easy_auto': EASYAuto
 }
 
 

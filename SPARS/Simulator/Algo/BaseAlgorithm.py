@@ -46,8 +46,9 @@ class BaseAlgorithm():
         for node in self.state:
             for timeout_info in self.timeout_list:
                 if node['id'] == timeout_info['node_id']:
-
-                    if self.current_time >= timeout_info['time'] and node['id'] not in self.allocated and node['job_id'] is None and node['state'] == 'active':
+                    allocated_ids = [node['id']
+                                     for node in self.allocated]
+                    if self.current_time >= timeout_info['time'] and node['id'] not in allocated_ids and node['job_id'] is None and node['state'] == 'active':
                         switch_off.append(node['id'])
                         self.timeout_list.remove(timeout_info)
                     elif self.current_time >= timeout_info['time'] and node['job_id'] is not None and node['state'] == 'active':
