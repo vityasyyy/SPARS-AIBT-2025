@@ -33,8 +33,8 @@ class FCFSAuto(BaseAlgorithm):
                     }
                     if self.timeout:
                         super().remove_from_timeout_list(allocated_ids)
-                    if event['job_id'] == 25:
-                        print('fa 35')
+                    # if event['job_id'] == 25:
+                    #     print('fa 35')
                     self.jobs_manager.add_job_to_scheduled_queue(
                         event['job_id'], allocated_ids, self.current_time)
                     super().push_event(self.current_time, event)
@@ -71,8 +71,8 @@ class FCFSAuto(BaseAlgorithm):
                         'type': 'execution_start',
                         'nodes': reserved_node_ids
                     }
-                    if event['job_id'] == 25:
-                        print('fa 74')
+                    # if event['job_id'] == 25:
+                    #     print('fa 74')
                     if self.timeout:
                         super().remove_from_timeout_list(reserved_node_ids)
                     to_activate_ids = [node['id'] for node in to_activate]

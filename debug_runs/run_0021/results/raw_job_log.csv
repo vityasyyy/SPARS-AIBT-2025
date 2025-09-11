@@ -1,101 +1,23 @@
 job_id,type,nodes,start_time,subtime,actual_finish_time,req_finish_time,terminated,finish_time
-4,execution_finished,[3],37.0,28,47.0,47.0,False,47.0
-1,execution_finished,[0],11.0,11,62.0,58.0,False,62.0
-3,execution_finished,[2],25.0,25,113.0,114.0,False,113.0
-2,execution_finished,[1],23.0,23,114.0,108.0,False,114.0
-5,execution_finished,[3],47.0,28,139.0,138.0,False,139.0
-6,execution_finished,[0],62.0,28,149.0,147.0,False,149.0
-9,execution_finished,[0],149.0,48,173.0,172.0,False,173.0
-7,execution_finished,"[1, 2]",114.0,38,226.0,221.0,False,226.0
-11,execution_finished,[1],226.0,50,230.0,227.0,False,230.0
-8,execution_finished,[3],139.0,47,236.0,230.0,False,236.0
-10,execution_finished,[0],173.0,49,275.0,276.0,False,275.0
-14,execution_finished,[0],275.0,63,310.0,306.0,False,310.0
-15,execution_finished,[0],310.0,64,313.0,311.0,False,313.0
-16,execution_finished,[0],313.0,64,337.0,334.0,False,337.0
-13,execution_finished,[3],236.0,54,343.0,340.0,False,343.0
-12,execution_finished,"[1, 2]",230.0,52,383.0,377.0,False,383.0
-20,execution_finished,[2],383.0,69,434.0,432.0,False,434.0
-19,execution_finished,[1],383.0,66,435.0,433.0,False,435.0
-21,execution_finished,[2],434.0,72,458.0,451.0,False,458.0
-18,execution_finished,[3],343.0,66,461.0,460.0,False,461.0
-23,execution_finished,[3],461.0,81,514.0,515.0,False,514.0
-17,execution_finished,[0],337.0,64,528.0,523.0,False,528.0
-22,execution_finished,"[1, 2]",458.0,76,604.0,598.0,False,604.0
-24,execution_finished,[3],514.0,84,625.0,621.0,False,625.0
-26,execution_finished,[0],609.0,88,697.0,696.0,False,697.0
-27,execution_finished,[3],625.0,89,709.0,712.0,False,709.0
-28,execution_finished,[0],697.0,90,730.0,723.0,False,730.0
-25,execution_finished,"[1, 2]",604.0,86,758.0,753.0,False,758.0
-29,execution_finished,[3],709.0,93,758.0,755.0,False,758.0
-30,execution_finished,[0],730.0,96,825.0,822.0,False,825.0
-31,execution_finished,[1],758.0,102,851.0,852.0,False,851.0
-32,execution_finished,[2],758.0,103,870.0,871.0,False,870.0
-34,execution_finished,[1],851.0,104,878.0,875.0,False,878.0
-33,execution_finished,"[0, 3]",830.0,104,928.0,919.0,False,928.0
-35,execution_finished,[2],870.0,106,937.0,934.0,False,937.0
-38,execution_finished,[3],928.0,130,1003.0,998.0,False,1003.0
-37,execution_finished,[0],928.0,108,1011.0,1014.0,False,1011.0
-36,execution_finished,[1],878.0,107,1026.0,1021.0,False,1026.0
-41,execution_finished,[1],1026.0,138,1065.0,1060.0,False,1065.0
-40,execution_finished,"[0, 3]",1011.0,136,1072.0,1068.0,False,1072.0
-39,execution_finished,[2],937.0,133,1121.0,1119.0,False,1121.0
-42,execution_finished,[1],1065.0,141,1160.0,1160.0,False,1160.0
-44,execution_finished,[2],1121.0,147,1182.0,1177.0,False,1182.0
-46,execution_finished,[2],1182.0,150,1183.0,1183.0,False,1183.0
-43,execution_finished,"[0, 3]",1072.0,145,1194.0,1187.0,False,1194.0
-49,execution_finished,[3],1194.0,157,1205.0,1207.0,False,1205.0
-50,execution_finished,[3],1205.0,158,1257.0,1257.0,False,1257.0
-45,execution_finished,[1],1160.0,147,1293.0,1293.0,False,1293.0
-51,execution_finished,[3],1257.0,161,1295.0,1291.0,False,1295.0
-48,execution_finished,[0],1194.0,153,1309.0,1304.0,False,1309.0
-52,execution_finished,[1],1293.0,173,1369.0,1371.0,False,1369.0
-47,execution_finished,[2],1183.0,151,1380.0,1375.0,False,1380.0
-53,execution_finished,[3],1295.0,181,1410.0,1411.0,False,1410.0
-55,execution_finished,"[1, 2]",1380.0,192,1441.0,1434.0,False,1441.0
-54,execution_finished,[0],1309.0,192,1452.0,1454.0,False,1452.0
-56,execution_finished,[3],1410.0,194,1471.0,1473.0,False,1471.0
-57,execution_finished,"[1, 2]",1441.0,198,1530.0,1527.0,False,1530.0
-58,execution_finished,[0],1452.0,198,1549.0,1547.0,False,1549.0
-59,execution_finished,[3],1471.0,199,1552.0,1548.0,False,1552.0
-61,execution_finished,[0],1549.0,203,1582.0,1582.0,False,1582.0
-62,execution_finished,[3],1552.0,205,1599.0,1597.0,False,1599.0
-60,execution_finished,"[1, 2]",1530.0,202,1604.0,1607.0,False,1604.0
-66,execution_finished,[2],1604.0,217,1675.0,1675.0,False,1675.0
-65,execution_finished,[1],1604.0,214,1685.0,1678.0,False,1685.0
-63,execution_finished,[0],1582.0,207,1707.0,1705.0,False,1707.0
-64,execution_finished,[3],1599.0,213,1716.0,1712.0,False,1716.0
-67,execution_finished,[2],1675.0,223,1753.0,1752.0,False,1753.0
-68,execution_finished,[1],1685.0,224,1753.0,1752.0,False,1753.0
-69,execution_finished,[0],1707.0,231,1765.0,1757.0,False,1765.0
-71,execution_finished,[1],1753.0,235,1814.0,1814.0,False,1814.0
-72,execution_finished,[2],1753.0,237,1837.0,1834.0,False,1837.0
-73,execution_finished,[0],1765.0,244,1856.0,1856.0,False,1856.0
-70,execution_finished,[3],1716.0,235,1857.0,1853.0,False,1857.0
-74,execution_finished,[1],1814.0,247,1881.0,1877.0,False,1881.0
-75,execution_finished,[2],1837.0,249,1891.0,1893.0,False,1891.0
-79,execution_finished,[2],1891.0,264,1921.0,1912.0,False,1921.0
-77,execution_finished,[3],1857.0,253,1961.0,1964.0,False,1961.0
-78,execution_finished,[1],1881.0,254,1976.0,1972.0,False,1976.0
-81,execution_finished,[1],1976.0,271,1979.0,1977.0,False,1979.0
-80,execution_finished,"[3, 2]",1966.0,266,2014.0,2005.0,False,2014.0
-76,execution_finished,[0],1856.0,252,2039.0,2039.0,False,2039.0
-82,execution_finished,[1],1979.0,274,2061.0,2061.0,False,2061.0
-83,execution_finished,[2],2014.0,277,2086.0,2087.0,False,2086.0
-86,execution_finished,[1],2061.0,288,2142.0,2143.0,False,2142.0
-84,execution_finished,[3],2014.0,277,2144.0,2141.0,False,2144.0
-85,execution_finished,[0],2039.0,286,2158.0,2158.0,False,2158.0
-87,execution_finished,"[1, 2]",2147.0,289,2261.0,2263.0,False,2261.0
-89,execution_finished,[0],2158.0,291,2285.0,2283.0,False,2285.0
-90,execution_finished,[1],2261.0,294,2293.0,2292.0,False,2293.0
-88,execution_finished,[3],2144.0,290,2328.0,2326.0,False,2328.0
-92,execution_finished,[1],2293.0,302,2352.0,2351.0,False,2352.0
-91,execution_finished,"[0, 2]",2285.0,297,2361.0,2362.0,False,2361.0
-95,execution_finished,[0],2361.0,305,2374.0,2363.0,False,2374.0
-96,execution_finished,[2],2361.0,308,2382.0,2383.0,False,2382.0
-97,execution_finished,[0],2374.0,309,2439.0,2441.0,False,2439.0
-93,execution_finished,[3],2328.0,302,2479.0,2474.0,False,2479.0
-98,execution_finished,[2],2382.0,317,2484.0,2484.0,False,2484.0
-94,execution_finished,[1],2352.0,304,2485.0,2486.0,False,2485.0
-100,execution_finished,[3],2479.0,318,2515.0,2514.0,False,2515.0
-99,execution_finished,[0],2439.0,318,2557.0,2555.0,False,2557.0
+1,execution_finished,"[0, 1, 2]",19.0,19,80.0,80.0,False,80.0
+3,execution_finished,[0],80.0,25,139.0,137.0,True,137.0
+5,execution_finished,"[1, 2]",80.0,44,196.0,195.0,True,195.0
+8,execution_finished,[0],137.0,70,216.0,206.0,True,206.0
+17,execution_finished,[0],206.0,186,207.0,207.0,False,207.0
+13,execution_finished,"[1, 2]",195.0,125,251.0,248.0,True,248.0
+15,execution_finished,"[1, 2]",248.0,140,310.0,299.0,True,299.0
+20,execution_finished,"[1, 2]",299.0,219,413.0,411.0,True,411.0
+21,execution_finished,"[1, 2]",411.0,231,475.0,485.0,False,475.0
+27,execution_finished,[2],475.0,254,518.0,512.0,True,512.0
+22,execution_finished,[1],475.0,239,535.0,533.0,True,533.0
+32,execution_finished,[1],533.0,309,554.0,547.0,True,547.0
+31,execution_finished,[2],512.0,304,646.0,640.0,True,640.0
+33,execution_finished,[1],547.0,316,737.0,733.0,True,733.0
+36,execution_finished,[2],640.0,340,814.0,816.0,False,814.0
+67,execution_finished,[2],814.0,573,852.0,856.0,False,852.0
+58,execution_finished,[1],733.0,525,876.0,871.0,True,871.0
+70,execution_finished,[2],852.0,585,916.0,917.0,False,916.0
+72,execution_finished,[1],871.0,595,986.0,987.0,False,986.0
+79,execution_finished,[2],916.0,662,1008.0,1000.0,True,1000.0
+98,execution_finished,[2],1000.0,804,1060.0,1055.0,True,1055.0
+95,execution_finished,[1],986.0,780,1095.0,1091.0,True,1091.0

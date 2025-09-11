@@ -289,7 +289,7 @@ def run_one_case(
 
     # start_time semantics from your runner: 0 (no human-readable)
     start_time = 0
-    overrun_policy = "continue"
+    overrun_policy = "terminate"
 
     try:
         from SPARS.Simulator.Simulator import Simulator, run_simulation

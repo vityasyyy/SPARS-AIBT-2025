@@ -10,8 +10,8 @@ class FCFSNormal(BaseAlgorithm):
         return self.events
 
     def FCFSNormal(self):
-        if self.current_time == 168:
-            print('x')
+        # if self.current_time == 168:
+        #     print('x')
         waiting_queue = [
             job for job in self.waiting_queue if job['job_id'] not in self.scheduled]
         for job in waiting_queue:
@@ -34,8 +34,8 @@ class FCFSNormal(BaseAlgorithm):
                     }
                     if self.timeout:
                         super().remove_from_timeout_list(allocated_ids)
-                    if event['job_id'] == 25:
-                        print('fn 36')
+                    # if event['job_id'] == 25:
+                    #     print('fn 36')
                     self.jobs_manager.add_job_to_scheduled_queue(
                         event['job_id'], allocated_ids, self.current_time)
                     super().push_event(self.current_time, event)

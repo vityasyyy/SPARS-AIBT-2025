@@ -66,8 +66,8 @@ class BaseAlgorithm():
                             'type': 'switch_off', 'nodes': switch_off})
 
     def prep_schedule(self, new_state, waiting_queue, scheduled_queue, resources_agenda):
-        if self.current_time == 450:
-            print('x')
+        # if self.current_time == 450:
+        #     print('x')
         self.state = new_state
         self.waiting_queue = waiting_queue
         self.scheduled_queue = scheduled_queue

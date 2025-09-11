@@ -1,3 +1,4 @@
+import warnings
 import pandas as pd
 import ast
 import os
@@ -5,6 +6,8 @@ import os
 import logging
 import os
 from typing import Optional
+
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 # --- Optional: add a TRACE level (between NOTSET=0 and DEBUG=10) ---
 TRACE = 5

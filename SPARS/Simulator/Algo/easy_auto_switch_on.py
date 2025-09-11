@@ -107,8 +107,8 @@ class EASYAuto(FCFSAuto):
                         self.available = [
                             node for node in self.available if node['id'] not in allocated_ids]
                         self.allocated.extend(allocated_nodes)
-                        if event['job_id'] == 25:
-                            print('ea 109')
+                        # if event['job_id'] == 25:
+                        #     print('ea 109')
                         self.jobs_manager.add_job_to_scheduled_queue(
                             event['job_id'], allocated_ids, self.current_time)
                         super().push_event(self.current_time, event)
@@ -151,8 +151,8 @@ class EASYAuto(FCFSAuto):
                         }
                         if self.timeout:
                             super().remove_from_timeout_list(reserved_node_ids)
-                        if event['job_id'] == 25:
-                            print('ea 151')
+                        # if event['job_id'] == 25:
+                        #     print('ea 151')
                         to_activate_ids = [node['id'] for node in to_activate]
                         self.jobs_manager.add_job_to_scheduled_queue(
                             event['job_id'], reserved_node_ids, start_predict_time)
@@ -202,8 +202,8 @@ class EASYAuto(FCFSAuto):
                         }
                         if self.timeout:
                             super().remove_from_timeout_list(allocated_ids)
-                        if event['job_id'] == 25:
-                            print('ea 200')
+                        # if event['job_id'] == 25:
+                        #     print('ea 200')
 
                         self.available = self.available[job['res']:]
                         self.jobs_manager.add_job_to_scheduled_queue(
@@ -244,8 +244,8 @@ class EASYAuto(FCFSAuto):
                         }
                         if self.timeout:
                             super().remove_from_timeout_list(reserved_node_ids)
-                        if event['job_id'] == 25:
-                            print('ea 240')
+                        # if event['job_id'] == 25:
+                        #     print('ea 240')
                         super().remove_from_timeout_list(reserved_node_ids)
                         self.jobs_manager.add_job_to_scheduled_queue(
                             event['job_id'], reserved_node_ids, start_predict_time)
