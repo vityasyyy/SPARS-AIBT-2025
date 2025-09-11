@@ -4,12 +4,34 @@ logger = logging.getLogger("runner")
 
 
 class PlatformControl:
-    def __init__(self, platform_info, start_time):
-        self.machines = Machine(platform_info, start_time)
-        self.resources_agenda = self.resources_agenda = [{'release_time': 0, 'id': i}
-                                                         for i in range(len(self.machines.nodes))]
+    def __init__(self, platform_info, overrun_policy, start_time):
+        """
+        Manage platform resources and node availability for the simulator.
+        Help adds machine events for simulator
 
-        self.active_jobs = []
+        - `resources_agenda` tracks each node's next available time.
+        - Overrun policy (when a job runs longer than the user-requested wall time):
+          1) **continue**: `release_time` is initially the requested wall time. When that
+             time is reached and the job is still running, the node stays allocated and
+             the job’s `release_time` becomes unknown (the system cannot predict finish time).
+          2) **terminate**: when the requested wall time is reached, the simulator
+             stops the job and immediately frees the node.
+
+        Args:
+            platform_info: Platform configuration used to construct the node pool.
+            policy: The overrun policy ('terminate' or 'continue')
+            start_time: Simulation start timestamp.
+
+        Attributes:
+            machines: Machine inventory built from `platform_info`.
+            resources_agenda: List of dicts, one per node, with keys:
+                - `id`: node identifier
+                - `release_time`: next time the node becomes free
+        """
+        self.machines = Machine(platform_info, start_time)
+        self.resources_agenda = [{'release_time': 0, 'id': i}
+                                 for i in range(len(self.machines.nodes))]
+        self.overrun_policy = overrun_policy
 
     def get_state(self):
         return self.machines.nodes
@@ -40,22 +62,41 @@ class PlatformControl:
         if not success:
             logger.info(f'Job {job} failed to execute')
             return None
-        compute_power = min(node['compute_speed']
-                            for node in self.machines.nodes if node['id'] in node_ids)
 
-        actual_compute_demand = job['runtime']
-        actual_finish_time = current_time + \
-            (actual_compute_demand / compute_power)
+        if self.overrun_policy == 'terminate':
+            compute_power = min(node['compute_speed']
+                                for node in self.machines.nodes if node['id'] in node_ids)
 
-        requested_compute_demand = job['reqtime']
-        requested_finish_time = current_time + \
-            (requested_compute_demand / compute_power)
-        event = {'job_id': job['job_id'], 'type': 'execution_finished', 'nodes': node_ids,
-                 'start_time': current_time, 'subtime': job['subtime'], 'start_time': current_time, 'actual_finish_time': actual_finish_time, 'req_finish_time': requested_finish_time}
+            actual_compute_demand = job['runtime']
+            actual_finish_time = current_time + \
+                (actual_compute_demand / compute_power)
 
-        finish_time = min(requested_finish_time, actual_finish_time)
-        self.update_resource_agenda(node_ids, finish_time)
-        return finish_time, event
+            requested_compute_demand = job['reqtime']
+            requested_finish_time = current_time + \
+                (requested_compute_demand / compute_power)
+            event = {'job_id': job['job_id'], 'type': 'execution_finished', 'nodes': node_ids,
+                     'start_time': current_time, 'subtime': job['subtime'], 'start_time': current_time, 'actual_finish_time': actual_finish_time, 'req_finish_time': requested_finish_time}
+
+            finish_time = min(requested_finish_time, actual_finish_time)
+            self.update_resource_agenda(node_ids, finish_time)
+            return finish_time, event
+        elif self.overrun_policy == 'continue':
+            compute_power = min(node['compute_speed']
+                                for node in self.machines.nodes if node['id'] in node_ids)
+
+            actual_compute_demand = job['runtime']
+            actual_finish_time = current_time + \
+                (actual_compute_demand / compute_power)
+
+            requested_compute_demand = job['reqtime']
+            requested_finish_time = current_time + \
+                (requested_compute_demand / compute_power)
+            event = {'job_id': job['job_id'], 'type': 'execution_finished', 'nodes': node_ids,
+                     'start_time': current_time, 'subtime': job['subtime'], 'start_time': current_time, 'actual_finish_time': actual_finish_time, 'req_finish_time': requested_finish_time}
+
+            finish_time = max(requested_finish_time, actual_finish_time)
+            self.update_resource_agenda(node_ids, finish_time)
+            return actual_finish_time, event
 
     def change_dvfs_mode(self, node_ids, mode):
         self.machines.change_dvfs_mode(node_ids, mode)
@@ -63,7 +104,7 @@ class PlatformControl:
 
     def release(self, event, current_time):
         terminated = False  # under request
-        if event['req_finish_time'] < event['actual_finish_time']:
+        if current_time < event['actual_finish_time']:
             terminated = True
         self.machines.release(event['nodes'])
         self.update_resource_agenda(event['nodes'], current_time)

@@ -14,12 +14,13 @@ logger = logging.getLogger("runner")
 
 
 class Simulator:
-    def __init__(self, workload_path, platform_path, start_time, algorithm, agent=None, rl=False, timeout=None):
+    def __init__(self, workload_path, platform_path, start_time, algorithm, overrun_policy, agent=None, rl=False, timeout=None):
         with open(workload_path, 'r') as file:
             self.workload_info = json.load(file)
         with open(platform_path, 'r') as file:
             self.platform_info = json.load(file)
-        self.PlatformControl = PlatformControl(self.platform_info, start_time)
+        self.PlatformControl = PlatformControl(
+            self.platform_info, overrun_policy, start_time)
         self.Monitor = Monitor(self.platform_info, start_time)
         self.current_time = start_time
         self.events = []

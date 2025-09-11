@@ -42,6 +42,8 @@ class FCFSAuto(BaseAlgorithm):
                         'type': 'execution_start',
                         'nodes': allocated_ids
                     }
+                    if event['job_id'] == 39:
+                        print('x')
                     super().push_event(self.current_time, event)
                 else:
                     count_avail = len(self.available)
@@ -90,6 +92,8 @@ class FCFSAuto(BaseAlgorithm):
                         'nodes': reserved_nodes
                     }
                     to_activate = [node['id'] for node in to_activate]
+                    if event['job_id'] == 39:
+                        print('x')
                     super().push_event(self.current_time, {
                         'type': 'switch_on', 'nodes': to_activate})
                     super().push_event(start_predict_time, event)

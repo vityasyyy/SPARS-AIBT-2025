@@ -23,7 +23,7 @@ class EASYAuto(FCFSAuto):
         best_finish_time = 0
         node_ids = [node['node_id'] for node in nodes]
         for combo in combinations(nodes, x):
-            total_compute_power = sum(node['compute_speed'] for node in combo)
+            total_compute_power = min(node['compute_speed'] for node in combo)
 
             max_activation_delay = max(
                 entry['release_time']
@@ -105,6 +105,8 @@ class EASYAuto(FCFSAuto):
                         self.available = [
                             node for node in self.available if node not in allocated_nodes]
                         self.allocated.extend(allocated_nodes)
+                        if event['job_id'] == 39:
+                            print('x')
                         super().push_event(self.current_time, event)
                         """should update releases agenda, do the same for others'
                         """
@@ -156,6 +158,8 @@ class EASYAuto(FCFSAuto):
                             'type': 'execution_start',
                             'nodes': reserved_nodes
                         }
+                        if event['job_id'] == 39:
+                            print('x')
                         to_activate = [node['id'] for node in to_activate]
 
                         super().push_event(self.current_time, {
@@ -195,6 +199,8 @@ class EASYAuto(FCFSAuto):
                             'type': 'execution_start',
                             'nodes': allocated_ids
                         }
+                        if event['job_id'] == 39:
+                            print('x')
 
                         self.available = self.available[job['res']:]
                         super().push_event(self.current_time, event)
@@ -241,7 +247,8 @@ class EASYAuto(FCFSAuto):
                             'type': 'execution_start',
                             'nodes': reserved_nodes
                         }
-
+                        if event['job_id'] == 39:
+                            print('x')
                         super().push_event(self.current_time, {
                             'type': 'switch_on', 'nodes': to_activate})
                         super().push_event(start_predict_time, event)
