@@ -8,6 +8,14 @@
       "program": "${workspaceFolder}/debug.py",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
+    },
+    {
+      "name": "Python Debugger: Run debug2.py",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/debug2.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
     }
   ]
 }

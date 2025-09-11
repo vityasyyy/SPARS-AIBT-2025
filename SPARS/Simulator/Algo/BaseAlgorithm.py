@@ -2,12 +2,14 @@ import copy
 
 
 class BaseAlgorithm():
-    def __init__(self, state, waiting_queue, start_time, timeout=None):
+    def __init__(self, state, waiting_queue, start_time, jobs_manager, timeout=None):
         self.state = state
         self.waiting_queue = waiting_queue
         self.events = []
         self.current_time = start_time
         self.timeout = timeout
+
+        self.jobs_manager = jobs_manager
 
         self.available = []
         self.inactive = []
@@ -28,6 +30,11 @@ class BaseAlgorithm():
 
     def set_time(self, current_time):
         self.current_time = current_time
+
+    def remove_from_timeout_list(self, node_ids):
+        ids = set(node_ids)
+        self.timeout_list[:] = [ti for ti in self.timeout_list
+                                if ti.get('node_id') not in ids]
 
     def timeout_policy(self):
 
@@ -59,7 +66,8 @@ class BaseAlgorithm():
                             'type': 'switch_off', 'nodes': switch_off})
 
     def prep_schedule(self, new_state, waiting_queue, scheduled_queue, resources_agenda):
-
+        if self.current_time == 450:
+            print('x')
         self.state = new_state
         self.waiting_queue = waiting_queue
         self.scheduled_queue = scheduled_queue
@@ -90,45 +98,37 @@ class BaseAlgorithm():
         self.allocated = []
         self.scheduled = []
 
-        if len(self.scheduled_queue) > 0:
-            for scheduled_job in self.scheduled_queue:
-                executable = True
-                for reserved_nodes in scheduled_job['nodes']:
-                    if reserved_nodes not in self.available:
-                        executable = False
+        self.reserved_ids = []
+        for job in scheduled_queue:
+            self.reserved_ids.extend(job['nodes'])
 
-                if executable:
-                    allocated_nodes = scheduled_job['nodes']
-                    self.available = [
-                        node for node in self.available if node not in scheduled_job['nodes']]
-                    self.allocated.extend(scheduled_job['nodes'])
-                    compute_demand = scheduled_job['runtime'] * \
-                        scheduled_job['res']
-                    compute_power = sum(
-                        self.compute_speeds[i] for i in allocated_nodes)
-                    finish_time = self.current_time + \
-                        (compute_demand / compute_power)
-                    for node in self.state:
-                        if node['id'] in allocated_nodes:
-                            node['release_time'] = finish_time
-                    self.scheduled_queue.remove(scheduled_job)
-                    event = {
-                        'job_id': scheduled_job['job_id'],
-                        'subtime': scheduled_job['subtime'],
-                        'runtime': scheduled_job['runtime'],
-                        'res': scheduled_job['res'],
-                        'type': 'execution_start',
-                        'nodes': allocated_nodes
-                    }
-                    self.push_event(self.current_time, event)
+        # if len(self.scheduled_queue) > 0:
+        #     for scheduled_job in self.scheduled_queue:
+        #         executable = True
+        #         for reserved_nodes in scheduled_job['nodes']:
+        #             if reserved_nodes not in self.available:
+        #                 executable = False
+
+        #         if executable:
+        #             allocated_nodes = scheduled_job['nodes']
+        #             self.available = [
+        #                 node for node in self.available if node not in scheduled_job['nodes']]
+        #             self.allocated.extend(scheduled_job['nodes'])
+
+        #             self.scheduled_queue.remove(scheduled_job)
+        #             event = {
+        #                 'job_id': scheduled_job['job_id'],
+        #                 'subtime': scheduled_job['subtime'],
+        #                 'runtime': scheduled_job['runtime'],
+        #                 'res': scheduled_job['res'],
+        #                 'type': 'execution_start',
+        #                 'nodes': allocated_nodes
+        #             }
+        #             self.push_event(self.current_time, event)
         """ 
         CONTINUE EXECUTE SCHEDULING LOGIC WITHOUT CONSIDERING THE RESERVED NODES
         """
-        reserved_nodes = [
-            node for node in self.state
-            if node['reserved']
-        ]
 
         self.available = [
-            node for node in self.available if node not in reserved_nodes
+            node for node in self.available if node['id'] not in self.reserved_ids
         ]

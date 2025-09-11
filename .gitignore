@@ -4,6 +4,7 @@ myenv
 requirements_linux.txt
 *:Zone.Identifier
 debug.py
+debug2.py
 # benchmark_execution_time.py
 # command_list.txt
 # batsimpy_data_rtfv1.py

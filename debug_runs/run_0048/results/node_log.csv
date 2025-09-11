@@ -1,0 +1,37 @@
+dvfs_mode,state,submission_time,start_time,finish_time,nodes,job_id,terminated
+base,active,,0.0,2.0,0 1 2 3,-1,
+base,active,,0.0,14.0,4 5 6 7 8 9 10 11 12 13,-1,
+base,active,,2.0,51.0,0 1 2 3,1,False
+base,switching_off,,14.0,19.0,4 5 6 7 8 9 10 11 12 13,-2,
+base,sleeping,,19.0,1440.0,4 5 6 7 8 9 10 11 12 13,-4,
+base,active,,51.0,116.0,0 1 2 3,2,False
+base,active,,116.0,182.0,0 1 2 3,3,False
+base,active,,182.0,281.0,0 1 2 3,4,False
+base,active,,281.0,282.0,0 1 2 3,5,False
+base,active,,282.0,331.0,3,7,False
+base,active,,282.0,359.0,0 1 2,6,False
+base,active,,331.0,395.0,3,15,False
+base,active,,359.0,422.0,0 1 2,8,False
+base,active,,395.0,409.0,3,-1,
+base,switching_off,,409.0,414.0,3,-2,
+base,sleeping,,414.0,1440.0,3,-4,
+base,active,,422.0,436.0,2,-1,
+base,active,,422.0,459.0,0 1,9,False
+base,switching_off,,436.0,441.0,2,-2,
+base,sleeping,,441.0,1440.0,2,-4,
+base,active,,459.0,548.0,0 1,11,False
+base,active,,548.0,669.0,0 1,28,False
+base,active,,669.0,780.0,0 1,37,False
+base,active,,780.0,893.0,0 1,41,False
+base,active,,893.0,960.0,0 1,55,False
+base,active,,960.0,993.0,0 1,58,False
+base,active,,993.0,1091.0,0 1,65,False
+base,active,,1091.0,1164.0,0 1,69,False
+base,active,,1164.0,1281.0,0 1,77,False
+base,active,,1281.0,1328.0,0 1,80,False
+base,active,,1328.0,1342.0,1,-1,
+base,active,,1328.0,1421.0,0,85,False
+base,switching_off,,1342.0,1347.0,1,-2,
+base,sleeping,,1347.0,1440.0,1,-4,
+base,active,,1421.0,1435.0,0,-1,
+base,switching_off,,1435.0,1440.0,0,-2,

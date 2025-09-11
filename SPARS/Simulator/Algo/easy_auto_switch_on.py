@@ -21,9 +21,9 @@ class EASYAuto(FCFSAuto):
 
         best_combo = None
         best_finish_time = 0
-        node_ids = [node['node_id'] for node in nodes]
+        node_ids = [node['id'] for node in nodes]
         for combo in combinations(nodes, x):
-            total_compute_power = min(node['compute_speed'] for node in combo)
+            compute_power = min(node['compute_speed'] for node in combo)
 
             max_activation_delay = max(
                 entry['release_time']
@@ -32,7 +32,7 @@ class EASYAuto(FCFSAuto):
             )
 
             finish_time = max_activation_delay + \
-                (compute_demand / total_compute_power)
+                (compute_demand / compute_power)
 
             if finish_time <= p_start_t and finish_time > best_finish_time:
                 best_finish_time = finish_time
@@ -69,29 +69,29 @@ class EASYAuto(FCFSAuto):
 
             candidates = [r['id']
                           for r in next_releases if r['release_time'] <= p_start_t]
-            head_job_reservation = candidates[-p_job['res']:]
+            head_job_reservation_ids = candidates[-p_job['res']:]
 
             not_reserved_nodes = [
-                r for r in not_reserved_nodes if r['id'] not in head_job_reservation]
+                r for r in not_reserved_nodes if r['id'] not in head_job_reservation_ids]
 
             for job in backfilling_queue:
 
                 allocated_ids = [node['id'] for node in self.allocated]
-                not_computing_resources = [
+                not_computing_resource_ids = [
                     node['id'] for node in self.state if node['job_id'] is None and node['id'] not in allocated_ids]
-                not_reserved = [
-                    h for h in not_computing_resources if h not in head_job_reservation]
+                not_reserved_ids = [
+                    h for h in not_computing_resource_ids if h not in head_job_reservation_ids]
 
                 available_resources_not_reserved = [
-                    r for r in self.available if r in not_reserved]
+                    node for node in self.available if node['id'] in not_reserved_ids]
                 inactive_resources_not_reserved = [
-                    r for r in self.inactive if r in not_reserved]
+                    node for node in self.inactive if node['id'] in not_reserved_ids]
 
-                if job['res'] <= len(not_reserved):
+                if job['res'] <= len(not_reserved_ids):
                     if job['res'] <= len(available_resources_not_reserved):
                         allocated_nodes = available_resources_not_reserved[:job['res']]
-                        allocated_nodes = [node['id']
-                                           for node in allocated_nodes]
+                        allocated_ids = [node['id']
+                                         for node in allocated_nodes]
 
                         event = {
                             'job_id': job['job_id'],
@@ -100,13 +100,17 @@ class EASYAuto(FCFSAuto):
                             'reqtime': job['reqtime'],
                             'res': job['res'],
                             'type': 'execution_start',
-                            'nodes': allocated_nodes
+                            'nodes': allocated_ids
                         }
+                        if self.timeout:
+                            super().remove_from_timeout_list(allocated_ids)
                         self.available = [
-                            node for node in self.available if node not in allocated_nodes]
+                            node for node in self.available if node['id'] not in allocated_ids]
                         self.allocated.extend(allocated_nodes)
-                        if event['job_id'] == 39:
-                            print('x')
+                        if event['job_id'] == 25:
+                            print('ea 109')
+                        self.jobs_manager.add_job_to_scheduled_queue(
+                            event['job_id'], allocated_ids, self.current_time)
                         super().push_event(self.current_time, event)
                         """should update releases agenda, do the same for others'
                         """
@@ -125,30 +129,17 @@ class EASYAuto(FCFSAuto):
 
                         self.inactive = self.inactive[num_need_activation:]
 
-                        allocated_ids = {
-                            d["id"] for d in allocated_nodes}
+                        compute_demand = job['reqtime']
+
+                        reserved_node_ids = [node['id']
+                                             for node in reserved_nodes]
 
                         highest_release_time = max(
                             (ra["release_time"]
-                             for ra in self.resources_agenda if ra["id"] in allocated_ids),
+                             for ra in self.resources_agenda if ra["id"] in reserved_node_ids),
                             default=0
                         )
-
-                        compute_demand = job['reqtime']
-                        compute_power = min(
-                            node['compute_speed'] for node in self.state if node in reserved_nodes)
-
                         start_predict_time = highest_release_time
-                        finish_time = start_predict_time + \
-                            (compute_demand / compute_power)
-
-                        for node in self.state:
-                            if node['id'] in allocated_nodes:
-                                node['release_time'] = finish_time
-
-                        reserved_nodes = [node['id']
-                                          for node in reserved_nodes]
-
                         event = {
                             'job_id': job['job_id'],
                             'subtime': job['subtime'],
@@ -156,33 +147,43 @@ class EASYAuto(FCFSAuto):
                             'reqtime': job['reqtime'],
                             'res': job['res'],
                             'type': 'execution_start',
-                            'nodes': reserved_nodes
+                            'nodes': reserved_node_ids
                         }
-                        if event['job_id'] == 39:
-                            print('x')
-                        to_activate = [node['id'] for node in to_activate]
-
+                        if self.timeout:
+                            super().remove_from_timeout_list(reserved_node_ids)
+                        if event['job_id'] == 25:
+                            print('ea 151')
+                        to_activate_ids = [node['id'] for node in to_activate]
+                        self.jobs_manager.add_job_to_scheduled_queue(
+                            event['job_id'], reserved_node_ids, start_predict_time)
                         super().push_event(self.current_time, {
-                            'type': 'switch_on', 'nodes': to_activate})
+                            'type': 'switch_on', 'nodes': to_activate_ids})
 
                         super().push_event(start_predict_time, event)
                 else:
                     allocated_ids = [node['id']
                                      for node in self.allocated]
-                    not_computing_resources = [
-                        node['id'] for node in self.state if node['job_id'] is None and node['id'] not in allocated_ids]
+                    not_computing_resource_ids = [
+                        node['id'] for node in self.state if node['job_id'] is None and node['id'] not in allocated_ids and node['state'] != 'switching_off' and node['state'] != 'switching_on']
 
                     compute_demand = job['reqtime']
-                    free_nodes = [{'node_id': node['id'], 'compute_speed': node['compute_speed']}
-                                  for node in self.state if node['id'] in not_computing_resources]
+                    free_nodes = [{'id': node['id'], 'compute_speed': node['compute_speed']}
+                                  for node in self.state if node['id'] in not_computing_resource_ids and node['id'] not in self.reserved_ids]
 
                     combo = self.find_node_combination(
                         p_start_t, compute_demand, free_nodes, next_releases, job['res'])
 
                     if combo == None:
                         continue
+                    inactive_ids = {
+                        n['id'] for n in (self.inactive or [])
+                        if isinstance(n, dict) and 'id' in n
+                    }
+
                     to_activate = [
-                        node for node in combo if node in self.inactive]
+                        n for n in (combo or [])
+                        if isinstance(n, dict) and n.get('id') in inactive_ids
+                    ]
 
                     if len(to_activate) == 0:
                         allocated_nodes = self.available[:job['res']]
@@ -199,10 +200,14 @@ class EASYAuto(FCFSAuto):
                             'type': 'execution_start',
                             'nodes': allocated_ids
                         }
-                        if event['job_id'] == 39:
-                            print('x')
+                        if self.timeout:
+                            super().remove_from_timeout_list(allocated_ids)
+                        if event['job_id'] == 25:
+                            print('ea 200')
 
                         self.available = self.available[job['res']:]
+                        self.jobs_manager.add_job_to_scheduled_queue(
+                            event['job_id'], allocated_ids, self.current_time)
                         super().push_event(self.current_time, event)
                     else:
                         count_available_nodes = len(self.available)
@@ -215,28 +220,18 @@ class EASYAuto(FCFSAuto):
                         self.available = []
                         self.inactive = self.inactive[num_need_activation:]
 
-                        allocated_ids = {
-                            d["id"] for d in allocated_nodes}  # use set for faster lookup
+                        to_activate_ids = [node['id']
+                                           for node in to_activate]
+                        reserved_node_ids = [node['id']
+                                             for node in reserved_nodes]
 
                         highest_release_time = max(
                             (ra["release_time"]
-                             for ra in self.resources_agenda if ra["id"] in allocated_ids),
+                             for ra in self.resources_agenda if ra["id"] in reserved_node_ids),
                             default=0
                         )
-
-                        compute_demand = job['reqtime']
-                        compute_power = min(
-                            node['compute_speed'] for node in self.state if node in reserved_nodes)
                         start_predict_time = highest_release_time
-                        finish_time = start_predict_time + \
-                            (compute_demand / compute_power)
-
-                        for node in self.state:
-                            if node['id'] in allocated_nodes:
-                                node['release_time'] = finish_time
-
-                        reserved_nodes = [node['id']
-                                          for node in reserved_nodes]
+                        compute_demand = job['reqtime']
 
                         event = {
                             'job_id': job['job_id'],
@@ -245,10 +240,15 @@ class EASYAuto(FCFSAuto):
                             'reqtime': job['reqtime'],
                             'res': job['res'],
                             'type': 'execution_start',
-                            'nodes': reserved_nodes
+                            'nodes': reserved_node_ids
                         }
-                        if event['job_id'] == 39:
-                            print('x')
+                        if self.timeout:
+                            super().remove_from_timeout_list(reserved_node_ids)
+                        if event['job_id'] == 25:
+                            print('ea 240')
+                        super().remove_from_timeout_list(reserved_node_ids)
+                        self.jobs_manager.add_job_to_scheduled_queue(
+                            event['job_id'], reserved_node_ids, start_predict_time)
                         super().push_event(self.current_time, {
-                            'type': 'switch_on', 'nodes': to_activate})
+                            'type': 'switch_on', 'nodes': to_activate_ids})
                         super().push_event(start_predict_time, event)

@@ -118,29 +118,55 @@ class PlatformControl:
         self.machines.turn_off(node_ids)
 
     def switch_off(self, node_ids, current_time):
+        # Trigger switch-off now
         self.machines.switch_off(node_ids)
 
-        timestamp_map = {}
+        # Grouping maps
+        # time when switching_off -> sleeping completes (for the returned event)
+        turnoff_map = {}
+        # time when nodes are active again (for update_resource_agenda)
+        release_map = {}
 
         for node_id in node_ids:
-            for machine_transition in self.machines.machines_transition:
-                if machine_transition['node_id'] == node_id:
-                    for transition in machine_transition['transitions']:
-                        if transition['from'] == 'switching_off' and transition['to'] == 'sleeping':
-                            transition_time = transition['transition_time']
+            # Find transition spec for this node
+            mt = next((mt for mt in self.machines.machines_transition
+                       if mt.get('node_id') == node_id), None)
 
-                    timestamp = current_time + transition_time
+            t_off = 0            # switching_off -> sleeping
+            t_sleep_to_on = 0    # sleeping -> switching_on
+            t_on = 0             # switching_on -> active
 
-                    if timestamp not in timestamp_map:
-                        timestamp_map[timestamp] = []
-                    timestamp_map[timestamp].append(node_id)
-                    break
+            if mt:
+                for tr in mt.get('transitions', []):
+                    frm = tr.get('from')
+                    to = tr.get('to')
+                    tt = tr.get('transition_time', 0)
+                    if frm == 'switching_off' and to == 'sleeping':
+                        t_off = tt
+                    elif frm == 'sleeping' and to == 'switching_on':
+                        t_sleep_to_on = tt
+                    elif frm == 'switching_on' and to == 'active':
+                        t_on = tt
 
+            # Absolute times
+            turn_off_done_at = current_time + (t_off or 0)
+            next_release_at = current_time + \
+                (t_off or 0) + (t_sleep_to_on or 0) + (t_on or 0)
+
+            # Group nodes by times
+            turnoff_map.setdefault(turn_off_done_at, []).append(node_id)
+            release_map.setdefault(next_release_at, []).append(node_id)
+
+        # Update resource agenda using the NEXT RELEASE time (off + sleep + on)
+        for next_release_at, nodes in release_map.items():
+            self.update_resource_agenda(nodes, next_release_at)
+
+        # Return the original 'turn_off' event at the time the nodes finish turning off
         result = []
-        for timestamp, nodes in timestamp_map.items():
+        for ts, nodes in turnoff_map.items():
             result.append({
                 'event': {'type': 'turn_off', 'nodes': nodes},
-                'timestamp': timestamp
+                'timestamp': ts
             })
 
         return result

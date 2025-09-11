@@ -29,7 +29,6 @@ class Machine:
                 'transitions': active_state['transitions'],
                 'can_run_jobs': active_state['can_run_jobs'],
                 'job_id': None,
-                'release_time': 0,
                 'reserved': False
             }
 
@@ -114,7 +113,8 @@ class Machine:
     def allocate(self, nodes, job_id):
         for node in self._get_nodes_by_ids(nodes):
             if node['state'] != 'active':
-                return False
+                raise RuntimeError(
+                    f"Node {node['id']} cannot be allocated — node is not active")
             if job_id is None:
                 raise RuntimeError(
                     f"Node {node['id']} cannot be allocated — job_id is None")

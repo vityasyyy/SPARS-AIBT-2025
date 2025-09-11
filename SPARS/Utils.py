@@ -82,106 +82,57 @@ def _to_float_series(s):
     return pd.to_numeric(s, errors="coerce").astype("float64")
 
 
-def process_node_job_data(nodes_data, jobs):
-    """MAP DATA"""
+def parse_nodes(x):
+    # handle NaN/None/empty strings
+    if x is None or (isinstance(x, float) and pd.isna(x)):
+        return []
+    if isinstance(x, (list, tuple)):
+        return list(x)
+    if isinstance(x, str):
+        s = x.strip()
+        if not s:
+            return []
+        try:
+            v = ast.literal_eval(s)
+            return list(v) if isinstance(v, (list, tuple)) else v
+        except Exception:
+            return []
+    return x  # as-is
 
-    mapping_non_active = {
-        'switching_off': -2,
-        'switching_on': -3,
-        'sleeping': -4
+
+def _ensure_jobs_shape(jobs: pd.DataFrame) -> pd.DataFrame:
+    """
+    Ensure jobs has the columns you later rely on, with compatible dtypes.
+    Works even if jobs is None or entirely empty.
+    """
+    expected = {
+        'job_id': 'Int64',
+        'nodes': 'object',
+        'submission_time': 'Int64',
+        'start_time': 'Int64',
+        'finish_time': 'Int64',
+        'terminated': 'boolean',
     }
 
-    # ---- build node intervals ----
-    node_intervals = []
-    for node in nodes_data:
-        node_id = node['id']
-        state_history = node['state_history']
-        current_dvfs = None
-        for interval in state_history:
-            if 'dvfs_mode' in interval:
-                current_dvfs = interval['dvfs_mode']
-            interval['dvfs_mode'] = current_dvfs
+    if jobs is None or not isinstance(jobs, pd.DataFrame) or jobs.empty:
+        # Build a skeleton empty DF with expected columns/dtypes
+        return pd.DataFrame({c: pd.Series(dtype=dt) for c, dt in expected.items()})
 
-            if interval['start_time'] < interval['finish_time']:
-                node_intervals.append({
-                    'node_id': node_id,
-                    'state': interval['state'],
-                    'dvfs_mode': interval['dvfs_mode'],
-                    'start_time': interval['start_time'],
-                    'finish_time': interval['finish_time']
-                })
-
-    node_intervals_df = pd.DataFrame(node_intervals)
-
-    # ---- explode jobs to (job_id, node_id) rows ----
-    jobs_exploded = jobs.copy()
-
-    # nodes column may be stringified list -> list
-    jobs_exploded['nodes'] = jobs_exploded['nodes'].apply(
-        lambda x: ast.literal_eval(x) if isinstance(x, str) else x
-    )
-    jobs_exploded = jobs_exploded.explode(
-        'nodes').rename(columns={'nodes': 'node_id'})
-
-    # unify submission time column: prefer 'submission_time', else 'subtime', else NA
-    if 'submission_time' in jobs_exploded.columns:
-        subcol = 'submission_time'
-    elif 'subtime' in jobs_exploded.columns:
-        subcol = 'subtime'
-        jobs_exploded['submission_time'] = jobs_exploded['subtime']
-    else:
-        subcol = 'submission_time'
-        jobs_exploded['submission_time'] = pd.NA
-
-    # ensure 'terminated' exists; if missing, set NA
-    if 'terminated' not in jobs_exploded.columns:
-        jobs_exploded['terminated'] = pd.NA
-
-    jobs_exploded = jobs_exploded[[
-        'job_id', 'node_id', 'submission_time', 'start_time', 'finish_time', 'terminated']]
-
-    # ---- ACTIVE intervals (join with jobs on exact node/time interval) ----
-    active_df = node_intervals_df[node_intervals_df['state'] == 'active'].copy(
-    )
-    active_merged = pd.merge(
-        active_df,
-        jobs_exploded,
-        on=['node_id', 'start_time', 'finish_time'],
-        how='left'
-    )
-    active_merged['job_id'] = active_merged['job_id'].fillna(-1)
-
-    # ---- NON-ACTIVE intervals (map job_id codes; no submission_time / terminated) ----
-    non_active_df = node_intervals_df[node_intervals_df['state'] != 'active'].copy(
-    )
-    non_active_df['job_id'] = non_active_df['state'].map(
-        mapping_non_active).fillna(-1)
-    non_active_df['submission_time'] = pd.NA
-    non_active_df['terminated'] = pd.NA
-
-    # ---- combine & group nodes into space-separated strings ----
-    combined = pd.concat([active_merged, non_active_df], ignore_index=True)
-    combined['node_id'] = combined['node_id'].astype(int)
-
-    grouped = (
-        combined
-        .groupby(['state', 'dvfs_mode', 'submission_time', 'start_time', 'finish_time', 'job_id'], dropna=False)
-        .agg(
-            nodes=('node_id', lambda x: ' '.join(map(str, sorted(x)))),
-            terminated=('terminated', 'first')  # carry job flag
-        )
-        .reset_index()
-        .sort_values(by=['start_time', 'finish_time'])
-    )
-
-    # final column order
-    result = grouped[['dvfs_mode', 'state', 'submission_time',
-                      'start_time', 'finish_time', 'nodes', 'job_id', 'terminated']]
-    return result
+    # Make sure all expected columns exist; keep existing values if present
+    for c, dt in expected.items():
+        if c not in jobs.columns:
+            jobs[c] = pd.Series(pd.NA, index=jobs.index, dtype=dt)
+        else:
+            # Best-effort cast; ignore if incompatible to avoid crashing
+            try:
+                jobs[c] = jobs[c].astype(dt)
+            except Exception:
+                pass
+    return jobs
 
 
 def process_node_job_data(nodes_data, jobs):
-    """ MAP DATA"""
+    """ MAP DATA — robust to empty jobs CSV """
 
     mapping_non_active = {
         'switching_off': -2,
@@ -191,50 +142,58 @@ def process_node_job_data(nodes_data, jobs):
 
     # --- build node intervals ---
     node_intervals = []
-    for node in nodes_data:
+    for node in (nodes_data or []):
         node_id = node['id']
-        state_history = node['state_history']
+        state_history = node.get('state_history', [])
         current_dvfs = None
         for interval in state_history:
             if 'dvfs_mode' in interval:
                 current_dvfs = interval['dvfs_mode']
             interval['dvfs_mode'] = current_dvfs
-
             if interval['start_time'] < interval['finish_time']:
                 node_intervals.append({
-                    'node_id': node_id,
-                    'state': interval['state'],
+                    'node_id':   node_id,
+                    'state':     interval['state'],
                     'dvfs_mode': interval['dvfs_mode'],
                     'start_time': interval['start_time'],
                     'finish_time': interval['finish_time']
                 })
 
-    node_intervals_df = pd.DataFrame(node_intervals)
+    node_intervals_df = pd.DataFrame(node_intervals, columns=[
+                                     'node_id', 'state', 'dvfs_mode', 'start_time', 'finish_time'])
 
-    # --- jobs explode by nodes ---
+    # --- jobs explode by nodes (robust to empty/missing columns) ---
+    jobs = _ensure_jobs_shape(jobs)
     jobs_exploded = jobs.copy()
 
-    # normalize nodes column to list
-    jobs_exploded['nodes'] = jobs_exploded['nodes'].apply(
-        lambda x: ast.literal_eval(x) if isinstance(x, str) else x
-    )
-    jobs_exploded = jobs_exploded.explode(
-        'nodes').rename(columns={'nodes': 'node_id'})
+    # normalize nodes column to list and explode
+    jobs_exploded['nodes'] = jobs_exploded['nodes'].map(parse_nodes)
+    jobs_exploded = jobs_exploded.explode('nodes')
+    jobs_exploded = jobs_exploded.rename(columns={'nodes': 'node_id'})
 
-    # normalize submission time column name
-    if 'submission_time' not in jobs_exploded.columns:
-        if 'subtime' in jobs_exploded.columns:
-            jobs_exploded = jobs_exploded.rename(
-                columns={'subtime': 'submission_time'})
+    # normalize submission time column name (keep yours, but ensure presence already handled)
+    if 'submission_time' not in jobs_exploded.columns and 'subtime' in jobs_exploded.columns:
+        jobs_exploded = jobs_exploded.rename(
+            columns={'subtime': 'submission_time'})
+
+    # ensure the columns you slice/merge on exist
+    for c, dt in [('job_id', 'Int64'),
+                  ('node_id', 'Int64'),
+                  ('submission_time', 'Int64'),
+                  ('start_time', 'Int64'),
+                  ('finish_time', 'Int64'),
+                  ('terminated', 'boolean')]:
+        if c not in jobs_exploded.columns:
+            jobs_exploded[c] = pd.Series(
+                pd.NA, index=jobs_exploded.index, dtype=dt)
         else:
-            jobs_exploded['submission_time'] = pd.NA
+            try:
+                jobs_exploded[c] = jobs_exploded[c].astype(dt)
+            except Exception:
+                pass
 
-    # ensure terminated exists (if not present, default NA)
-    if 'terminated' not in jobs_exploded.columns:
-        jobs_exploded['terminated'] = pd.NA
-
-    jobs_exploded = jobs_exploded[['job_id', 'node_id', 'submission_time',
-                                   'start_time', 'finish_time', 'terminated']]
+    jobs_exploded = jobs_exploded[[
+        'job_id', 'node_id', 'submission_time', 'start_time', 'finish_time', 'terminated']]
 
     # --- active intervals joined with jobs ---
     active_df = node_intervals_df[node_intervals_df['state'] == 'active'].copy(
@@ -246,9 +205,8 @@ def process_node_job_data(nodes_data, jobs):
         how='left'
     )
     active_merged['job_id'] = active_merged['job_id'].fillna(-1)
-    # keep terminated as-is; if no match it will be NaN/NA
 
-    # --- non-active intervals get mapped job_id, NA submission_time/terminated ---
+    # --- non-active intervals ---
     non_active_df = node_intervals_df[node_intervals_df['state'] != 'active'].copy(
     )
     non_active_df['job_id'] = non_active_df['state'].map(
@@ -258,15 +216,20 @@ def process_node_job_data(nodes_data, jobs):
 
     # --- combine ---
     combined = pd.concat([active_merged, non_active_df], ignore_index=True)
-    combined['node_id'] = combined['node_id'].astype(int)
+    if not combined.empty:
+        combined['node_id'] = combined['node_id'].astype('Int64')
 
-    # --- group nodes into intervals (aggregate node ids; propagate terminated) ---
+    # --- group nodes into intervals ---
+    if combined.empty:
+        return pd.DataFrame(columns=['dvfs_mode', 'state', 'submission_time', 'start_time', 'finish_time', 'nodes', 'job_id', 'terminated'])
+
     grouped = combined.groupby(
         ['state', 'dvfs_mode', 'submission_time',
             'start_time', 'finish_time', 'job_id'],
         dropna=False
     ).agg(
-        nodes=('node_id', lambda x: ' '.join(map(str, sorted(x)))),
+        nodes=('node_id', lambda x: ' '.join(
+            map(str, sorted([int(i) for i in x.dropna().tolist()])))),
         terminated=('terminated', lambda s: bool(pd.Series(s).fillna(False).astype(bool).any())
                     if s.notna().any() else pd.NA)
     ).reset_index()
@@ -275,7 +238,6 @@ def process_node_job_data(nodes_data, jobs):
 
     result = grouped[['dvfs_mode', 'state', 'submission_time',
                       'start_time', 'finish_time', 'nodes', 'job_id', 'terminated']]
-
     return result
 
 

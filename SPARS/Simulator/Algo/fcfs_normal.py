@@ -10,6 +10,8 @@ class FCFSNormal(BaseAlgorithm):
         return self.events
 
     def FCFSNormal(self):
+        if self.current_time == 168:
+            print('x')
         waiting_queue = [
             job for job in self.waiting_queue if job['job_id'] not in self.scheduled]
         for job in waiting_queue:
@@ -19,18 +21,6 @@ class FCFSNormal(BaseAlgorithm):
                     allocated_ids = [node['id'] for node in allocated_nodes]
                     self.available = self.available[job['res']:]
                     self.allocated.extend(allocated_nodes)
-                    compute_demand = job['reqtime'] * job['res']
-                    compute_power = sum(
-                        node['compute_speed'] for node in self.state if node in allocated_nodes)
-                    finish_time = self.current_time + \
-                        (compute_demand / compute_power)
-
-                    agenda_map = {ra["id"]: ra for ra in self.resources_agenda}
-
-                    for node in self.state:
-                        if node["id"] in allocated_ids:
-                            agenda_map[node["id"]
-                                       ]["release_time"] = finish_time
                     self.scheduled.append(job['job_id'])
 
                     event = {
@@ -42,6 +32,12 @@ class FCFSNormal(BaseAlgorithm):
                         'type': 'execution_start',
                         'nodes': allocated_ids
                     }
+                    if self.timeout:
+                        super().remove_from_timeout_list(allocated_ids)
+                    if event['job_id'] == 25:
+                        print('fn 36')
+                    self.jobs_manager.add_job_to_scheduled_queue(
+                        event['job_id'], allocated_ids, self.current_time)
                     super().push_event(self.current_time, event)
 
             else:

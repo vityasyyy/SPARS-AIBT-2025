@@ -1,0 +1,8 @@
+job_id,type,nodes,start_time,subtime,actual_finish_time,req_finish_time,terminated,finish_time
+1,execution_finished,"[0, 1, 2, 3, 4, 5, 6]",5.0,5,79.0,84.0,False,79.0
+2,execution_finished,"[0, 1, 2, 3, 4, 5]",79.0,13,120.0,124.0,False,120.0
+3,execution_finished,"[0, 1, 2, 3, 4]",120.0,21,179.0,185.0,False,179.0
+11,execution_finished,"[0, 1, 2, 3, 4]",179.0,96,195.0,197.0,False,195.0
+15,execution_finished,"[0, 1, 2, 3, 4]",195.0,124,221.0,226.0,False,221.0
+16,execution_finished,"[0, 1, 2, 3]",221.0,128,275.0,280.0,False,275.0
+35,execution_finished,"[0, 1, 2, 3]",275.0,234,309.0,317.0,False,309.0

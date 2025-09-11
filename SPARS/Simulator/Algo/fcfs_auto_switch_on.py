@@ -19,18 +19,7 @@ class FCFSAuto(BaseAlgorithm):
                     allocated_ids = [node['id'] for node in allocated_nodes]
                     self.available = self.available[job['res']:]
                     self.allocated.extend(allocated_nodes)
-                    compute_demand = job['reqtime'] * job['res']
-                    compute_power = sum(
-                        node['compute_speed'] for node in self.state if node in allocated_nodes)
-                    finish_time = self.current_time + \
-                        (compute_demand / compute_power)
 
-                    agenda_map = {ra["id"]: ra for ra in self.resources_agenda}
-
-                    for node in self.state:
-                        if node["id"] in allocated_ids:
-                            agenda_map[node["id"]
-                                       ]["release_time"] = finish_time
                     self.scheduled.append(job['job_id'])
 
                     event = {
@@ -42,8 +31,12 @@ class FCFSAuto(BaseAlgorithm):
                         'type': 'execution_start',
                         'nodes': allocated_ids
                     }
-                    if event['job_id'] == 39:
-                        print('x')
+                    if self.timeout:
+                        super().remove_from_timeout_list(allocated_ids)
+                    if event['job_id'] == 25:
+                        print('fa 35')
+                    self.jobs_manager.add_job_to_scheduled_queue(
+                        event['job_id'], allocated_ids, self.current_time)
                     super().push_event(self.current_time, event)
                 else:
                     count_avail = len(self.available)
@@ -53,34 +46,21 @@ class FCFSAuto(BaseAlgorithm):
                     reserved_nodes = self.available + to_activate
 
                     allocated_nodes = reserved_nodes
-                    allocated_ids = [node['id'] for node in allocated_nodes]
                     self.allocated.extend(reserved_nodes)
                     self.available = []
                     self.inactive = self.inactive[num_need_activation:]
 
                     """should consider activation delay"""
 
+                    reserved_node_ids = [node['id'] for node in reserved_nodes]
+
                     highest_release_time = max(
                         (ra["release_time"]
-                         for ra in self.resources_agenda if ra["id"] in allocated_ids),
+                         for ra in self.resources_agenda if ra["id"] in reserved_node_ids),
                         default=0
                     )
 
-                    compute_demand = job['reqtime']
-                    compute_power = min(
-                        node['compute_speed'] for node in self.state if node in reserved_nodes)
                     start_predict_time = highest_release_time
-                    finish_time = start_predict_time + \
-                        (compute_demand / compute_power)
-
-                    agenda_map = {ra["id"]: ra for ra in self.resources_agenda}
-
-                    for node in self.state:
-                        if node["id"] in allocated_ids:
-                            agenda_map[node["id"]
-                                       ]["release_time"] = finish_time
-
-                    reserved_nodes = [node['id'] for node in reserved_nodes]
 
                     event = {
                         'job_id': job['job_id'],
@@ -89,13 +69,19 @@ class FCFSAuto(BaseAlgorithm):
                         'reqtime': job['reqtime'],
                         'res': job['res'],
                         'type': 'execution_start',
-                        'nodes': reserved_nodes
+                        'nodes': reserved_node_ids
                     }
-                    to_activate = [node['id'] for node in to_activate]
-                    if event['job_id'] == 39:
-                        print('x')
+                    if event['job_id'] == 25:
+                        print('fa 74')
+                    if self.timeout:
+                        super().remove_from_timeout_list(reserved_node_ids)
+                    to_activate_ids = [node['id'] for node in to_activate]
+
+                    super().remove_from_timeout_list(reserved_node_ids)
+                    self.jobs_manager.add_job_to_scheduled_queue(
+                        event['job_id'], reserved_node_ids, start_predict_time)
                     super().push_event(self.current_time, {
-                        'type': 'switch_on', 'nodes': to_activate})
+                        'type': 'switch_on', 'nodes': to_activate_ids})
                     super().push_event(start_predict_time, event)
 
             else:

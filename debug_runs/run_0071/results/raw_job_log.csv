@@ -1,0 +1,101 @@
+job_id,type,nodes,start_time,subtime,actual_finish_time,req_finish_time,terminated,finish_time
+3,execution_finished,[3],2.0,2,3.0,3.0,False,3.0
+2,execution_finished,[2],1.0,1,21.0,24.0,False,21.0
+4,execution_finished,[3],3.0,3,39.0,40.0,False,39.0
+5,execution_finished,[4],3.0,3,46.0,54.0,False,46.0
+6,execution_finished,"[5, 6]",6.0,6,53.0,52.0,False,53.0
+9,execution_finished,[5],53.0,10,54.0,54.0,False,54.0
+1,execution_finished,"[0, 1]",0.0,0,59.0,62.0,False,59.0
+8,execution_finished,[4],46.0,9,60.0,56.0,False,60.0
+11,execution_finished,"[0, 1]",59.0,11,60.0,60.0,False,60.0
+10,execution_finished,[6],53.0,11,63.0,54.0,False,63.0
+14,execution_finished,[6],63.0,23,100.0,100.0,False,100.0
+7,execution_finished,"[3, 2]",48.0,8,106.0,105.0,False,106.0
+12,execution_finished,"[0, 1]",60.0,19,116.0,121.0,False,116.0
+13,execution_finished,"[4, 5]",60.0,20,133.0,133.0,False,133.0
+18,execution_finished,[3],116.0,32,149.0,152.0,False,149.0
+19,execution_finished,"[3, 4, 5]",149.0,36,150.0,150.0,False,150.0
+17,execution_finished,"[0, 1]",116.0,31,158.0,156.0,False,158.0
+16,execution_finished,[2],106.0,28,160.0,167.0,False,160.0
+15,execution_finished,[6],100.0,25,172.0,178.0,False,172.0
+21,execution_finished,"[0, 1, 5]",158.0,43,188.0,190.0,False,188.0
+20,execution_finished,"[3, 4]",150.0,36,201.0,199.0,False,201.0
+25,execution_finished,[3],201.0,45,204.0,202.0,False,204.0
+27,execution_finished,[3],204.0,48,205.0,205.0,False,205.0
+22,execution_finished,"[2, 6]",172.0,43,237.0,236.0,False,237.0
+26,execution_finished,[4],201.0,47,241.0,242.0,False,241.0
+24,execution_finished,"[1, 5]",188.0,44,300.0,306.0,False,300.0
+28,execution_finished,"[2, 6, 3]",242.0,48,317.0,318.0,False,317.0
+23,execution_finished,[0],188.0,43,327.0,322.0,False,327.0
+32,execution_finished,[0],327.0,58,328.0,328.0,False,328.0
+31,execution_finished,[4],322.0,56,372.0,370.0,False,372.0
+33,execution_finished,[0],328.0,63,417.0,418.0,False,417.0
+30,execution_finished,"[2, 3, 6]",317.0,55,421.0,422.0,False,421.0
+29,execution_finished,"[1, 5]",300.0,50,428.0,429.0,False,428.0
+35,execution_finished,"[6, 4]",426.0,68,454.0,454.0,False,454.0
+36,execution_finished,[1],428.0,70,459.0,459.0,False,459.0
+34,execution_finished,"[0, 2, 3]",421.0,64,476.0,477.0,False,476.0
+40,execution_finished,"[0, 2]",476.0,81,477.0,477.0,False,477.0
+42,execution_finished,[0],477.0,84,478.0,478.0,False,478.0
+43,execution_finished,[2],477.0,86,478.0,478.0,False,478.0
+45,execution_finished,[2],478.0,87,479.0,479.0,False,479.0
+39,execution_finished,[1],459.0,80,509.0,508.0,False,509.0
+38,execution_finished,[5],459.0,79,518.0,521.0,False,518.0
+37,execution_finished,"[4, 6]",454.0,71,519.0,520.0,False,519.0
+48,execution_finished,[4],519.0,90,520.0,520.0,False,520.0
+46,execution_finished,[2],479.0,88,521.0,519.0,False,521.0
+50,execution_finished,[4],520.0,99,521.0,524.0,False,521.0
+47,execution_finished,"[1, 5]",518.0,88,528.0,534.0,False,528.0
+52,execution_finished,"[1, 4, 5]",528.0,101,548.0,554.0,False,548.0
+53,execution_finished,"[1, 4]",548.0,104,549.0,549.0,False,549.0
+54,execution_finished,"[1, 4, 5]",549.0,104,570.0,575.0,False,570.0
+44,execution_finished,[0],478.0,86,574.0,579.0,False,574.0
+41,execution_finished,[3],476.0,82,576.0,578.0,False,576.0
+57,execution_finished,[0],574.0,107,582.0,590.0,False,582.0
+51,execution_finished,[2],521.0,100,598.0,603.0,False,598.0
+56,execution_finished,[5],570.0,105,600.0,600.0,False,600.0
+60,execution_finished,[2],598.0,114,600.0,604.0,False,600.0
+55,execution_finished,"[1, 4]",570.0,104,606.0,615.0,False,606.0
+62,execution_finished,[1],606.0,119,607.0,607.0,False,607.0
+58,execution_finished,[3],576.0,108,621.0,627.0,False,621.0
+61,execution_finished,"[2, 5]",600.0,118,630.0,633.0,False,630.0
+59,execution_finished,[0],582.0,110,634.0,640.0,False,634.0
+63,execution_finished,[4],606.0,126,635.0,636.0,False,635.0
+64,execution_finished,[1],607.0,127,643.0,643.0,False,643.0
+67,execution_finished,[4],635.0,129,643.0,639.0,False,643.0
+49,execution_finished,[6],519.0,93,647.0,645.0,False,647.0
+66,execution_finished,"[0, 5]",634.0,129,657.0,662.0,False,657.0
+69,execution_finished,[0],657.0,132,658.0,658.0,False,658.0
+68,execution_finished,"[1, 4, 6]",647.0,131,662.0,667.0,False,662.0
+71,execution_finished,"[0, 1]",662.0,135,707.0,706.0,False,707.0
+73,execution_finished,"[0, 1]",707.0,140,709.0,713.0,False,709.0
+74,execution_finished,[6],712.0,140,713.0,713.0,False,713.0
+70,execution_finished,[5],657.0,133,721.0,722.0,False,721.0
+78,execution_finished,[5],721.0,146,722.0,722.0,False,722.0
+79,execution_finished,[5],722.0,146,738.0,738.0,False,738.0
+76,execution_finished,[1],709.0,144,752.0,754.0,False,752.0
+75,execution_finished,[0],709.0,143,755.0,760.0,False,755.0
+72,execution_finished,[4],662.0,139,756.0,757.0,False,756.0
+77,execution_finished,[6],713.0,145,781.0,783.0,False,781.0
+82,execution_finished,[0],755.0,154,781.0,787.0,False,781.0
+83,execution_finished,[4],756.0,155,783.0,790.0,False,783.0
+80,execution_finished,[5],738.0,147,784.0,786.0,False,784.0
+65,execution_finished,"[2, 3]",630.0,128,788.0,787.0,False,788.0
+86,execution_finished,[5],784.0,164,798.0,797.0,False,798.0
+81,execution_finished,[1],752.0,148,803.0,800.0,False,803.0
+84,execution_finished,"[0, 6]",781.0,161,819.0,823.0,False,819.0
+85,execution_finished,[4],783.0,164,838.0,843.0,False,838.0
+87,execution_finished,"[2, 3]",788.0,166,868.0,871.0,False,868.0
+91,execution_finished,[3],868.0,180,869.0,869.0,False,869.0
+90,execution_finished,[2],868.0,171,902.0,903.0,False,902.0
+88,execution_finished,"[0, 1, 6]",819.0,166,921.0,922.0,False,921.0
+93,execution_finished,[0],921.0,182,927.0,928.0,False,927.0
+89,execution_finished,"[4, 5]",843.0,168,933.0,931.0,False,933.0
+94,execution_finished,[1],921.0,183,933.0,932.0,False,933.0
+92,execution_finished,"[2, 3]",907.0,182,940.0,936.0,False,940.0
+97,execution_finished,"[2, 3]",940.0,190,998.0,998.0,False,998.0
+95,execution_finished,"[0, 6]",927.0,183,1007.0,1008.0,False,1007.0
+100,execution_finished,"[0, 6]",1007.0,192,1009.0,1011.0,False,1009.0
+96,execution_finished,"[1, 4]",933.0,185,1026.0,1022.0,False,1026.0
+98,execution_finished,"[2, 3]",998.0,190,1032.0,1033.0,False,1032.0
+99,execution_finished,[5],1003.0,191,1136.0,1139.0,False,1136.0

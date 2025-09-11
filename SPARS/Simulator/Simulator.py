@@ -30,7 +30,7 @@ class Simulator:
         self.jobs_manager = JobsManager()
         self.start_time = start_time
         self.scheduler = Scheduler(self.PlatformControl.get_state(
-        ), self.jobs_manager.waiting_queue, algorithm, start_time, timeout)
+        ), self.jobs_manager.waiting_queue, algorithm, start_time, self.jobs_manager, timeout)
 
         self.rl = rl
 
@@ -153,9 +153,12 @@ class Simulator:
 
                 if result is not None:
                     finish_time, event = result
-                    self.jobs_manager.remove_job_from_waiting_queue(
+                    self.jobs_manager.remove_job_from_scheduled_queue(
                         self.event['job_id'], 'execution_start')
                     self.push_event(finish_time, event)
+                else:
+                    self.jobs_manager.remove_job_from_scheduled_queue(
+                        self.event['job_id'], 'fail')
 
             elif self.event['type'] == 'execution_finished':
                 terminated = self.PlatformControl.release(
