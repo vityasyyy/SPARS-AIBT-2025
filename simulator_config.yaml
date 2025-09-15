@@ -1,0 +1,37 @@
+paths:
+  workload: "workloads/generated.json"
+  platform: "platforms/generated.json"
+  output: "results/generated"
+
+run:
+  algorithm: "fcfs_normal"
+  overrun_policy: "continue"
+  timeout: null
+  # start_time can be:
+  # - integer epoch (e.g., 0), or
+  # - string "YYYY-MM-DD HH:MM:SS" (local), or "now"
+  start_time: 0
+
+rl:
+  enabled: true
+  type: "discrete"
+  dt: 1800
+  device: "auto" # resolved to 'cuda' if available else 'cpu'
+  learning_rate: 0.0003 # fallback if optimizer.params.lr is omitted
+  epochs: 10
+
+  agent:
+    class: "RL_Agent.SPARS.agent:ActorCriticMLP"
+    params:
+      obs_dim: 11
+      act_dim: 1
+      num_nodes: 16
+      device: "cuda"
+    optimizer:
+      class: "torch.optim:Adam"
+      params:
+        lr: 0.0003 # optional; else uses rl.learning_rate
+
+logging:
+  level: "INFO"
+  file: "results/simulation.log"

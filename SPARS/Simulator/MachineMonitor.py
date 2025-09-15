@@ -35,8 +35,9 @@ class Monitor:
                                                          'start_time': start_time, 'finish_time': 0}]} for i in range(self.num_nodes)]
         self.states_dur = []
 
-        self.jobs_execution_log = []
+        self.jobs_arrival_log = []
         self.jobs_submission_log = []
+        self.jobs_execution_log = []
 
         for i, node in enumerate(platform_info['machines']):
             entry = {'id': i}
@@ -74,7 +75,7 @@ class Monitor:
         self.print_energy()
         self.print_states_dur()
 
-    def record(self, mode, current_time=None, machines=None, record_job_execution=None, record_job_arrival=None):
+    def record(self, mode, current_time=None, machines=None, record_job_arrival=None, record_job_submission=None, record_job_execution=None):
         if mode not in ('before', 'after'):
             raise ValueError(
                 f"Invalid mode '{mode}'. Expected 'before' or 'after'.")
@@ -92,13 +93,18 @@ class Monitor:
             if current_time is None:
                 raise ValueError(
                     "`current_time` is required for mode 'before'.")
+            if len(record_job_arrival) > 0:
+                for job in record_job_arrival:
+                    self.jobs_arrival_log.append(job)
+
+            if len(record_job_submission) > 0:
+                for job in record_job_submission:
+                    self.jobs_submission_log.append(job)
+
             if len(record_job_execution) > 0:
                 for job in record_job_execution:
                     job['finish_time'] = current_time
                     self.jobs_execution_log.append(job)
-            if len(record_job_arrival) > 0:
-                for job in record_job_arrival:
-                    self.jobs_submission_log.append(job)
 
             self.update_node_state(machines, current_time)
 

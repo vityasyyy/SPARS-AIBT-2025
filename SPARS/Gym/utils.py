@@ -1,303 +1,141 @@
-from torch import nn
-import numpy as np
-import torch as T
-import logging
-from SPARS.Simulator.MachineMonitor import Monitor
-logger = logging.getLogger("runner")
+# SPARS/Gym/utils.py
+# Minimal shim with ZERO defaults/registries.
+# Your config/bootstrap must set these names BEFORE the env is imported,
+# e.g., in config.py: from SPARS.Gym import utils as G; G.feature_extraction = ...
+
+from typing import Any, Dict, Union, Tuple, Callable
+import importlib
+import inspect
 
 
-class Reward:
-    """
-    reward_per_node = α * (-energy_waste_per_node) + β * (-waiting_time_metric)
-    where waiting_time_metric is a scalar (mean wait of finished jobs) broadcast to all nodes.
-    """
+def _unconfigured(name: str):
+    raise RuntimeError(
+        f"SPARS.Gym.utils.{name} is not configured. "
+        "Import your config (which sets these symbols) BEFORE importing/creating the env."
+    )
 
-    def __init__(self, alpha: float = 0.1, beta: float = 0.9,
-                 # mean wait per finished job (True) or sum (False)
-                 use_mean_wait: bool = True,
-                 device: str = "cuda",
-                 require_grad: bool = True):   # keep True to match your current pipeline
-        self.alpha = alpha
-        self.beta = beta
-        self.use_mean_wait = use_mean_wait
-        self.device = T.device(device)
-        self.require_grad = require_grad
-
-    @staticmethod
-    def _get_first_key(d: dict, keys):
-        for k in keys:
-            if k in d:
-                return d[k]
-        return None
-
-    def _compute_waiting_time_scalar(self, monitor) -> float:
-        """
-        Compute a scalar waiting-time metric from monitor logs:
-        wait_j = max(0, start_time_j - submit_time_j) for each job with both times available.
-        Returns 0.0 if no valid pairs found.
-        """
-        # Build lookup: submit time per job_id (or unique job dict key)
-        submit_by_id = {}
-        for job in monitor.jobs_submission_log:
-            # Try several likely key names to be robust
-            jid = self._get_first_key(job, ["job_id", "id", "jid"])
-            submit = self._get_first_key(
-                job, ["submit_time", "arrival_time", "arrival", "queued_time", "time"])
-            if jid is not None and submit is not None:
-                submit_by_id[jid] = float(submit)
-
-        waits = []
-        for job in monitor.jobs_execution_log:
-            jid = self._get_first_key(job, ["job_id", "id", "jid"])
-            # start_time should be part of the job dict when it started; try common aliases
-            start = self._get_first_key(
-                job, ["start_time", "dispatch_time", "begin_time"])
-            submit = submit_by_id.get(jid, None)
-            if submit is not None and start is not None:
-                wait = float(start) - float(submit)
-                if wait > 0:
-                    waits.append(wait)
-
-        if not waits:
-            return 0.0
-        if self.use_mean_wait:
-            return float(sum(waits) / len(waits))
-        else:
-            return float(sum(waits))
-
-    def calculate_reward(self, monitor, waiting_queue, current_time):
-        """
-        Returns a scalar reward (torch tensor) on self.device.
-        Higher energy waste or waiting time => more negative reward.
-        """
-        # 1) Totals (as floats)
-        total_waste = sum(float(e.get('energy_waste', 0.0))
-                          for e in monitor.energy)
-        total_wait = sum(
-            max(0.0, float(current_time) - float(j.get('subtime', 0.0)))
-            for j in waiting_queue
-        )
-
-        # 2) To tensors on the correct device
-        waste_t = T.tensor(total_waste, dtype=T.float32, device=self.device)
-        wait_t = T.tensor(total_wait,  dtype=T.float32, device=self.device)
-
-        # 3) Weighted penalty -> reward (scalar)
-        penalty = self.alpha * waste_t + self.beta * wait_t
-        reward = -penalty  # penalize waste & wait
-
-        # (optional) logging as Python floats
-        logger.info(
-            f"total_waste={waste_t.item():.4f}, total_wait={wait_t.item():.4f}, reward={reward.item():.4f}")
-        return reward  # 0-D tensor on self.device
+# Placeholders that error until your config assigns real implementations
 
 
-def discounted_returns(rewards, gamma, time_dim=-1):
-    """
-    rewards: tensor with time along `time_dim`
-    gamma: float or 0-D tensor (can require_grad)
-    returns: discounted-to-go along `time_dim` (same shape as rewards)
-    """
-    assert T.is_tensor(rewards), "rewards must be a tensor"
-    dtype, device = rewards.dtype, rewards.device
+def feature_extraction(
+    *args, **kwargs): return _unconfigured("feature_extraction")
 
-    if time_dim != -1:
-        rewards = rewards.transpose(time_dim, -1)  # shape: [..., seq_len]
 
-    seq_len = rewards.size(-1)
+def action_translator(
+    *args, **kwargs): return _unconfigured("action_translator")
+def get_feasible_mask(
+    *args, **kwargs): return _unconfigured("get_feasible_mask")
 
-    # gamma as tensor
-    if T.is_tensor(gamma):
-        gamma = gamma.to(device=device, dtype=dtype)
+
+def learn(*args, **kwargs): return _unconfigured("learn")
+def discounted_returns(
+    *args, **kwargs): return _unconfigured("discounted_returns")
+
+# Reward is called like a class/zero-arg factory in env code; keep as callable placeholder.
+
+
+def Reward(*args, **kwargs): return _unconfigured("Reward")
+
+# ---------------------------
+# Helpers (no registry, no defaults)
+# ---------------------------
+
+
+def _load_object(spec: str) -> Any:
+    """Load 'pkg.mod:obj' or 'pkg.mod.obj' into a Python object."""
+    if ":" in spec:
+        module_path, obj_name = spec.split(":", 1)
     else:
-        gamma = T.tensor(gamma, device=device, dtype=dtype)
-
-    weighted = rewards.view(-1, 1) * gamma
-    flipped = T.flip(weighted, dims=[-1])
-    csum = T.cumsum(flipped, dim=-1)
-    disc = T.flip(csum, dims=[-1]) / gamma
-
-    # Put time axis back
-    if time_dim != -1:
-        disc = disc.transpose(-1, time_dim)
-
-    return disc
+        module_path, _, obj_name = spec.rpartition(".")
+        if not module_path:
+            raise ValueError(
+                f"Cannot import '{spec}'. Use 'pkg.mod:obj' or 'pkg.mod.obj'.")
+    mod = importlib.import_module(module_path)
+    return getattr(mod, obj_name)
 
 
-def learn(model, model_opt, done, saved_experiences, next_observation,
-          gamma: float = 0.99, entropy_coef: float = 0.0, eps: float = 1e-12):
+def make_reward(spec: Union[type, str, Dict[str, Any], Any], **overrides) -> Any:
     """
-    Batched A2C-style update.
-    Expects saved_experiences as lists of Tensors with matching shapes per step:
-      memory_features[t] : [N, D]
-      memory_masks[t]    : [N] or [N,1]  (1=valid, 0=invalid)  (used for logprob reduction)
-      memory_actions[t]  : one of:
-         • [N]   (class index per node, e.g., 0/1)
-         • [N,1] (class index per node)
-         • [N,2] (one-hot per node for 2 classes)
-      memory_rewards[t]  : scalar or tensor reducible to scalar (mean)
-    next_observation = (next_features, next_masks) with next_features: [N,D]
-    Agent forward: probs[B,N,2], entropy[B]; Critic forward: values[B]
+    Build a reward instance without any central registry.
+
+    Accepts:
+      - class (callable):        RewardClass
+      - dotted string:          "pkg.mod:RewardClass" or "pkg.mod.RewardClass"
+      - dict:                   {"name": <class|dotted_str|instance>, "params": {...}}
+      - instance:               object having .calculate_reward(...)
     """
-    memory_actions, memory_features, memory_masks, memory_rewards = saved_experiences
-    memory_features = T.stack(memory_features, dim=0)
-    memory_actions = T.stack(memory_actions, dim=0)
-    memory_rewads = T.stack(memory_rewards, dim=0)
-    next_features, _next_masks = next_observation
-    device = model.device
+    params: Dict[str, Any] = {}
 
-    rews = T.stack([r.to(device).float().view(-1).mean() if isinstance(r, T.Tensor)
-                    else T.tensor(float(r), device=device)
-                    for r in memory_rewards])
+    if isinstance(spec, dict):
+        name_or_obj = spec.get("name")
+        params = dict(spec.get("params", {}))
+        params.update(overrides)
+        if inspect.isclass(name_or_obj):
+            return name_or_obj(**params)
+        if isinstance(name_or_obj, str):
+            cls = _load_object(name_or_obj)
+            return cls(**params)
+        if hasattr(name_or_obj, "calculate_reward"):
+            return name_or_obj
+        raise TypeError(
+            "reward dict 'name' must be a class, dotted string, or instance")
 
-    device = next(model.parameters()).device
-    Tlen = len(memory_rewards)
+    if inspect.isclass(spec):
+        params.update(overrides)
+        return spec(**params)
 
-    logits, values = model(memory_features)
-    next_logits, next_values = model(next_features)
-    loc = logits.mean()
+    if isinstance(spec, str):
+        cls = _load_object(spec)
+        params.update(overrides)
+        return cls(**params)
 
-    # use std only when we have >1 element, else fallback to 1.0
-    if logits.numel() > 1:
-        std = logits.float().std(unbiased=False)   # avoid NaN
-    else:
-        std = T.tensor(1.0, device=logits.device, dtype=logits.dtype)
+    if hasattr(spec, "calculate_reward"):
+        return spec
 
-    scale = std.clamp_min(1e-6)  # avoid 0 or NaN
-    dist = T.distributions.Normal(loc=loc, scale=scale)
-    log_probs = dist.log_prob(memory_actions)
-    entropy = dist.entropy().mean()
-
-    bootstrap = T.zeros(
-        (), device=device) if done else next_values.view(-1).mean()
-    returns = T.empty_like(rews)
-    R = bootstrap
-    for t in range(Tlen - 1, -1, -1):
-        R = rews[t] + gamma * R
-        returns[t] = R
-
-    advantages = gamma * returns - values
-
-    # losses
-    policy_loss = -(log_probs * advantages).mean()
-    value_loss = (returns - values).pow(2).mean()
-    loss = policy_loss + 0.5 * value_loss - 0.01 * entropy
-
-    # backprop
-    model_opt.zero_grad()
-    loss.backward()
-    nn.utils.clip_grad_norm_(model.parameters(), 0.5)
-    model_opt.step()
+    raise TypeError("Unsupported reward spec")
 
 
-def get_feasible_mask(states):
-    # fm[:, 0] = dibiarkan, dummy
-    # fm[:, 1] = boleh matikan/tidak
-    # fm[:, 2] = boleh hidupkan/tidak
-    feasible_mask = np.ones((len(states), 3), dtype=np.float32)
-    is_switching_off = np.asarray(
-        [host['state'] == 'switching_off' for host in states])
-    is_switching_on = np.asarray(
-        [host['state'] == 'switching_on' for host in states])
-    is_switching = np.logical_or(is_switching_off, is_switching_on)
-    is_idle = np.asarray(
-        [host['state'] == 'active' and host['job_id'] is None for host in states])
-    is_sleeping = np.asarray(
-        [host['state'] == 'sleeping' for host in states])
-    is_allocated = np.asarray(
-        [host['state'] == 'active' and host['job_id'] is None for host in states])
-
-    # can it be switched off
-    is_really_idle = np.logical_and(is_idle, np.logical_not(is_allocated))
-    feasible_mask[:, 1] = np.logical_and(
-        np.logical_not(is_switching), is_really_idle)
-
-    # can it be switched on
-    feasible_mask[:, 2] = np.logical_and(
-        np.logical_not(is_switching), is_sleeping)
-    # return cuma 2 action, update 15-09-2022
-    return feasible_mask[:, 1:]
-
-
-def feature_extraction(simulator) -> np.ndarray:
+def resolve_components(cfg: Dict[str, Any]) -> Tuple[Callable, Callable, Any, Callable, Callable, Callable]:
     """
-    Returns a 1D global feature vector of shape [11].
-    The timestep axis is *implicit* (you append this per step to history_features).
+    Resolve components WITHOUT defaults/registries.
+    All entries must be provided as callables or dotted strings.
+
+    Required cfg keys:
+      - feature_extractor
+      - translator
+      - feasible_mask
+      - reward   (class/instance/dotted or dict {'name':..., 'params':{...}})
+      - learner
+      - discounted_returns
+
+    Returns: (feature_extractor, translator, reward_instance, learner, feasible_mask, discounted_returns)
     """
+    def _need(key: str):
+        if key not in cfg:
+            raise KeyError(
+                f"Missing '{key}' in cfg for resolve_components(...)")
+        return cfg[key]
 
-    # === GLOBAL (simulator-level) FEATURES ===
-    # 1) #jobs in queue
-    # 2) job arrival rate
-    # 3) mean runtime of jobs in queue
-    # 4) total energy waste
-    # 5) mean requested walltime in queue (== runtime per your note)
-    # 6) avg #required nodes by jobs in queue
-    tq = simulator.jobs_manager.waiting_queue
-    tnow = simulator.current_time
-    t0 = simulator.start_time
-    dt = max(tnow - t0, 1e-8)
+    def _resolve_fn_or_path(x):
+        if callable(x) and not isinstance(x, str):
+            return x
+        if isinstance(x, str):
+            return _load_object(x)
+        raise TypeError(
+            f"Expected callable or dotted string for component, got {type(x)}")
 
-    job_num = float(len(tq))
-    arrival_rate = float(len(simulator.Monitor.jobs_submission_log)) / dt
-    mean_runtime_q = (sum(job.get("runtime", 0.0) for job in tq) /
-                      max(len(tq), 1e-8))
-    total_waste = float(sum(e.get("energy_waste", 0.0)
-                        for e in simulator.Monitor.energy))
-    mean_req_wt_q = mean_runtime_q
-    avg_req_nodes = (sum(job.get("res", 0.0) for job in tq) /
-                     max(len(tq), 1e-8))
+    fe = _resolve_fn_or_path(_need("feature_extractor"))
+    tr = _resolve_fn_or_path(_need("translator"))
+    fm = _resolve_fn_or_path(_need("feasible_mask"))
+    lr = _resolve_fn_or_path(_need("learner"))
+    dr = _resolve_fn_or_path(_need("discounted_returns"))
+    rw = make_reward(_need("reward"))
 
-    sim_feats = np.array([
-        job_num,
-        arrival_rate,
-        float(mean_runtime_q),
-        total_waste,
-        float(mean_req_wt_q),
-        float(avg_req_nodes),
-    ], dtype=np.float32)  # [6]
+    return fe, tr, rw, lr, fm, dr
 
-    # === AGGREGATED NODE FEATURES ===
-    # 1) #computing nodes
-    # 2) #idle nodes
-    # 3) #sleeping nodes
-    # 4) avg switching-on time
-    # 5) avg switching-off time
-    state = list(simulator.PlatformControl.get_state())
-    computing_nodes = [n["id"] for n in state if n.get(
-        "state") == "active" and n.get("job_id") is not None]
-    idle_nodes = [n["id"] for n in state if n.get(
-        "state") == "active" and n.get("job_id") is None]
-    sleeping_nodes = [n["id"] for n in state if n.get("state") == "sleeping"]
 
-    transitions_info = getattr(getattr(
-        simulator.PlatformControl, "machines", object()), "machines_transition", [])
-    sleeping_set, idle_set = set(sleeping_nodes), set(idle_nodes)
-    switch_on_times, switch_off_times = [], []
-    for node_info in transitions_info:
-        nid = node_info.get("node_id")
-        for tr in node_info.get("transitions", []):
-            frm = tr.get("from")
-            to = tr.get("to")
-            tt = float(tr.get("transition_time", 0.0))
-            if frm == "switching_on" and to == "active" and nid in sleeping_set:
-                switch_on_times.append(tt)
-            if frm == "switching_off" and to == "sleeping" and nid in idle_set:
-                switch_off_times.append(tt)
-
-    avg_switch_on = (sum(switch_on_times) /
-                     max(len(switch_on_times),  1)) if switch_on_times else 0.0
-    avg_switch_off = (sum(switch_off_times) /
-                      max(len(switch_off_times), 1)) if switch_off_times else 0.0
-
-    node_feats = np.array([
-        float(len(computing_nodes)),
-        float(len(idle_nodes)),
-        float(len(sleeping_nodes)),
-        float(avg_switch_on),
-        float(avg_switch_off),
-    ], dtype=np.float32)  # [5]
-
-    # === FINAL 1D FEATURE VECTOR ===
-    features = np.concatenate(
-        [sim_feats, node_feats], axis=0).astype(np.float32)  # [11]
-    return features
+__all__ = [
+    "Reward", "feature_extraction", "get_feasible_mask",
+    "action_translator", "discounted_returns", "learn",
+    "_load_object", "make_reward", "resolve_components",
+]
