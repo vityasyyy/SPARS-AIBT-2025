@@ -18,20 +18,20 @@ class MultiHeadAttention(T.jit.ScriptModule):
         self,
         n_heads: int,
         obs_dim: int,
-        num_nodes: int,
+        embed_dim: int,
         val_dim: Optional[int] = None,
         key_dim: Optional[int] = None,
     ):
         super(MultiHeadAttention, self).__init__()
 
         if val_dim is None:
-            val_dim = num_nodes // n_heads
+            val_dim = embed_dim // n_heads
         if key_dim is None:
             key_dim = val_dim
 
         self.n_heads = n_heads
         self.obs_dim = obs_dim
-        self.num_nodes = num_nodes
+        self.embed_dim = embed_dim
         self.val_dim = val_dim
         self.key_dim = key_dim
 
@@ -41,7 +41,7 @@ class MultiHeadAttention(T.jit.ScriptModule):
         self.W_key = nn.Parameter(T.Tensor(n_heads, obs_dim, key_dim))
         self.W_val = nn.Parameter(T.Tensor(n_heads, obs_dim, val_dim))
 
-        self.W_out = nn.Parameter(T.Tensor(n_heads, val_dim, num_nodes))
+        self.W_out = nn.Parameter(T.Tensor(n_heads, val_dim, embed_dim))
 
         self.init_parameters()
 
@@ -85,15 +85,15 @@ class MultiHeadAttention(T.jit.ScriptModule):
         out = T.mm(
             heads.permute(1, 2, 0, 3).contiguous(
             ).view(-1, self.n_heads * self.val_dim),
-            self.W_out.view(-1, self.num_nodes)
-        ).view(B, n_query, self.num_nodes)                  # [B, Q, E]
+            self.W_out.view(-1, self.embed_dim)
+        ).view(B, n_query, self.embed_dim)                  # [B, Q, E]
         return out
 
 
 class Normalization(nn.Module):
-    def __init__(self, num_nodes: int):
+    def __init__(self, embed_dim: int):
         super(Normalization, self).__init__()
-        self.normalizer = nn.InstanceNorm1d(num_nodes, affine=True)
+        self.normalizer = nn.InstanceNorm1d(embed_dim, affine=True)
         self.init_parameters()
 
     def init_parameters(self):
@@ -110,26 +110,26 @@ class MultiHeadAttentionLayer(nn.Sequential):
     def __init__(
         self,
         n_heads: int,
-        num_nodes: int,
+        embed_dim: int,
         feed_forward_hidden: int = 512,
     ):
         super(MultiHeadAttentionLayer, self).__init__(
             SkipConnection(
                 MultiHeadAttention(
                     n_heads,
-                    obs_dim=num_nodes,
-                    num_nodes=num_nodes
+                    obs_dim=embed_dim,
+                    embed_dim=embed_dim
                 )
             ),
-            Normalization(num_nodes),
+            Normalization(embed_dim),
             SkipConnection(
                 nn.Sequential(
-                    nn.Linear(num_nodes, feed_forward_hidden),
+                    nn.Linear(embed_dim, feed_forward_hidden),
                     nn.ReLU(),
-                    nn.Linear(feed_forward_hidden, num_nodes),
-                ) if feed_forward_hidden > 0 else nn.Linear(num_nodes, num_nodes)
+                    nn.Linear(feed_forward_hidden, embed_dim),
+                ) if feed_forward_hidden > 0 else nn.Linear(embed_dim, embed_dim)
             ),
-            Normalization(num_nodes),
+            Normalization(embed_dim),
         )
 
 
@@ -137,7 +137,7 @@ class GraphAttentionEncoder(T.jit.ScriptModule):
     def __init__(
         self,
         n_heads: int,
-        num_nodes: int,
+        embed_dim: int,
         n_layers: int,
         obs_dim: Optional[int] = None,
         feed_forward_hidden: int = 512,
@@ -145,9 +145,9 @@ class GraphAttentionEncoder(T.jit.ScriptModule):
         super(GraphAttentionEncoder, self).__init__()
 
         self.init_embed = nn.Linear(
-            obs_dim, num_nodes) if obs_dim is not None else None
+            obs_dim, embed_dim) if obs_dim is not None else None
         self.layers = nn.Sequential(*(
-            MultiHeadAttentionLayer(n_heads, num_nodes, feed_forward_hidden)
+            MultiHeadAttentionLayer(n_heads, embed_dim, feed_forward_hidden)
             for _ in range(n_layers)
         ))
 

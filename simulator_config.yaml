@@ -4,8 +4,8 @@ paths:
   output: "results/generated"
 
 run:
-  algorithm: "fcfs_normal"
-  overrun_policy: "continue"
+  algorithm: "easy_normal"
+  overrun_policy: "terminate"
   timeout: null
   # start_time can be:
   # - integer epoch (e.g., 0), or
@@ -13,20 +13,22 @@ run:
   start_time: 0
 
 rl:
-  enabled: true
+  enabled: False
   type: "discrete"
   dt: 1800
-  device: "auto" # resolved to 'cuda' if available else 'cpu'
+  device: "cpu" # resolved to 'cuda' if available else 'cpu'
   learning_rate: 0.0003 # fallback if optimizer.params.lr is omitted
   epochs: 10
 
   agent:
-    class: "RL_Agent.SPARS.agent:ActorCriticMLP"
+    # class: "RL_Agent.SPARS.agent:ActorCriticMLP"
+    class: "RL_Agent.Thomas.ActorCritic:ActorCritic"
     params:
-      obs_dim: 11
-      act_dim: 1
-      num_nodes: 16
-      device: "cuda"
+      # obs_dim: 11
+      # act_dim: 1
+      obs_dim: 11 # Thomas Parameter
+      embed_dim: 16 # Thomas Parameter
+      device: "cpu"
     optimizer:
       class: "torch.optim:Adam"
       params:

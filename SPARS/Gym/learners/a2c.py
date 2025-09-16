@@ -64,7 +64,15 @@ def learn(model, model_opt, done, saved_experiences, next_observation,
     Tlen = len(memory_rewards)
 
     logits, values = model(memory_features)
-    next_logits, next_values = model(next_features)
+
+    # --- SPARS ---
+    # next_logits, next_values = model(next_features)
+
+    # --- Thomas Reshape ---
+    num_nodes = 16
+    next_features_reshaped = next_features.reshape(1, num_nodes, 11)
+    next_logits, next_values = model(next_features_reshaped)
+
     loc = logits.mean()
 
     # use std only when we have >1 element, else fallback to 1.0

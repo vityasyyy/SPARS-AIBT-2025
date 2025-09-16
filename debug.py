@@ -263,7 +263,14 @@ def main():
                 features_, mask_ = observation
                 features_ = features_.to(device)
 
-                logits, values = model(features_)  # your policy/value forward
+                # your policy/value forward
+
+                # --- SPARS ---
+                # logits, values = model(features_)
+
+                # --- Thomas Reshape ---
+                features_reshaped = features_.reshape(1, num_nodes, 11)
+                logits, values = model(features_reshaped)
 
                 next_observation, reward, done = env.step(logits)
 
@@ -285,6 +292,19 @@ def main():
                 observation = next_observation
 
         log_output(env.simulator, output_path)
+
+        # --- Save agent checkpoint ---
+        os.makedirs(output_path, exist_ok=True)
+        ckpt = {
+            "agent_class": f"{model.__class__.__module__}:{model.__class__.__name__}",
+            "model_state_dict": model.state_dict(),
+            "optimizer_state_dict": model_opt.state_dict(),
+            "rl_config": cfg.get("rl", {}),
+            "epochs_trained": epochs,
+        }
+        ckpt_path = os.path.join(output_path, "agent_checkpoint.pt")
+        T.save(ckpt, ckpt_path)
+        logger.info(f"Saved agent checkpoint to: {ckpt_path}")
 
     else:
         simulator = Simulator.from_config(cfg)

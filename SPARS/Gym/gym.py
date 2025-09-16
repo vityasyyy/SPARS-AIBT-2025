@@ -63,11 +63,13 @@ class HPCGymEnv(gym.Env):
         logger.info(f"Action taken: {actions}")
 
         """"Action translator for Scalar Active Target"""
-        rl_events = action_translator(
-            self.simulator.Monitor.num_nodes, state, actions, self.simulator.current_time)
+        # rl_events = action_translator(
+        #     self.simulator.Monitor.num_nodes, state, actions, self.simulator.current_time)
 
         """Thomas Action Translator"""
-        # rl_events = action_translator(actions)
+        monitor = copy.deepcopy(self.simulator.Monitor)
+        rl_events = action_translator(
+            actions, state, self.simulator.current_time)
 
         for _rl_event in rl_events:
             self.simulator.push_event(
@@ -93,9 +95,17 @@ class HPCGymEnv(gym.Env):
                         break
                 if need_rl:
                     break
+
         reward_function = Reward()
+
+        """SPARS Calculate Reward"""
+        # reward = reward_function.calculate_reward(
+        #     self.simulator.Monitor, self.simulator.jobs_manager.waiting_queue, self.simulator.current_time)
+
+        """Thomas Calculate Reward"""
+        future_monitor = self.simulator.Monitor
         reward = reward_function.calculate_reward(
-            self.simulator.Monitor, self.simulator.jobs_manager.waiting_queue, self.simulator.current_time)
+            monitor, future_monitor, self.simulator.jobs_manager.waiting_queue, self.simulator.jobs_manager.scheduled_queue)
         done = not self.simulator.is_running
         observation = self.get_observation()
 
@@ -111,7 +121,6 @@ class HPCGymEnv(gym.Env):
         mask = get_feasible_mask(states)
         features = feature_extraction(self.simulator)
 
-        features = features.reshape(1, 11)
         features_ = T.from_numpy(features).to(self.device).float()
 
         mask = np.asanyarray(mask)

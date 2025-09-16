@@ -2,6 +2,7 @@
 import json
 import logging
 from math import ceil
+from bisect import bisect_left
 
 from SPARS.Simulator.JobsManager import JobsManager
 from SPARS.Simulator.Scheduler import Scheduler
@@ -88,6 +89,7 @@ class Simulator:
 
         # RL
         self.rl = rl
+        self.rl_tick_scheduled = False
         if self.rl and rl_type is None:
             raise RuntimeError(
                 "Select an RL_TYPE ('continuous' or 'discrete')")
@@ -106,16 +108,37 @@ class Simulator:
             self.push_event(timestamp, job)
 
     def push_event(self, timestamp, event):
-        found = None
-        for x in self.events:
-            if x['timestamp'] == timestamp:
-                found = x
-                break
-        if found:
-            found['events'].append(event)
+        evs = self.events
+
+        # Fast path: append or merge at end if in order
+        if not evs:
+            evs.append({'timestamp': timestamp, 'events': [event]})
+            return
+        last_ts = evs[-1]['timestamp']
+        if timestamp >= last_ts:
+            if timestamp == last_ts:
+                evs[-1]['events'].append(event)
+            else:
+                evs.append({'timestamp': timestamp, 'events': [event]})
+            return
+
+        # Out-of-order insert: binary search without building a new ts list
+        try:
+            # Python 3.10+: bisect supports 'key'
+            i = bisect_left(evs, timestamp, key=lambda e: e['timestamp'])
+        except TypeError:
+            # Python < 3.10: use a lightweight key-view
+            class _TsView:
+                __slots__ = ('seq',)
+                def __init__(self, seq): self.seq = seq
+                def __len__(self): return len(self.seq)
+                def __getitem__(self, idx): return self.seq[idx]['timestamp']
+            i = bisect_left(_TsView(evs), timestamp)
+
+        if i < len(evs) and evs[i]['timestamp'] == timestamp:
+            evs[i]['events'].append(event)
         else:
-            self.events.append({'timestamp': timestamp, 'events': [event]})
-        self.events.sort(key=lambda x: x['timestamp'])
+            evs.insert(i, {'timestamp': timestamp, 'events': [event]})
 
     # ---- RL tick helpers (discrete) ----
     def _schedule_first_rl_tick(self):
@@ -126,14 +149,15 @@ class Simulator:
             self.push_event(next_tick, {'type': 'CALL_RL'})
 
     def _schedule_next_rl_tick(self):
-        if self.rl and self.rl_type == 'discrete':
+        if self.rl and self.rl_type == 'discrete' and self.rl_tick_scheduled == False:
             # strictly after current_time
             next_tick = ((self.current_time // self.rl_dt) + 1) * self.rl_dt
             self.push_event(next_tick, {'type': 'CALL_RL'})
+            self.rl_tick_scheduled = True
 
     def start_simulator(self):
         self.is_running = True
-        self._schedule_first_rl_tick()
+        # self._schedule_first_rl_tick()
 
     def on_finish(self):
         self.is_running = False
@@ -244,6 +268,9 @@ class Simulator:
             elif etype == 'change_dvfs_mode':
                 _ = self.PlatformControl.change_dvfs_mode(
                     event['node'], event['mode'])
+
+            elif etype == 'CALL_RL':
+                self.rl_tick_scheduled = False
 
         self.PlatformControl.update_resources_agenda_global(self.current_time)
         self.Monitor.record(

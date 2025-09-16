@@ -2,11 +2,11 @@ import torch.nn as nn
 
 
 class ActorCriticMLP(nn.Module):
-    def __init__(self, obs_dim, act_dim, num_nodes, device, hidden_sizes=(128, 128)):
+    def __init__(self, obs_dim, act_dim, device, hidden_sizes=(128, 128)):
         super().__init__()
         # shared body
         self.device = device
-        self.num_nodes = num_nodes
+
         layers = []
         last = obs_dim
         for h in hidden_sizes:

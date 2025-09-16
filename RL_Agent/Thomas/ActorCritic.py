@@ -12,8 +12,8 @@ class ActorCritic(T.jit.ScriptModule):
         self,
         n_heads: int = 8,
         n_gae_layers: int = 3,
-        obs_dim: int = 11,
-        num_nodes: int = 128,
+        obs_dim: int = 11,  # number of features
+        embed_dim: int = 128,  # number of nodes
         gae_ff_hidden: int = 512,
         tanh_clip: float = 10.0,
         device=CPU_DEVICE,
@@ -22,23 +22,23 @@ class ActorCritic(T.jit.ScriptModule):
         self.n_heads = n_heads
         self.n_gae_layers = n_gae_layers
         self.obs_dim = obs_dim
-        self.num_nodes = num_nodes
+        self.embed_dim = embed_dim
         self.tanh_clip = tanh_clip
         self.device = device
-        self.key_size = self.val_size = self.num_nodes // self.n_heads
+        self.key_size = self.val_size = self.embed_dim // self.n_heads
 
         # Shared encoder
         self.gae = GraphAttentionEncoder(
             n_heads=n_heads,
             n_layers=n_gae_layers,
-            num_nodes=num_nodes,     # encoder output dim E
+            embed_dim=embed_dim,     # encoder output dim E
             obs_dim=obs_dim,      # per-node input dim
             feed_forward_hidden=gae_ff_hidden,
         )
 
         # Actor head: per-node 2-class logits
         self.prob_head = nn.Sequential(
-            nn.Linear(num_nodes, 64),
+            nn.Linear(embed_dim, 64),
             nn.ReLU(inplace=True),
             nn.Linear(64, 32),
             nn.ReLU(inplace=True),
@@ -47,7 +47,7 @@ class ActorCritic(T.jit.ScriptModule):
 
         # Critic head: graph (pooled) embedding -> scalar
         self.value_layers = nn.Sequential(
-            nn.Linear(num_nodes, 20),
+            nn.Linear(embed_dim, 20),
             nn.ReLU(),
             nn.Linear(20, 20),
             nn.ReLU(),

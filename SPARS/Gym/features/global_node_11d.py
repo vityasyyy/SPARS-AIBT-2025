@@ -74,4 +74,6 @@ def feature_extraction(simulator) -> np.ndarray:
 
     features = np.concatenate(
         [sim_feats, node_feats], axis=0).astype(np.float32)  # [11]
+
+    features = features.reshape(1, 11)
     return features

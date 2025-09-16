@@ -7,6 +7,7 @@ from SPARS.Gym import utils as G
 # Local name -> dotted path (pure-config; edit freely here)
 FEATURE_EXTRACTORS = {
     "global_node_11d": "SPARS.Gym.features.global_node_11d:feature_extraction",
+    "thomas_11d": "SPARS.Gym.features.thomas_11d:feature_extraction",
     # "global_node_12d": "mypkg.features:global_node_12d",
 }
 
@@ -38,10 +39,13 @@ RETURNS = {
 
 # Choose by local names (or use dotted strings directly)
 CFG = {
-    "feature_extractor": "global_node_11d",
-    "translator": "scalar_active_target",
+    # "feature_extractor": "global_node_11d",
+    "feature_extractor": "thomas_11d",
+    # "translator": "scalar_active_target",
+    "translator": "thomas",
     "feasible_mask": "default",
-    "reward": {"name": "energy_wait_time", "params": {"alpha": 0.5, "beta": 0.5, "device": "cuda"}},
+    # "reward": {"name": "energy_wait_time", "params": {"alpha": 0.5, "beta": 0.5, "device": "cuda"}},
+    "reward": {"name": "thomas", "params": {"alpha": 0.5, "beta": 0.5, "device": "cpu"}},
     "learner": "a2c",
     "discounted_returns": "a2c",
 }

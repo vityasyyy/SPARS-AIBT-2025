@@ -24,7 +24,7 @@ class Monitor:
         self.num_nodes = len(platform_info['machines'])
         self.node_ids = [node['id'] for node in platform_info['machines']]
         self.energy = [
-            {'id': i, 'energy_consumption': 0,
+            {'id': i, 'energy_consumption': 0, 'energy_effective': 0,
                 'energy_waste': 0, 'last_update': start_time}
             for i in range(self.num_nodes)
         ]
@@ -55,7 +55,7 @@ class Monitor:
     def print_energy(self):
         for entry in self.energy:
             logger.info(
-                f"Node {entry['id']}: Energy Consumption = {entry['energy_consumption']}, Energy Waste = {entry['energy_waste']}")
+                f"Node {entry['id']}: Energy Consumption = {entry['energy_consumption']}, Energy Effective = {entry['energy_effective']}, Energy Waste = {entry['energy_waste']}")
 
     def print_states_dur(self):
         for state_dur in self.states_dur:
@@ -133,7 +133,10 @@ class Monitor:
                 """" Node is active but not computing"""
                 energy_entry['energy_waste'] += ecr_value * timespan
             else:
-                energy_entry['energy_consumption'] += ecr_value * timespan
+                energy_entry['energy_effective'] += ecr_value * timespan
+
+            energy_entry['energy_consumption'] = energy_entry['energy_effective'] + \
+                energy_entry['energy_waste']
 
     def update_node_state_duration(self, current_time):
         for node in self.nodes_state:

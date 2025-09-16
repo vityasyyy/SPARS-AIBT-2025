@@ -244,13 +244,134 @@ def process_node_job_data(nodes_data, jobs):
     return result
 
 
+def build_waiting_time_df(jobs_execution_log: list) -> pd.DataFrame:
+    """
+    Convert jobs_execution_log (list of dict) into a DataFrame with:
+    job_id, subtime, start_time, finish_time, waiting_time (start_time - subtime).
+
+    Handles both numeric timestamps and datetime-like strings.
+    """
+    df = pd.DataFrame(jobs_execution_log)
+    required = {'job_id', 'subtime', 'start_time', 'finish_time'}
+    missing = required - set(df.columns)
+    if missing:
+        raise KeyError(f"Missing required columns: {sorted(missing)}")
+
+    sub = df['subtime']
+    start = df['start_time']
+
+    if not (pd.api.types.is_numeric_dtype(sub) and pd.api.types.is_numeric_dtype(start)):
+        sub_dt = pd.to_datetime(sub, errors='coerce')
+        start_dt = pd.to_datetime(start, errors='coerce')
+        waiting = (start_dt - sub_dt).dt.total_seconds()
+    else:
+        waiting = start - sub
+
+    out = df.loc[:, ['job_id', 'subtime', 'start_time', 'finish_time']].copy()
+    out['waiting_time'] = waiting
+    return out
+
+
+def write_waiting_time_log(simulator, output_folder: str, filename: str = "waiting_time_log.csv") -> str:
+    """
+    Build waiting-time DataFrame from simulator.Monitor.jobs_execution_log
+    and write it to <output_folder>/<filename>. Returns the file path.
+    """
+    os.makedirs(output_folder, exist_ok=True)
+    wt_df = build_waiting_time_df(simulator.Monitor.jobs_execution_log)
+    path = os.path.join(output_folder, filename)
+    wt_df.to_csv(path, index=False)
+    return path
+
+
+def build_energy_df(energy_log: list) -> pd.DataFrame:
+    """
+    Convert simulator.Monitor.energy (list[dict]) into a DataFrame with columns:
+    id, energy_consumption, energy_effective, energy_waste.
+    """
+    df = pd.DataFrame(energy_log)
+    required = {'id', 'energy_consumption', 'energy_effective', 'energy_waste'}
+    missing = required - set(df.columns)
+    if missing:
+        raise KeyError(
+            f"Missing required columns in energy log: {sorted(missing)}")
+
+    out = df.loc[:, ['id', 'energy_consumption',
+                     'energy_effective', 'energy_waste']].copy()
+
+    # (Optional) coerce to numeric in case inputs are strings
+    for col in ['energy_consumption', 'energy_effective', 'energy_waste']:
+        out[col] = pd.to_numeric(out[col], errors='coerce')
+
+    return out
+
+
+def write_energy_log(simulator, output_folder: str, filename: str = "energy_log.csv") -> str:
+    """
+    Build energy DataFrame from simulator.Monitor.energy and write it to CSV.
+    Returns the file path.
+    """
+    os.makedirs(output_folder, exist_ok=True)
+    energy_df = build_energy_df(simulator.Monitor.energy)
+    path = os.path.join(output_folder, filename)
+    energy_df.to_csv(path, index=False)
+    return path
+
+
+def build_metrics_df(jobs_execution_log: list, energy_log: list) -> pd.DataFrame:
+    """
+    Return a 1-row DataFrame with:
+      total_waiting_time, total_energy_waste
+    waiting_time is computed as start_time - subtime (seconds if datetimes).
+    """
+    # reuse existing builders
+    wt_df = build_waiting_time_df(
+        jobs_execution_log) if jobs_execution_log else pd.DataFrame(columns=['waiting_time'])
+    en_df = build_energy_df(energy_log) if energy_log else pd.DataFrame(
+        columns=['energy_waste'])
+
+    total_waiting = pd.to_numeric(wt_df.get('waiting_time', pd.Series(
+        dtype=float)), errors='coerce').sum(min_count=1)
+    total_waste = pd.to_numeric(en_df.get('energy_waste', pd.Series(
+        dtype=float)), errors='coerce').sum(min_count=1)
+
+    # if no data or all NaN, make them 0.0
+    if pd.isna(total_waiting):
+        total_waiting = 0.0
+    if pd.isna(total_waste):
+        total_waste = 0.0
+
+    return pd.DataFrame([{
+        'total_waiting_time': float(total_waiting),
+        'total_energy_waste': float(total_waste),
+    }])
+
+
+def write_metrics_log(simulator, output_folder: str, filename: str = "metrics.csv") -> str:
+    """
+    Build metrics DataFrame and write it to <output_folder>/<filename>.
+    """
+    os.makedirs(output_folder, exist_ok=True)
+    metrics_df = build_metrics_df(
+        simulator.Monitor.jobs_execution_log, simulator.Monitor.energy)
+    path = os.path.join(output_folder, filename)
+    metrics_df.to_csv(path, index=False)
+    return path
+
+
 def log_output(simulator, output_folder):
     os.makedirs(f'{output_folder}', exist_ok=True)
-    # Assuming simulator.Monitor.nodes_state_log is already populated
+
     raw_node_log = pd.DataFrame(simulator.Monitor.states_hist)
     raw_node_log.to_csv(f'{output_folder}/raw_node_log.csv', index=False)
+
     raw_job_log = pd.DataFrame(simulator.Monitor.jobs_execution_log)
     raw_job_log.to_csv(f'{output_folder}/raw_job_log.csv', index=False)
+
+    write_waiting_time_log(simulator, output_folder)
+    write_energy_log(simulator, output_folder)
+    write_metrics_log(simulator, output_folder)
+
     node_log = process_node_job_data(
         simulator.Monitor.states_hist, raw_job_log)
     node_log.to_csv(f'{output_folder}/node_log.csv', index=False)
