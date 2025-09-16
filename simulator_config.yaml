@@ -1,7 +1,7 @@
 paths:
   workload: "workloads/generated.json"
   platform: "platforms/generated.json"
-  output: "results/generated_60"
+  output: "results/generated"
 
 run:
   algorithm: "easy_auto"
