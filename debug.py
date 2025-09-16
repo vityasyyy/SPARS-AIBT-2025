@@ -14,8 +14,6 @@ from SPARS.Gym import config          # your pluggable Gym setup
 from SPARS.Gym import utils as G
 from SPARS.Gym.gym import HPCGymEnv
 
-from RL_Agent.SPARS.agent import ActorCriticMLP  # (kept as in your original)
-
 DEFAULT_CFG_PATH = "simulator_config.yaml"
 
 
