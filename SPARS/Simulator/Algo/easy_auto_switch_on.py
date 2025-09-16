@@ -202,8 +202,6 @@ class EASYAuto(FCFSAuto):
                         }
                         if self.timeout:
                             super().remove_from_timeout_list(allocated_ids)
-                        # if event['job_id'] == 25:
-                        #     print('ea 200')
 
                         self.available = self.available[job['res']:]
                         self.jobs_manager.add_job_to_scheduled_queue(

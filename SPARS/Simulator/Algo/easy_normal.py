@@ -102,8 +102,7 @@ class EASYNormal(FCFSNormal):
                         }
                         if self.timeout:
                             super().remove_from_timeout_list(allocated_ids)
-                        # if event['job_id'] == 25:
-                        #     print('en 104')
+
                         self.available = [
                             node for node in self.available if node['id'] not in allocated_ids]
                         self.allocated.extend(allocated_nodes)
@@ -157,8 +156,7 @@ class EASYNormal(FCFSNormal):
                         }
                         if self.timeout:
                             super().remove_from_timeout_list(allocated_ids)
-                        # if event['job_id'] == 25:
-                        #     print('en 157')
+
                         self.available = self.available[job['res']:]
                         self.jobs_manager.add_job_to_scheduled_queue(
                             event['job_id'], allocated_ids, self.current_time)

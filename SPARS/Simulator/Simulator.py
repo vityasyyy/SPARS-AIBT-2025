@@ -88,7 +88,7 @@ class Simulator:
         )
 
         # RL
-        self.rl = rl
+        self.rl = rl  # <- This means RL Enabled: True or False
         self.rl_tick_scheduled = False
         if self.rl and rl_type is None:
             raise RuntimeError(

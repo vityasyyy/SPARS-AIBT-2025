@@ -1,12 +1,12 @@
 paths:
   workload: "workloads/generated.json"
   platform: "platforms/generated.json"
-  output: "results/generated"
+  output: "results/generated_5"
 
 run:
-  algorithm: "easy_normal"
+  algorithm: "easy_auto"
   overrun_policy: "terminate"
-  timeout: null
+  timeout: 5
   # start_time can be:
   # - integer epoch (e.g., 0), or
   # - string "YYYY-MM-DD HH:MM:SS" (local), or "now"

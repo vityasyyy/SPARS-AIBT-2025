@@ -37,37 +37,62 @@ class BaseAlgorithm():
                                 if ti.get('node_id') not in ids]
 
     def timeout_policy(self):
+        now = self.current_time
+        t_exp = now + self.timeout
 
-        add_event = False
+        # Fast membership on existing timeouts
+        timeout_node_ids = {t['node_id'] for t in self.timeout_list}
+
+        # Add timeouts for newly idle, active nodes (no duplicates)
         for node in self.state:
-            if node['job_id'] == None and node['state'] == 'active' and node['id'] not in [t['node_id'] for t in self.timeout_list]:
+            if (
+                node['job_id'] is None
+                and node['state'] == 'active'
+                and node['id'] not in timeout_node_ids
+            ):
                 self.timeout_list.append(
-                    {'node_id': node['id'], 'time': self.current_time + self.timeout})
-                add_event = True
+                    {'node_id': node['id'], 'time': t_exp})
+                timeout_node_ids.add(node['id'])
 
-        if add_event:
-            self.push_event(self.current_time + self.timeout,
-                            {'type': 'call_me_later'})
+        # Build lookups once
+        state_by_id = {n['id']: n for n in self.state}
+        allocated_ids = {n['id'] for n in self.allocated}
 
         switch_off = []
-        for node in self.state:
-            for timeout_info in self.timeout_list:
-                if node['id'] == timeout_info['node_id']:
-                    allocated_ids = [node['id']
-                                     for node in self.allocated]
-                    if self.current_time >= timeout_info['time'] and node['id'] not in allocated_ids and node['job_id'] is None and node['state'] == 'active':
-                        switch_off.append(node['id'])
-                        self.timeout_list.remove(timeout_info)
-                    elif self.current_time >= timeout_info['time'] and node['job_id'] is not None and node['state'] == 'active':
-                        self.timeout_list.remove(timeout_info)
+        keep_timeouts = []
+        next_earliest = None  # track the earliest remaining timeout
 
-        if len(switch_off) > 0:
-            self.push_event(self.current_time, {
-                            'type': 'switch_off', 'nodes': switch_off})
+        for t in self.timeout_list:
+            node = state_by_id.get(t['node_id'])
+            if not node:
+                # stale timeout for a node that no longer exists
+                continue
+
+            # keep if not yet expired or node not active
+            if now < t['time'] or node['state'] != 'active':
+                keep_timeouts.append(t)
+                if next_earliest is None or t['time'] < next_earliest:
+                    next_earliest = t['time']
+                continue
+
+            # expired:
+            if node['job_id'] is None and node['id'] not in allocated_ids:
+                switch_off.append(node['id'])
+            # else: drop the timeout silently
+
+        # swap in the filtered list
+        self.timeout_list = keep_timeouts
+
+        if switch_off:
+            self.push_event(now, {'type': 'switch_off', 'nodes': switch_off})
+
+        # Schedule exactly one wake-up at the earliest pending timeout
+        if next_earliest is not None and getattr(self, 'next_timeout_at', None) != next_earliest:
+            self.push_event(next_earliest, {'type': 'call_me_later'})
+            self.next_timeout_at = next_earliest
 
     def prep_schedule(self, new_state, waiting_queue, scheduled_queue, resources_agenda):
-        # if self.current_time == 450:
-        #     print('x')
+
         self.state = new_state
         self.waiting_queue = waiting_queue
         self.scheduled_queue = scheduled_queue
@@ -95,7 +120,7 @@ class BaseAlgorithm():
             if node['state'] == 'sleeping'
         ]
 
-        self.allocated = []
+        self.allocated = []  # This tracks the list of allocated nodes in an instance of scheduling, since easy scheduler is executed after fcfs scheduler, we have to make sure easy scheduler doesn't realocate the nodes that already been allocated by fcfs, since fcfs doesnt immediately update simulator's machine, we have to store info of currently allocated nodes in the current instance of scheduling
         self.scheduled = []
 
         self.reserved_ids = []

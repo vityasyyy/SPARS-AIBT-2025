@@ -1,138 +1,248 @@
 dvfs_mode,state,submission_time,start_time,finish_time,nodes,job_id,terminated
-base,active,,0.0,1.0,0 1 2,-1,
-base,active,,0.0,3.0,3 4 5 6 7 8 9 10,-1,
-base,active,,0.0,4.0,11 12 13 14 15,-1,
-base,active,,0.0,5.0,16 17 18 19,-1,
-base,active,,1.0,94.0,0 1 2,1,True
-base,active,,3.0,56.0,3 4 5,2,False
-base,active,,3.0,84.0,6 7 8 9 10,3,False
-base,active,,4.0,80.0,11 12 13 14 15,4,False
-base,active,,5.0,117.0,16 17 18 19,5,True
-base,active,,56.0,80.0,3 4 5,-1,
-base,active,,80.0,131.0,13 14 15,7,False
-base,active,,80.0,167.0,3 4 5 11 12,6,False
-base,active,,84.0,160.0,6 7 8 9 10,8,False
-base,active,,94.0,117.0,0 1 2,-1,
-base,active,,117.0,131.0,18,-1,
-base,active,,117.0,141.0,19,-1,
-base,active,,117.0,181.0,0 1 2 16 17,9,True
-base,active,,131.0,201.0,13 14 15 18,10,False
-base,switching_off,,141.0,146.0,19,-2,
-base,sleeping,,146.0,3607.0,19,-4,
-base,active,,160.0,167.0,9 10,-1,
-base,active,,160.0,258.0,6 7 8,11,False
-base,active,,167.0,181.0,12,-1,
-base,active,,167.0,282.0,3 4 5 9 10 11,12,True
-base,active,,181.0,201.0,16,-1,
-base,active,,181.0,205.0,17,-1,
-base,active,,181.0,236.0,0 1 2 12,13,True
-base,active,,201.0,225.0,18,-1,
-base,active,,201.0,302.0,13 14 15 16,14,True
-base,switching_off,,205.0,210.0,17,-2,
-base,sleeping,,210.0,3607.0,17,-4,
-base,switching_off,,225.0,230.0,18,-2,
-base,sleeping,,230.0,3607.0,18,-4,
-base,active,,236.0,260.0,12,-1,
-base,active,,236.0,347.0,0 1 2,15,True
-base,active,,258.0,349.0,6 7 8,16,False
-base,switching_off,,260.0,265.0,12,-2,
-base,sleeping,,265.0,3607.0,12,-4,
-base,active,,282.0,302.0,11,-1,
-base,active,,282.0,338.0,3 4 5 9 10,17,True
-base,active,,302.0,326.0,15 16,-1,
-base,active,,302.0,406.0,11 13 14,18,False
-base,switching_off,,326.0,331.0,15 16,-2,
-base,sleeping,,331.0,3607.0,15 16,-4,
-base,active,,338.0,347.0,9,-1,
-base,active,,338.0,349.0,10,-1,
-base,active,,338.0,479.0,3 4 5,19,True
-base,active,,347.0,471.0,0 1 2 9,20,False
-base,active,,349.0,383.0,6 7 8 10,21,True
-base,active,,383.0,480.0,6 7 8 10,22,False
-base,active,,406.0,471.0,11 13 14,26,False
-base,active,,471.0,479.0,13 14,-1,
-base,active,,471.0,580.0,0 1 2 9 11,23,False
-base,active,,479.0,573.0,3 4 5 13 14,24,False
-base,active,,480.0,504.0,10,-1,
-base,active,,480.0,617.0,6 7 8,29,True
-base,switching_off,,504.0,509.0,10,-2,
-base,sleeping,,509.0,3607.0,10,-4,
-base,active,,573.0,683.0,3 4 5 13 14,25,False
-base,active,,580.0,674.0,0 1 2 9 11,27,True
-base,active,,617.0,702.0,6 7 8,32,True
-base,active,,674.0,722.0,0 1 2 9 11,28,True
-base,active,,683.0,702.0,14,-1,
-base,active,,683.0,734.0,3 4 5 13,30,False
-base,active,,702.0,783.0,6 7 8 14,31,False
-base,active,,722.0,734.0,11,-1,
-base,active,,722.0,797.0,0 1 2 9,33,False
-base,active,,734.0,758.0,13,-1,
-base,active,,734.0,776.0,3 4 5 11,34,True
-base,switching_off,,758.0,763.0,13,-2,
-base,sleeping,,763.0,3607.0,13,-4,
-base,active,,776.0,842.0,3 4 5 11,35,False
-base,active,,783.0,807.0,14,-1,
-base,active,,783.0,894.0,6 7 8,36,False
-base,active,,797.0,929.0,0 1 2 9,37,True
-base,switching_off,,807.0,812.0,14,-2,
-base,sleeping,,812.0,3607.0,14,-4,
-base,active,,842.0,936.0,3 4 5 11,38,True
-base,active,,894.0,1016.0,6 7 8,55,True
-base,active,,929.0,1061.0,0 1 2 9,40,False
-base,active,,936.0,1042.0,3 4 5 11,44,False
-base,active,,1016.0,1119.0,6 7 8,65,True
-base,active,,1042.0,1138.0,3 4 5 11,46,True
-base,active,,1061.0,1163.0,0 1 2 9,47,True
-base,active,,1119.0,1219.0,6 7 8,74,True
-base,active,,1138.0,1247.0,3 4 5 11,52,True
-base,active,,1163.0,1286.0,0 1 2 9,56,True
-base,active,,1219.0,1305.0,6 7 8,82,False
-base,active,,1247.0,1333.0,3 4 5 11,60,True
-base,active,,1286.0,1362.0,0 1 2 9,63,False
-base,active,,1305.0,1397.0,6 7 8,91,True
-base,active,,1333.0,1409.0,3 4 5 11,66,False
-base,active,,1362.0,1458.0,0 1 2 9,69,True
-base,active,,1397.0,1409.0,6 7 8,-1,
-base,active,,1409.0,1433.0,11,-1,
-base,active,,1409.0,1470.0,3 4 5 6 7 8,39,True
-base,switching_off,,1433.0,1438.0,11,-2,
-base,sleeping,,1438.0,3607.0,11,-4,
-base,active,,1458.0,1573.0,0 1 2 9,73,False
-base,active,,1470.0,1494.0,8,-1,
-base,active,,1470.0,1603.0,3 4 5 6 7,41,False
-base,switching_off,,1494.0,1499.0,8,-2,
-base,sleeping,,1499.0,3607.0,8,-4,
-base,active,,1573.0,1663.0,0 1 2 9,75,False
-base,active,,1603.0,1729.0,3 4 5 6 7,43,False
-base,active,,1663.0,1789.0,0 1 2 9,76,False
-base,active,,1729.0,1789.0,3 4 5 6 7,45,True
-base,active,,1789.0,1813.0,6 7 9,-1,
-base,active,,1789.0,1895.0,0 1 2 3 4 5,42,False
-base,switching_off,,1813.0,1818.0,6 7 9,-2,
-base,sleeping,,1818.0,3607.0,6 7 9,-4,
-base,active,,1895.0,1919.0,5,-1,
-base,active,,1895.0,2037.0,0 1 2 3 4,48,True
-base,switching_off,,1919.0,1924.0,5,-2,
-base,sleeping,,1924.0,3607.0,5,-4,
-base,active,,2037.0,2114.0,0 1 2 3 4,50,True
-base,active,,2114.0,2204.0,0 1 2 3 4,51,True
-base,active,,2204.0,2290.0,0 1 2 3 4,53,True
-base,active,,2290.0,2392.0,0 1 2 3 4,57,False
-base,active,,2392.0,2511.0,0 1 2 3 4,58,True
-base,active,,2511.0,2589.0,0 1 2 3 4,61,False
-base,active,,2589.0,2665.0,0 1 2 3 4,67,False
-base,active,,2665.0,2724.0,0 1 2 3 4,71,True
-base,active,,2724.0,2859.0,0 1 2 3 4,72,True
-base,active,,2859.0,2883.0,4,-1,
-base,active,,2859.0,2918.0,0 1 2 3,77,False
-base,switching_off,,2883.0,2888.0,4,-2,
-base,sleeping,,2888.0,3607.0,4,-4,
-base,active,,2918.0,2998.0,0 1 2 3,79,True
-base,active,,2998.0,3124.0,0 1 2 3,81,True
-base,active,,3124.0,3194.0,0 1 2 3,86,True
-base,active,,3194.0,3331.0,0 1 2 3,89,True
-base,active,,3331.0,3422.0,0 1 2 3,92,True
-base,active,,3422.0,3516.0,0 1 2 3,94,False
-base,active,,3516.0,3578.0,0 1 2 3,95,False
-base,active,,3578.0,3602.0,0 1 2 3,-1,
-base,switching_off,,3602.0,3607.0,0 1 2 3,-2,
+base,active,,0.0,4.0,0 1 2 3,-1,
+base,active,,0.0,6.0,4 5 6 7 8 9 10 11 12 13,-1,
+base,active,,0.0,9.0,14 15 16 17 18 19,-1,
+base,active,,0.0,11.0,20,-1,
+base,active,,4.0,46.0,0 1 2 3,1,False
+base,active,,6.0,97.0,11 12 13,4,False
+base,active,,6.0,102.0,8 9 10,3,False
+base,active,,6.0,128.0,4 5 6 7,2,False
+base,active,,9.0,104.0,14 15 16 17 18 19,5,False
+base,switching_off,,11.0,16.0,20,-2,
+base,sleeping,,16.0,97.0,20,-4,
+base,active,,46.0,142.0,0 1 2 3,6,False
+base,active,,97.0,102.0,11 12 13,-1,
+base,switching_on,,97.0,102.0,20,-3,
+base,active,,102.0,147.0,11 12 13 20,7,False
+base,active,,102.0,175.0,8 9 10,17,False
+base,active,,104.0,115.0,19,-1,
+base,active,,104.0,226.0,14 15 16 17 18,8,True
+base,switching_off,,115.0,120.0,19,-2,
+base,sleeping,,120.0,222.0,19,-4,
+base,active,,128.0,139.0,7,-1,
+base,active,,128.0,235.0,4 5 6,32,True
+base,switching_off,,139.0,144.0,7,-2,
+base,active,,142.0,152.0,3,-1,
+base,active,,142.0,224.0,0 1 2,42,False
+base,sleeping,,144.0,147.0,7,-4,
+base,active,,147.0,152.0,11 12 13 20,-1,
+base,switching_on,,147.0,152.0,7,-3,
+base,active,,152.0,266.0,3 7 11 12 13 20,9,False
+base,active,,175.0,186.0,8 9 10,-1,
+base,switching_off,,186.0,191.0,8 9 10,-2,
+base,sleeping,,191.0,222.0,8 9 10,-4,
+base,switching_on,,222.0,227.0,8 9 10 19,-3,
+base,active,,224.0,226.0,2,-1,
+base,active,,224.0,302.0,0 1,47,False
+base,active,,226.0,335.0,2 14 15 16 17 18,10,False
+base,active,,227.0,314.0,8 9 10 19,16,False
+base,active,,235.0,359.0,4 5 6,46,False
+base,active,,266.0,277.0,20,-1,
+base,active,,266.0,377.0,3 7 11 12 13,11,False
+base,switching_off,,277.0,282.0,20,-2,
+base,sleeping,,282.0,377.0,20,-4,
+base,active,,302.0,313.0,0 1,-1,
+base,switching_off,,313.0,318.0,0 1,-2,
+base,active,,314.0,323.0,8 9 10 19,-1,
+base,switching_on,,318.0,323.0,0 1,-3,
+base,active,,323.0,422.0,0 1 8 9 10 19,12,False
+base,active,,335.0,440.0,2 14 15 16 17 18,13,False
+base,active,,359.0,451.0,4 5 6,65,False
+base,active,,377.0,382.0,3 7 11 12 13,-1,
+base,switching_on,,377.0,382.0,20,-3,
+base,active,,382.0,519.0,3 7 11 12 13 20,14,False
+base,active,,422.0,517.0,0 1 8 9 10 19,15,False
+base,active,,440.0,451.0,18,-1,
+base,active,,440.0,520.0,2 14 15 16 17,18,False
+base,active,,451.0,555.0,4 5 6 18,25,False
+base,active,,517.0,519.0,19,-1,
+base,active,,517.0,592.0,0 1 8 9 10,19,False
+base,active,,519.0,602.0,19 20,71,False
+base,active,,519.0,631.0,3 7 11 12 13,20,False
+base,active,,520.0,580.0,2 14 15 16 17,21,False
+base,active,,555.0,566.0,18,-1,
+base,active,,555.0,626.0,4 5 6,76,False
+base,switching_off,,566.0,571.0,18,-2,
+base,sleeping,,571.0,580.0,18,-4,
+base,active,,580.0,585.0,2 14 15 16 17,-1,
+base,switching_on,,580.0,585.0,18,-3,
+base,active,,585.0,650.0,2 14 15 16 17 18,22,False
+base,active,,592.0,602.0,0 1 8 9 10,-1,
+base,active,,602.0,613.0,20,-1,
+base,active,,602.0,678.0,0 1 8 9 10 19,23,False
+base,switching_off,,613.0,618.0,20,-2,
+base,sleeping,,618.0,631.0,20,-4,
+base,active,,626.0,759.0,4 5 6,77,False
+base,active,,631.0,636.0,3 7 11 12 13,-1,
+base,switching_on,,631.0,636.0,20,-3,
+base,active,,636.0,764.0,3 7 11 12 13 20,24,False
+base,active,,650.0,779.0,2 14 15 16 17 18,26,False
+base,active,,678.0,770.0,0 1 8 9 10 19,27,False
+base,active,,759.0,764.0,4 5 6,-1,
+base,active,,764.0,770.0,13 20,-1,
+base,active,,764.0,851.0,3 4 5 6 7 11 12,28,True
+base,active,,770.0,889.0,10 13 19 20,38,False
+base,active,,770.0,901.0,0 1 8 9,29,False
+base,active,,779.0,790.0,18,-1,
+base,active,,779.0,864.0,2 14 15 16 17,30,False
+base,switching_off,,790.0,795.0,18,-2,
+base,sleeping,,795.0,851.0,18,-4,
+base,active,,851.0,856.0,11 12,-1,
+base,switching_on,,851.0,856.0,18,-3,
+base,active,,851.0,940.0,3 4 5 6 7,31,False
+base,active,,856.0,964.0,11 12 18,87,True
+base,active,,864.0,918.0,2 14 15 16 17,33,False
+base,active,,889.0,900.0,20,-1,
+base,active,,889.0,998.0,10 13 19,95,False
+base,switching_off,,900.0,905.0,20,-2,
+base,active,,901.0,910.0,0 1 8 9,-1,
+base,switching_on,,905.0,910.0,20,-3,
+base,active,,910.0,1005.0,0 1 8 9 20,34,False
+base,active,,918.0,980.0,2 14 15 16 17,35,False
+base,active,,940.0,1015.0,3 4 5 6 7,36,False
+base,active,,964.0,1052.0,11 12 18,97,False
+base,active,,980.0,1086.0,2 14 15 16 17,37,False
+base,active,,998.0,1130.0,10 13 19,100,False
+base,active,,1005.0,1016.0,20,-1,
+base,active,,1005.0,1130.0,0 1 8 9,39,False
+base,active,,1015.0,1098.0,3 4 5 6 7,40,False
+base,switching_off,,1016.0,1021.0,20,-2,
+base,sleeping,,1021.0,1273.0,20,-4,
+base,active,,1052.0,1063.0,11 12 18,-1,
+base,switching_off,,1063.0,1068.0,11 12 18,-2,
+base,sleeping,,1068.0,1086.0,11,-4,
+base,sleeping,,1068.0,1098.0,12,-4,
+base,sleeping,,1068.0,1179.0,18,-4,
+base,active,,1086.0,1091.0,2 14 15 16 17,-1,
+base,switching_on,,1086.0,1091.0,11,-3,
+base,active,,1091.0,1194.0,2 11 14 15 16 17,41,True
+base,active,,1098.0,1103.0,3 4 5 6 7,-1,
+base,switching_on,,1098.0,1103.0,12,-3,
+base,active,,1103.0,1179.0,3 4 5 6 7 12,43,True
+base,active,,1130.0,1141.0,19,-1,
+base,active,,1130.0,1190.0,0 1 8 9 10 13,44,False
+base,switching_off,,1141.0,1146.0,19,-2,
+base,sleeping,,1146.0,1179.0,19,-4,
+base,active,,1179.0,1184.0,7 12,-1,
+base,switching_on,,1179.0,1184.0,18 19,-3,
+base,active,,1179.0,1273.0,3 4 5 6,45,False
+base,active,,1184.0,1270.0,7 12 18 19,48,False
+base,active,,1190.0,1194.0,13,-1,
+base,active,,1190.0,1285.0,0 1 8 9 10,49,False
+base,active,,1194.0,1205.0,16 17,-1,
+base,active,,1194.0,1285.0,2 11 13 14 15,50,False
+base,switching_off,,1205.0,1210.0,16 17,-2,
+base,sleeping,,1210.0,1270.0,16 17,-4,
+base,active,,1270.0,1275.0,7 12 18 19,-1,
+base,switching_on,,1270.0,1275.0,16 17,-3,
+base,active,,1273.0,1278.0,3 4 5 6,-1,
+base,switching_on,,1273.0,1278.0,20,-3,
+base,active,,1275.0,1351.0,7 12 16 17 18 19,51,False
+base,active,,1278.0,1379.0,3 4 5 6 20,52,False
+base,active,,1285.0,1296.0,14 15,-1,
+base,active,,1285.0,1380.0,0 1 2 8,53,False
+base,active,,1285.0,1382.0,9 10 11 13,54,False
+base,switching_off,,1296.0,1301.0,14 15,-2,
+base,sleeping,,1301.0,1351.0,14 15,-4,
+base,active,,1351.0,1356.0,18 19,-1,
+base,switching_on,,1351.0,1356.0,14 15,-3,
+base,active,,1351.0,1452.0,7 12 16 17,55,False
+base,active,,1356.0,1419.0,14 15 18 19,62,False
+base,active,,1379.0,1468.0,3 4 5 6 20,56,False
+base,active,,1380.0,1382.0,0 1 2 8,-1,
+base,active,,1382.0,1393.0,10 11 13,-1,
+base,active,,1382.0,1484.0,0 1 2 8 9,57,False
+base,switching_off,,1393.0,1398.0,10 11 13,-2,
+base,sleeping,,1398.0,1419.0,10,-4,
+base,sleeping,,1398.0,1452.0,11,-4,
+base,sleeping,,1398.0,1484.0,13,-4,
+base,active,,1419.0,1424.0,14 15 18 19,-1,
+base,switching_on,,1419.0,1424.0,10,-3,
+base,active,,1424.0,1548.0,10 14 15 18 19,58,False
+base,active,,1452.0,1457.0,7 12 16 17,-1,
+base,switching_on,,1452.0,1457.0,11,-3,
+base,active,,1457.0,1578.0,7 11 12 16 17,59,False
+base,active,,1468.0,1530.0,3 4 5 6 20,60,False
+base,active,,1484.0,1489.0,0 1 2 8 9,-1,
+base,switching_on,,1484.0,1489.0,13,-3,
+base,active,,1489.0,1604.0,0 1 2 8 9 13,61,False
+base,active,,1530.0,1623.0,3 4 5 6 20,63,False
+base,active,,1548.0,1559.0,19,-1,
+base,active,,1548.0,1628.0,10 14 15 18,64,False
+base,switching_off,,1559.0,1564.0,19,-2,
+base,sleeping,,1564.0,1804.0,19,-4,
+base,active,,1578.0,1644.0,7 11 12 16 17,66,False
+base,active,,1604.0,1615.0,13,-1,
+base,active,,1604.0,1702.0,0 1 2 8 9,67,False
+base,switching_off,,1615.0,1620.0,13,-2,
+base,sleeping,,1620.0,1623.0,13,-4,
+base,active,,1623.0,1628.0,3 4 5 6 20,-1,
+base,switching_on,,1623.0,1628.0,13,-3,
+base,active,,1628.0,1718.0,10 14 15 18,69,True
+base,active,,1628.0,1744.0,3 4 5 6 13 20,68,False
+base,active,,1644.0,1655.0,17,-1,
+base,active,,1644.0,1767.0,7 11 12 16,70,False
+base,switching_off,,1655.0,1660.0,17,-2,
+base,sleeping,,1660.0,1767.0,17,-4,
+base,active,,1702.0,1713.0,9,-1,
+base,active,,1702.0,1799.0,0 1 2 8,72,False
+base,switching_off,,1713.0,1718.0,9,-2,
+base,active,,1718.0,1723.0,10 14 15 18,-1,
+base,switching_on,,1718.0,1723.0,9,-3,
+base,active,,1723.0,1804.0,9 10 14 15 18,73,True
+base,active,,1744.0,1816.0,3 4 5 6 13 20,74,False
+base,active,,1767.0,1772.0,7 11 12 16,-1,
+base,switching_on,,1767.0,1772.0,17,-3,
+base,active,,1772.0,1850.0,7 11 12 16 17,75,False
+base,active,,1799.0,1888.0,0 1 2 8,78,False
+base,active,,1804.0,1809.0,9 10 14 15 18,-1,
+base,switching_on,,1804.0,1809.0,19,-3,
+base,active,,1809.0,1926.0,9 10 14 15 18 19,79,False
+base,active,,1816.0,1827.0,13 20,-1,
+base,active,,1816.0,1907.0,3 4 5 6,80,False
+base,switching_off,,1827.0,1832.0,13 20,-2,
+base,sleeping,,1832.0,1850.0,13 20,-4,
+base,active,,1850.0,1855.0,7 11 12 16 17,-1,
+base,switching_on,,1850.0,1855.0,13 20,-3,
+base,active,,1855.0,1946.0,7 11 12 13 16 17 20,81,False
+base,active,,1888.0,1899.0,0 1 2 8,-1,
+base,switching_off,,1899.0,1904.0,0 1 2 8,-2,
+base,sleeping,,1904.0,1907.0,0,-4,
+base,sleeping,,1904.0,1926.0,1 2 8,-4,
+base,active,,1907.0,1912.0,3 4 5 6,-1,
+base,switching_on,,1907.0,1912.0,0,-3,
+base,active,,1912.0,2019.0,0 3 4 5 6,82,False
+base,active,,1926.0,1931.0,19,-1,
+base,switching_on,,1926.0,1931.0,1 2 8,-3,
+base,active,,1926.0,2045.0,9 10 14 15 18,83,False
+base,active,,1931.0,2060.0,1 2 8 19,86,False
+base,active,,1946.0,1957.0,17 20,-1,
+base,active,,1946.0,2018.0,7 11 12 13 16,84,False
+base,switching_off,,1957.0,1962.0,17 20,-2,
+base,sleeping,,1962.0,2123.0,17,-4,
+base,sleeping,,1962.0,2199.0,20,-4,
+base,active,,2018.0,2121.0,7 11 12 13 16,85,False
+base,active,,2019.0,2093.0,0 3 4 5 6,88,False
+base,active,,2045.0,2118.0,9 10 14 15 18,89,False
+base,active,,2060.0,2123.0,1 2 8 19,90,False
+base,active,,2093.0,2199.0,0 3 4 5 6,91,False
+base,active,,2118.0,2225.0,9 10 14 15 18,92,True
+base,active,,2121.0,2234.0,7 11 12 13 16,93,False
+base,active,,2123.0,2128.0,1 2 8 19,-1,
+base,switching_on,,2123.0,2128.0,17,-3,
+base,active,,2128.0,2243.0,1 2 8 17 19,94,False
+base,active,,2199.0,2204.0,0 3 4 5 6,-1,
+base,switching_on,,2199.0,2204.0,20,-3,
+base,active,,2204.0,2346.0,0 3 4 5 6 20,96,False
+base,active,,2225.0,2355.0,9 10 14 15 18,98,False
+base,active,,2234.0,2245.0,16,-1,
+base,active,,2234.0,2319.0,7 11 12 13,99,False
+base,active,,2243.0,2254.0,1 2 8 17 19,-1,
+base,switching_off,,2245.0,2250.0,16,-2,
+base,sleeping,,2250.0,2355.0,16,-4,
+base,switching_off,,2254.0,2259.0,1 2 8 17 19,-2,
+base,sleeping,,2259.0,2355.0,1 2 8 17 19,-4,
+base,active,,2319.0,2330.0,7 11 12 13,-1,
+base,switching_off,,2330.0,2335.0,7 11 12 13,-2,
+base,sleeping,,2335.0,2355.0,7 11 12 13,-4,
+base,active,,2346.0,2355.0,0 3 4 5 6 20,-1,

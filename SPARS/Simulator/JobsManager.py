@@ -17,7 +17,7 @@ class JobsManager:
             self.remove_job_from_waiting_queue(job['job_id'], 'terminated')
 
         for job in self.scheduled_queue:
-            self.remove_job_from_waiting_queue(job['job_id'], 'terminated')
+            self.remove_job_from_scheduled_queue(job['job_id'], 'terminated')
 
     def add_job_to_waiting_queue(self, job):
         self.waiting_queue.append(job)

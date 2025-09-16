@@ -1,903 +1,903 @@
 {
-    "nb_res": 16,
+    "nb_res": 1,
     "jobs": [
         {
             "job_id": 1,
-            "res": 8,
-            "subtime": 1,
-            "reqtime": 91,
-            "runtime": 102,
+            "res": 1,
+            "subtime": 0,
+            "reqtime": 117,
+            "runtime": 113,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 2,
-            "res": 6,
-            "subtime": 2,
-            "reqtime": 76,
-            "runtime": 76,
+            "res": 1,
+            "subtime": 5,
+            "reqtime": 99,
+            "runtime": 98,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 3,
-            "res": 7,
-            "subtime": 5,
-            "reqtime": 71,
-            "runtime": 71,
+            "res": 1,
+            "subtime": 8,
+            "reqtime": 107,
+            "runtime": 102,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 4,
-            "res": 7,
-            "subtime": 5,
-            "reqtime": 95,
-            "runtime": 99,
+            "res": 1,
+            "subtime": 11,
+            "reqtime": 125,
+            "runtime": 121,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 5,
-            "res": 9,
-            "subtime": 8,
-            "reqtime": 66,
-            "runtime": 64,
+            "res": 1,
+            "subtime": 20,
+            "reqtime": 124,
+            "runtime": 123,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 6,
-            "res": 7,
-            "subtime": 11,
-            "reqtime": 71,
-            "runtime": 81,
+            "res": 1,
+            "subtime": 21,
+            "reqtime": 109,
+            "runtime": 106,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 7,
-            "res": 6,
-            "subtime": 12,
-            "reqtime": 83,
+            "res": 1,
+            "subtime": 27,
+            "reqtime": 94,
             "runtime": 90,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 8,
-            "res": 8,
-            "subtime": 12,
-            "reqtime": 73,
-            "runtime": 74,
+            "res": 1,
+            "subtime": 41,
+            "reqtime": 127,
+            "runtime": 124,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 9,
-            "res": 8,
-            "subtime": 19,
-            "reqtime": 62,
-            "runtime": 63,
+            "res": 1,
+            "subtime": 43,
+            "reqtime": 99,
+            "runtime": 92,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 10,
-            "res": 7,
-            "subtime": 19,
-            "reqtime": 78,
-            "runtime": 74,
+            "res": 1,
+            "subtime": 47,
+            "reqtime": 127,
+            "runtime": 122,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 11,
-            "res": 9,
-            "subtime": 20,
-            "reqtime": 75,
-            "runtime": 74,
+            "res": 1,
+            "subtime": 50,
+            "reqtime": 110,
+            "runtime": 108,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 12,
-            "res": 8,
-            "subtime": 23,
-            "reqtime": 66,
-            "runtime": 60,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 13,
-            "res": 6,
-            "subtime": 25,
-            "reqtime": 93,
-            "runtime": 100,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 14,
-            "res": 6,
-            "subtime": 30,
-            "reqtime": 99,
-            "runtime": 98,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 15,
-            "res": 8,
-            "subtime": 34,
-            "reqtime": 90,
-            "runtime": 90,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 16,
-            "res": 7,
-            "subtime": 34,
-            "reqtime": 96,
-            "runtime": 97,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 17,
-            "res": 8,
-            "subtime": 35,
-            "reqtime": 94,
-            "runtime": 96,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 18,
-            "res": 8,
-            "subtime": 36,
-            "reqtime": 69,
-            "runtime": 71,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 19,
-            "res": 8,
-            "subtime": 37,
-            "reqtime": 90,
-            "runtime": 98,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 20,
-            "res": 8,
-            "subtime": 37,
-            "reqtime": 51,
-            "runtime": 61,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 21,
-            "res": 7,
-            "subtime": 39,
-            "reqtime": 83,
-            "runtime": 82,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 22,
-            "res": 7,
-            "subtime": 41,
-            "reqtime": 59,
-            "runtime": 66,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 23,
-            "res": 7,
-            "subtime": 42,
-            "reqtime": 66,
-            "runtime": 72,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 24,
-            "res": 7,
-            "subtime": 45,
-            "reqtime": 108,
+            "res": 1,
+            "subtime": 63,
+            "reqtime": 114,
             "runtime": 114,
             "profile": "100",
             "user_id": 0
         },
         {
-            "job_id": 25,
-            "res": 8,
-            "subtime": 49,
-            "reqtime": 99,
-            "runtime": 105,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 26,
-            "res": 7,
-            "subtime": 52,
-            "reqtime": 88,
-            "runtime": 88,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 27,
-            "res": 7,
-            "subtime": 54,
-            "reqtime": 105,
-            "runtime": 110,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 28,
-            "res": 7,
-            "subtime": 55,
-            "reqtime": 66,
-            "runtime": 66,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 29,
-            "res": 7,
-            "subtime": 55,
-            "reqtime": 94,
-            "runtime": 91,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 30,
-            "res": 7,
-            "subtime": 56,
-            "reqtime": 91,
-            "runtime": 93,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 31,
-            "res": 8,
-            "subtime": 61,
-            "reqtime": 86,
-            "runtime": 85,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 32,
-            "res": 7,
-            "subtime": 65,
-            "reqtime": 99,
-            "runtime": 105,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 33,
-            "res": 7,
+            "job_id": 13,
+            "res": 1,
             "subtime": 66,
-            "reqtime": 89,
-            "runtime": 89,
+            "reqtime": 100,
+            "runtime": 101,
             "profile": "100",
             "user_id": 0
         },
         {
-            "job_id": 34,
-            "res": 9,
-            "subtime": 67,
-            "reqtime": 64,
-            "runtime": 75,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 35,
-            "res": 9,
-            "subtime": 67,
-            "reqtime": 70,
-            "runtime": 66,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 36,
-            "res": 8,
-            "subtime": 67,
-            "reqtime": 83,
-            "runtime": 91,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 37,
-            "res": 7,
-            "subtime": 69,
-            "reqtime": 55,
-            "runtime": 60,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 38,
-            "res": 8,
-            "subtime": 71,
-            "reqtime": 82,
-            "runtime": 85,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 39,
-            "res": 8,
+            "job_id": 14,
+            "res": 1,
             "subtime": 72,
-            "reqtime": 87,
-            "runtime": 87,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 40,
-            "res": 6,
-            "subtime": 75,
-            "reqtime": 89,
-            "runtime": 94,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 41,
-            "res": 6,
-            "subtime": 76,
-            "reqtime": 78,
-            "runtime": 80,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 42,
-            "res": 6,
-            "subtime": 76,
-            "reqtime": 61,
-            "runtime": 68,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 43,
-            "res": 8,
-            "subtime": 82,
-            "reqtime": 58,
-            "runtime": 57,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 44,
-            "res": 8,
-            "subtime": 84,
-            "reqtime": 101,
-            "runtime": 98,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 45,
-            "res": 9,
-            "subtime": 85,
-            "reqtime": 57,
-            "runtime": 61,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 46,
-            "res": 7,
-            "subtime": 85,
-            "reqtime": 99,
+            "reqtime": 102,
             "runtime": 100,
             "profile": "100",
             "user_id": 0
         },
         {
-            "job_id": 47,
-            "res": 8,
-            "subtime": 86,
-            "reqtime": 105,
-            "runtime": 110,
+            "job_id": 15,
+            "res": 1,
+            "subtime": 73,
+            "reqtime": 111,
+            "runtime": 101,
             "profile": "100",
             "user_id": 0
         },
         {
-            "job_id": 48,
-            "res": 7,
-            "subtime": 86,
-            "reqtime": 95,
-            "runtime": 95,
+            "job_id": 16,
+            "res": 1,
+            "subtime": 78,
+            "reqtime": 110,
+            "runtime": 106,
             "profile": "100",
             "user_id": 0
         },
         {
-            "job_id": 49,
-            "res": 9,
-            "subtime": 87,
-            "reqtime": 89,
-            "runtime": 87,
+            "job_id": 17,
+            "res": 1,
+            "subtime": 80,
+            "reqtime": 118,
+            "runtime": 117,
             "profile": "100",
             "user_id": 0
         },
         {
-            "job_id": 50,
-            "res": 9,
-            "subtime": 89,
-            "reqtime": 93,
+            "job_id": 18,
+            "res": 1,
+            "subtime": 93,
+            "reqtime": 128,
+            "runtime": 124,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 19,
+            "res": 1,
+            "subtime": 97,
+            "reqtime": 124,
+            "runtime": 118,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 20,
+            "res": 1,
+            "subtime": 106,
+            "reqtime": 98,
             "runtime": 94,
             "profile": "100",
             "user_id": 0
         },
         {
+            "job_id": 21,
+            "res": 1,
+            "subtime": 107,
+            "reqtime": 108,
+            "runtime": 100,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 22,
+            "res": 1,
+            "subtime": 118,
+            "reqtime": 110,
+            "runtime": 106,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 23,
+            "res": 1,
+            "subtime": 120,
+            "reqtime": 105,
+            "runtime": 103,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 24,
+            "res": 1,
+            "subtime": 122,
+            "reqtime": 82,
+            "runtime": 78,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 25,
+            "res": 1,
+            "subtime": 129,
+            "reqtime": 105,
+            "runtime": 103,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 26,
+            "res": 1,
+            "subtime": 135,
+            "reqtime": 109,
+            "runtime": 105,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 27,
+            "res": 1,
+            "subtime": 144,
+            "reqtime": 104,
+            "runtime": 102,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 28,
+            "res": 1,
+            "subtime": 145,
+            "reqtime": 106,
+            "runtime": 101,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 29,
+            "res": 1,
+            "subtime": 146,
+            "reqtime": 110,
+            "runtime": 106,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 30,
+            "res": 1,
+            "subtime": 155,
+            "reqtime": 104,
+            "runtime": 100,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 31,
+            "res": 1,
+            "subtime": 159,
+            "reqtime": 125,
+            "runtime": 119,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 32,
+            "res": 1,
+            "subtime": 173,
+            "reqtime": 121,
+            "runtime": 121,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 33,
+            "res": 1,
+            "subtime": 189,
+            "reqtime": 129,
+            "runtime": 132,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 34,
+            "res": 1,
+            "subtime": 192,
+            "reqtime": 99,
+            "runtime": 96,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 35,
+            "res": 1,
+            "subtime": 197,
+            "reqtime": 103,
+            "runtime": 95,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 36,
+            "res": 1,
+            "subtime": 204,
+            "reqtime": 126,
+            "runtime": 123,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 37,
+            "res": 1,
+            "subtime": 218,
+            "reqtime": 127,
+            "runtime": 120,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 38,
+            "res": 1,
+            "subtime": 228,
+            "reqtime": 121,
+            "runtime": 118,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 39,
+            "res": 1,
+            "subtime": 240,
+            "reqtime": 129,
+            "runtime": 120,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 40,
+            "res": 1,
+            "subtime": 241,
+            "reqtime": 99,
+            "runtime": 99,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 41,
+            "res": 1,
+            "subtime": 244,
+            "reqtime": 100,
+            "runtime": 100,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 42,
+            "res": 1,
+            "subtime": 245,
+            "reqtime": 98,
+            "runtime": 94,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 43,
+            "res": 1,
+            "subtime": 255,
+            "reqtime": 109,
+            "runtime": 108,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 44,
+            "res": 1,
+            "subtime": 260,
+            "reqtime": 105,
+            "runtime": 97,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 45,
+            "res": 1,
+            "subtime": 261,
+            "reqtime": 105,
+            "runtime": 101,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 46,
+            "res": 1,
+            "subtime": 263,
+            "reqtime": 113,
+            "runtime": 109,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 47,
+            "res": 1,
+            "subtime": 284,
+            "reqtime": 111,
+            "runtime": 108,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 48,
+            "res": 1,
+            "subtime": 284,
+            "reqtime": 131,
+            "runtime": 128,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 49,
+            "res": 1,
+            "subtime": 296,
+            "reqtime": 101,
+            "runtime": 96,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 50,
+            "res": 1,
+            "subtime": 297,
+            "reqtime": 101,
+            "runtime": 96,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
             "job_id": 51,
-            "res": 6,
-            "subtime": 97,
-            "reqtime": 49,
-            "runtime": 51,
+            "res": 1,
+            "subtime": 299,
+            "reqtime": 104,
+            "runtime": 96,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 52,
-            "res": 7,
-            "subtime": 99,
-            "reqtime": 55,
-            "runtime": 50,
+            "res": 1,
+            "subtime": 301,
+            "reqtime": 108,
+            "runtime": 102,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 53,
-            "res": 7,
-            "subtime": 106,
-            "reqtime": 72,
-            "runtime": 75,
+            "res": 1,
+            "subtime": 313,
+            "reqtime": 97,
+            "runtime": 98,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 54,
-            "res": 9,
-            "subtime": 106,
-            "reqtime": 51,
-            "runtime": 51,
+            "res": 1,
+            "subtime": 317,
+            "reqtime": 112,
+            "runtime": 110,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 55,
-            "res": 7,
-            "subtime": 106,
-            "reqtime": 85,
-            "runtime": 88,
+            "res": 1,
+            "subtime": 322,
+            "reqtime": 121,
+            "runtime": 109,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 56,
-            "res": 7,
-            "subtime": 110,
-            "reqtime": 89,
-            "runtime": 93,
+            "res": 1,
+            "subtime": 328,
+            "reqtime": 115,
+            "runtime": 108,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 57,
-            "res": 8,
-            "subtime": 110,
-            "reqtime": 69,
-            "runtime": 72,
+            "res": 1,
+            "subtime": 332,
+            "reqtime": 122,
+            "runtime": 118,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 58,
-            "res": 8,
-            "subtime": 114,
-            "reqtime": 90,
-            "runtime": 91,
+            "res": 1,
+            "subtime": 334,
+            "reqtime": 108,
+            "runtime": 104,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 59,
-            "res": 9,
-            "subtime": 115,
+            "res": 1,
+            "subtime": 343,
+            "reqtime": 118,
+            "runtime": 114,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 60,
+            "res": 1,
+            "subtime": 351,
+            "reqtime": 109,
+            "runtime": 105,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 61,
+            "res": 1,
+            "subtime": 352,
+            "reqtime": 120,
+            "runtime": 118,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 62,
+            "res": 1,
+            "subtime": 353,
+            "reqtime": 119,
+            "runtime": 118,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 63,
+            "res": 1,
+            "subtime": 357,
+            "reqtime": 105,
+            "runtime": 98,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 64,
+            "res": 1,
+            "subtime": 358,
+            "reqtime": 104,
+            "runtime": 99,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 65,
+            "res": 1,
+            "subtime": 364,
+            "reqtime": 98,
+            "runtime": 97,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 66,
+            "res": 1,
+            "subtime": 369,
+            "reqtime": 101,
+            "runtime": 97,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 67,
+            "res": 1,
+            "subtime": 386,
+            "reqtime": 117,
+            "runtime": 116,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 68,
+            "res": 1,
+            "subtime": 388,
+            "reqtime": 95,
+            "runtime": 90,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 69,
+            "res": 1,
+            "subtime": 390,
+            "reqtime": 90,
+            "runtime": 85,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 70,
+            "res": 1,
+            "subtime": 390,
+            "reqtime": 110,
+            "runtime": 106,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 71,
+            "res": 1,
+            "subtime": 390,
+            "reqtime": 117,
+            "runtime": 116,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 72,
+            "res": 1,
+            "subtime": 403,
+            "reqtime": 91,
+            "runtime": 88,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 73,
+            "res": 1,
+            "subtime": 407,
+            "reqtime": 99,
+            "runtime": 96,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 74,
+            "res": 1,
+            "subtime": 415,
+            "reqtime": 113,
+            "runtime": 110,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 75,
+            "res": 1,
+            "subtime": 416,
+            "reqtime": 111,
+            "runtime": 104,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 76,
+            "res": 1,
+            "subtime": 420,
+            "reqtime": 99,
+            "runtime": 96,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 77,
+            "res": 1,
+            "subtime": 429,
+            "reqtime": 97,
+            "runtime": 88,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 78,
+            "res": 1,
+            "subtime": 440,
+            "reqtime": 105,
+            "runtime": 105,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 79,
+            "res": 1,
+            "subtime": 452,
+            "reqtime": 102,
+            "runtime": 96,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 80,
+            "res": 1,
+            "subtime": 453,
+            "reqtime": 93,
+            "runtime": 86,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 81,
+            "res": 1,
+            "subtime": 471,
+            "reqtime": 110,
+            "runtime": 113,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 82,
+            "res": 1,
+            "subtime": 474,
             "reqtime": 97,
             "runtime": 97,
             "profile": "100",
             "user_id": 0
         },
         {
-            "job_id": 60,
-            "res": 6,
-            "subtime": 116,
-            "reqtime": 39,
-            "runtime": 46,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 61,
-            "res": 8,
-            "subtime": 119,
-            "reqtime": 59,
-            "runtime": 64,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 62,
-            "res": 9,
-            "subtime": 120,
-            "reqtime": 80,
-            "runtime": 91,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 63,
-            "res": 8,
-            "subtime": 122,
-            "reqtime": 90,
-            "runtime": 88,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 64,
-            "res": 7,
-            "subtime": 123,
-            "reqtime": 92,
-            "runtime": 85,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 65,
-            "res": 7,
-            "subtime": 126,
-            "reqtime": 60,
-            "runtime": 67,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 66,
-            "res": 8,
-            "subtime": 126,
-            "reqtime": 58,
-            "runtime": 53,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 67,
-            "res": 7,
-            "subtime": 128,
-            "reqtime": 59,
-            "runtime": 62,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 68,
-            "res": 6,
-            "subtime": 131,
-            "reqtime": 100,
-            "runtime": 99,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 69,
-            "res": 6,
-            "subtime": 131,
-            "reqtime": 76,
-            "runtime": 81,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 70,
-            "res": 6,
-            "subtime": 132,
-            "reqtime": 46,
-            "runtime": 48,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 71,
-            "res": 6,
-            "subtime": 132,
-            "reqtime": 76,
-            "runtime": 87,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 72,
-            "res": 8,
-            "subtime": 133,
-            "reqtime": 96,
-            "runtime": 95,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 73,
-            "res": 6,
-            "subtime": 135,
-            "reqtime": 76,
-            "runtime": 93,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 74,
-            "res": 7,
-            "subtime": 137,
-            "reqtime": 68,
-            "runtime": 75,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 75,
-            "res": 9,
-            "subtime": 138,
-            "reqtime": 70,
-            "runtime": 65,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 76,
-            "res": 9,
-            "subtime": 142,
-            "reqtime": 82,
-            "runtime": 85,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 77,
-            "res": 7,
-            "subtime": 148,
-            "reqtime": 74,
-            "runtime": 76,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 78,
-            "res": 9,
-            "subtime": 148,
-            "reqtime": 84,
-            "runtime": 86,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 79,
-            "res": 8,
-            "subtime": 150,
-            "reqtime": 62,
-            "runtime": 69,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 80,
-            "res": 6,
-            "subtime": 150,
-            "reqtime": 103,
-            "runtime": 110,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 81,
-            "res": 8,
-            "subtime": 153,
-            "reqtime": 104,
-            "runtime": 106,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 82,
-            "res": 5,
-            "subtime": 156,
-            "reqtime": 88,
-            "runtime": 87,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
             "job_id": 83,
-            "res": 8,
-            "subtime": 159,
-            "reqtime": 91,
-            "runtime": 93,
+            "res": 1,
+            "subtime": 475,
+            "reqtime": 129,
+            "runtime": 121,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 84,
-            "res": 7,
-            "subtime": 162,
-            "reqtime": 69,
-            "runtime": 65,
+            "res": 1,
+            "subtime": 476,
+            "reqtime": 108,
+            "runtime": 107,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 85,
-            "res": 7,
-            "subtime": 162,
-            "reqtime": 63,
-            "runtime": 62,
+            "res": 1,
+            "subtime": 487,
+            "reqtime": 111,
+            "runtime": 111,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 86,
-            "res": 7,
-            "subtime": 170,
-            "reqtime": 50,
-            "runtime": 55,
+            "res": 1,
+            "subtime": 495,
+            "reqtime": 134,
+            "runtime": 130,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 87,
-            "res": 8,
-            "subtime": 176,
-            "reqtime": 76,
-            "runtime": 81,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 88,
-            "res": 8,
-            "subtime": 180,
-            "reqtime": 53,
-            "runtime": 60,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 89,
-            "res": 9,
-            "subtime": 184,
-            "reqtime": 115,
-            "runtime": 117,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 90,
-            "res": 6,
-            "subtime": 187,
-            "reqtime": 81,
-            "runtime": 79,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 91,
-            "res": 8,
-            "subtime": 187,
-            "reqtime": 87,
-            "runtime": 91,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 92,
-            "res": 8,
-            "subtime": 190,
-            "reqtime": 70,
-            "runtime": 75,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 93,
-            "res": 6,
-            "subtime": 193,
-            "reqtime": 80,
-            "runtime": 81,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 94,
-            "res": 6,
-            "subtime": 193,
-            "reqtime": 80,
-            "runtime": 81,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 95,
-            "res": 8,
-            "subtime": 195,
-            "reqtime": 85,
-            "runtime": 93,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 96,
-            "res": 7,
-            "subtime": 196,
-            "reqtime": 67,
-            "runtime": 61,
-            "profile": "100",
-            "user_id": 0
-        },
-        {
-            "job_id": 97,
-            "res": 6,
-            "subtime": 197,
-            "reqtime": 118,
+            "res": 1,
+            "subtime": 497,
+            "reqtime": 127,
             "runtime": 119,
             "profile": "100",
             "user_id": 0
         },
         {
+            "job_id": 88,
+            "res": 1,
+            "subtime": 499,
+            "reqtime": 108,
+            "runtime": 107,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 89,
+            "res": 1,
+            "subtime": 506,
+            "reqtime": 93,
+            "runtime": 88,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 90,
+            "res": 1,
+            "subtime": 507,
+            "reqtime": 95,
+            "runtime": 97,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 91,
+            "res": 1,
+            "subtime": 512,
+            "reqtime": 92,
+            "runtime": 89,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 92,
+            "res": 1,
+            "subtime": 513,
+            "reqtime": 110,
+            "runtime": 106,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 93,
+            "res": 1,
+            "subtime": 523,
+            "reqtime": 105,
+            "runtime": 102,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 94,
+            "res": 1,
+            "subtime": 526,
+            "reqtime": 115,
+            "runtime": 112,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 95,
+            "res": 1,
+            "subtime": 530,
+            "reqtime": 104,
+            "runtime": 105,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 96,
+            "res": 1,
+            "subtime": 531,
+            "reqtime": 113,
+            "runtime": 112,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
+            "job_id": 97,
+            "res": 1,
+            "subtime": 533,
+            "reqtime": 90,
+            "runtime": 84,
+            "profile": "100",
+            "user_id": 0
+        },
+        {
             "job_id": 98,
-            "res": 8,
-            "subtime": 199,
-            "reqtime": 74,
-            "runtime": 79,
+            "res": 1,
+            "subtime": 537,
+            "reqtime": 118,
+            "runtime": 111,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 99,
-            "res": 6,
-            "subtime": 204,
-            "reqtime": 109,
-            "runtime": 109,
+            "res": 1,
+            "subtime": 541,
+            "reqtime": 123,
+            "runtime": 121,
             "profile": "100",
             "user_id": 0
         },
         {
             "job_id": 100,
-            "res": 9,
-            "subtime": 207,
-            "reqtime": 65,
-            "runtime": 76,
+            "res": 1,
+            "subtime": 541,
+            "reqtime": 112,
+            "runtime": 107,
             "profile": "100",
             "user_id": 0
         }
