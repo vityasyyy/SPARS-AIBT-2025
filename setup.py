@@ -1,7 +1,7 @@
 # setup.py
 from venv import create as create_venv
 from os import getcwd, makedirs, name as os_name
-from os.path import join, abspath, exists
+from os.path import join
 from subprocess import run
 from pathlib import Path
 import sys
@@ -17,19 +17,26 @@ def main():
     python_exe = join(venv_dir, scripts_dir,
                       "python.exe" if os_name == "nt" else "python")
 
-    # requirements.txt assumed to be next to this setup.py
-    reqs = abspath("requirements.txt")
-    if not exists(reqs):
-        raise FileNotFoundError(f"requirements.txt not found at {reqs}")
+    # Pick requirements file based on OS (Windows vs. Linux/Unix-like)
+    base_dir = Path(__file__).resolve().parent
+    req_file = base_dir / (
+        "requirements-windows.txt" if os_name == "nt" else "requirements-linux.txt"
+    )
+
+    if not req_file.exists():
+        raise FileNotFoundError(f"{req_file.name} not found at {req_file}")
+
+    print(f"Detected OS: {'Windows' if os_name == 'nt' else 'Linux/Unix-like'}")
+    print(f"Using requirements file: {req_file}")
 
     # Upgrade pip (optional but helpful), then install
     print("Upgrading pip inside venv…")
     run([python_exe, "-m", "pip", "install", "--upgrade", "pip"], check=True)
 
-    print(f"Installing dependencies from {reqs} ...")
-    run([python_exe, "-m", "pip", "install", "-r", reqs], check=True)
+    print(f"Installing dependencies from {req_file} ...")
+    run([python_exe, "-m", "pip", "install", "-r", str(req_file)], check=True)
 
-    print("\n Done.")
+    print("\nDone.")
     print("To activate the venv:")
     if os_name == "nt":
         print(rf"  PowerShell: .\SPARS-venv\Scripts\Activate.ps1")

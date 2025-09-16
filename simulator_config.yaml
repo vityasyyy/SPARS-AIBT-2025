@@ -1,12 +1,12 @@
 paths:
-  workload: "workloads/generated.json"
-  platform: "platforms/generated.json"
-  output: "results/timeout_300"
+  workload: "workloads/nasa-20-back.json"
+  platform: "platforms/platform-nasa-128.json"
+  output: "results/nasa_20_back_timeout_3000"
 
 run:
   algorithm: "easy_auto"
   overrun_policy: "terminate"
-  timeout: 300
+  timeout: 3000
   # start_time can be:
   # - integer epoch (e.g., 0), or
   # - string "YYYY-MM-DD HH:MM:SS" (local), or "now"

@@ -1,5 +1,5 @@
 from .fcfs_auto_switch_on import FCFSAuto
-from itertools import combinations
+from bisect import bisect_left
 
 
 class EASYAuto(FCFSAuto):
@@ -15,28 +15,89 @@ class EASYAuto(FCFSAuto):
         return self.events
 
     def find_node_combination(self, p_start_t, compute_demand, nodes, next_releases, x):
+        """
+        Returns a tuple (best_combo, best_finish_time)
+        - best_combo: list[dict node] or None
+        - best_finish_time: float (0 if None)
+
+        Idea:
+        For a cutoff r (candidate "max activation delay"), a combo of size x is feasible iff
+            min_speed >= compute_demand / (p_start_t - r)
+        using only nodes with release_time <= r.
+        We scan r across unique release times (ascending), keep eligible nodes in a list
+        sorted by speed, and check feasibility with a bisect. This avoids combinations().
+        """
         n = len(nodes)
-        if x > n:
+        if x > n or x <= 0:
             return None
 
+        # --- Precompute release times and filter impossible nodes early
+        release_by_id = {e['id']: e['release_time'] for e in next_releases}
+        cand = []
+        for nd in nodes:
+            s = float(nd.get('compute_speed', 0) or 0.0)
+            if s <= 0:
+                continue
+            rid = nd['id']
+            r = float(release_by_id.get(rid, 0.0))
+            # If r >= p_start_t, this node can never finish a positive-demand job before p_start_t
+            if r >= p_start_t:
+                continue
+            cand.append((r, s, nd))  # (release_time, speed, node_ref)
+
+        if len(cand) < x:
+            return None
+
+        # Sort candidates by release_time ascending
+        cand.sort(key=lambda t: t[0])
+        unique_r = sorted(set(r for r, _, _ in cand))
+
+        # We'll maintain a list of eligible nodes (those with release_time <= r), sorted by speed asc
+        eligible = []              # list of (speed, node_ref, release_time)
+        eligible_speeds = []       # parallel list of speeds for bisect
+        idx_cand = 0
+        best_finish_time = 0.0
         best_combo = None
-        best_finish_time = 0
-        node_ids = [node['id'] for node in nodes]
-        for combo in combinations(nodes, x):
-            compute_power = min(node['compute_speed'] for node in combo)
 
-            max_activation_delay = max(
-                entry['release_time']
-                for entry in next_releases
-                if entry['id'] in node_ids
-            )
+        for r in unique_r:
+            # Add all nodes with release_time == r into eligible
+            while idx_cand < len(cand) and cand[idx_cand][0] <= r:
+                ri, si, ndi = cand[idx_cand]
+                # insert by speed (ascending)
+                pos = bisect_left(eligible_speeds, si)
+                eligible_speeds.insert(pos, si)
+                eligible.insert(pos, (si, ndi, ri))
+                idx_cand += 1
 
-            finish_time = max_activation_delay + \
-                (compute_demand / compute_power)
+            # Compute required minimum speed at this cutoff
+            remain = p_start_t - r
+            if remain <= 0:
+                continue  # impossible at this r
 
+            min_speed_req = compute_demand / remain
+
+            # Count how many eligible nodes have speed >= min_speed_req
+            pos = bisect_left(eligible_speeds, min_speed_req)
+            avail = len(eligible_speeds) - pos
+            if avail < x:
+                continue  # not feasible at this r
+
+            # Choose the x *slowest* nodes that still meet the threshold (tight finish time)
+            # [(speed, node, release_time), ...]
+            chosen = eligible[pos: pos + x]
+            speeds = [t[0] for t in chosen]
+            nodes_sel = [t[1] for t in chosen]
+            rel_times = [t[2] for t in chosen]
+
+            s_min = min(speeds)                     # == eligible_speeds[pos]
+            # may be <= r; use the actual max of chosen
+            r_max = max(rel_times)
+            finish_time = r_max + (compute_demand / s_min)
+
+            # Keep the latest finish time that still fits
             if finish_time <= p_start_t and finish_time > best_finish_time:
                 best_finish_time = finish_time
-                best_combo = combo
+                best_combo = nodes_sel
 
         return best_combo
 
