@@ -158,7 +158,8 @@ class EASYAuto(FCFSAuto):
                             event['job_id'], reserved_node_ids, start_predict_time)
                         super().push_event(self.current_time, {
                             'type': 'switch_on', 'nodes': to_activate_ids})
-
+                        super().push_event(self.current_time, {
+                            'type': 'reserve', 'nodes': reserved_node_ids})
                         super().push_event(start_predict_time, event)
                 else:
                     allocated_ids = [node['id']
@@ -242,11 +243,12 @@ class EASYAuto(FCFSAuto):
                         }
                         if self.timeout:
                             super().remove_from_timeout_list(reserved_node_ids)
-                        # if event['job_id'] == 25:
-                        #     print('ea 240')
+
                         super().remove_from_timeout_list(reserved_node_ids)
                         self.jobs_manager.add_job_to_scheduled_queue(
                             event['job_id'], reserved_node_ids, start_predict_time)
                         super().push_event(self.current_time, {
                             'type': 'switch_on', 'nodes': to_activate_ids})
+                        super().push_event(self.current_time, {
+                            'type': 'reserve', 'nodes': reserved_node_ids})
                         super().push_event(start_predict_time, event)

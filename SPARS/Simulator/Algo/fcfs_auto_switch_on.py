@@ -83,6 +83,8 @@ class FCFSAuto(BaseAlgorithm):
                         event['job_id'], reserved_node_ids, start_predict_time)
                     super().push_event(self.current_time, {
                         'type': 'switch_on', 'nodes': to_activate_ids})
+                    super().push_event(self.current_time, {
+                        'type': 'reserve', 'nodes': reserved_node_ids})
                     super().push_event(start_predict_time, event)
 
             else:

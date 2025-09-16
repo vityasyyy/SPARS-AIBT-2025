@@ -1,12 +1,12 @@
 paths:
   workload: "workloads/generated.json"
   platform: "platforms/generated.json"
-  output: "results/generated"
+  output: "results/timeout_300"
 
 run:
   algorithm: "easy_auto"
   overrun_policy: "terminate"
-  timeout: 60
+  timeout: 300
   # start_time can be:
   # - integer epoch (e.g., 0), or
   # - string "YYYY-MM-DD HH:MM:SS" (local), or "now"
@@ -16,7 +16,7 @@ rl:
   enabled: False
   type: "discrete"
   dt: 1800
-  device: "cpu" # 'auto' resolve to 'cuda' if available else 'cpu'
+  device: "cpu" # resolved to 'cuda' if available else 'cpu'
   learning_rate: 0.0003 # fallback if optimizer.params.lr is omitted
   epochs: 10
 

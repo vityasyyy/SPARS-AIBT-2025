@@ -38,9 +38,11 @@ class BaseAlgorithm():
 
     def timeout_policy(self):
         now = self.current_time
+
         t_exp = now + self.timeout
 
         # Fast membership on existing timeouts
+        allocated_ids = [node['id'] for node in self.allocated]
         timeout_node_ids = {t['node_id'] for t in self.timeout_list}
 
         # Add timeouts for newly idle, active nodes (no duplicates)
@@ -48,6 +50,8 @@ class BaseAlgorithm():
             if (
                 node['job_id'] is None
                 and node['state'] == 'active'
+                and node['reserved'] == False
+                and node['id'] not in allocated_ids
                 and node['id'] not in timeout_node_ids
             ):
                 self.timeout_list.append(
@@ -92,7 +96,6 @@ class BaseAlgorithm():
             self.next_timeout_at = next_earliest
 
     def prep_schedule(self, new_state, waiting_queue, scheduled_queue, resources_agenda):
-
         self.state = new_state
         self.waiting_queue = waiting_queue
         self.scheduled_queue = scheduled_queue
@@ -112,12 +115,12 @@ class BaseAlgorithm():
         """
         self.available = [
             node for node in self.state
-            if node['state'] == 'active' and node['job_id'] is None
+            if node['state'] == 'active' and node['job_id'] is None and node['reserved'] == False
         ]
 
         self.inactive = [
             node for node in self.state
-            if node['state'] == 'sleeping'
+            if node['state'] == 'sleeping' and node['reserved'] == False
         ]
 
         self.allocated = []  # This tracks the list of allocated nodes in an instance of scheduling, since easy scheduler is executed after fcfs scheduler, we have to make sure easy scheduler doesn't realocate the nodes that already been allocated by fcfs, since fcfs doesnt immediately update simulator's machine, we have to store info of currently allocated nodes in the current instance of scheduling

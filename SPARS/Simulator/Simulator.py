@@ -237,6 +237,9 @@ class Simulator:
                 if self.rl and self.rl_type == 'continuous':
                     need_rl = True
 
+            elif etype == 'reserve':
+                self.PlatformControl.reserve_node(event['nodes'])
+
             elif etype == 'execution_start':
                 if event['job_id'] in self.jobs_manager.active_jobs_id:
                     logger.info(f"Job {event['job_id']} is already started")

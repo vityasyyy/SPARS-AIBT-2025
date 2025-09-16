@@ -110,6 +110,10 @@ class Machine:
             self._update_node_state(node, 'sleeping')
             node['job_id'] = None
 
+    def reserve(self, node_ids):
+        for node in self._get_nodes_by_ids(node_ids):
+            node['reserved'] = True
+
     def allocate(self, nodes, job_id):
         for node in self._get_nodes_by_ids(nodes):
             if node['state'] != 'active':
@@ -123,6 +127,7 @@ class Machine:
                     f"Node {node['id']} cannot be allocated for {job_id} — node is already allocated for {node['job_id']}")
 
             node['job_id'] = job_id
+            node['reserved'] = False
         return True
 
     def release(self, nodes):
@@ -134,6 +139,7 @@ class Machine:
                 raise RuntimeError(
                     f"Node {node['id']} cannot be released — state is 'active' but not computing")
             node['job_id'] = None
+            node['reserved'] = False
 
     def _get_nodes_by_ids(self, node_ids):
         found = [n for n in self.nodes if n['id'] in node_ids]
