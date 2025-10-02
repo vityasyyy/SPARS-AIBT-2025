@@ -1,0 +1,47 @@
+@inproceedings{10.1145/3624062.3624201,
+  author = {Kolker-Hicks, Elliot and Zhang, Di and Dai, Dong},
+  title = {A Reinforcement Learning Based Backfilling Strategy for HPC Batch
+           Jobs},
+  year = {2023},
+  isbn = {9798400707858},
+  publisher = {Association for Computing Machinery},
+  address = {New York, NY, USA},
+  url = {https://doi.org/10.1145/3624062.3624201},
+  doi = {10.1145/3624062.3624201},
+  abstract = {High Performance Computing (HPC) systems are used across a wide
+              range of disciplines for both large and complex computations. HPC
+              systems often receive many thousands of computational tasks at a
+              time, colloquially referred to as “jobs”. These jobs must then be
+              scheduled as optimally as possible so they can be completed within
+              a reasonable timeframe. HPC scheduling systems often employ a
+              technique called “backfilling”, wherein low-priority jobs are
+              scheduled earlier to use the available resources that are waiting
+              for the pending high-priority jobs. To make it work, backfilling
+              largely relies on job runtime to calculate the start time of the
+              ready-to-schedule jobs and avoid delaying them. It is a common
+              belief that better estimations of job runtime will lead to better
+              backfilling and more effective scheduling. However, our experiments
+              show a different conclusion: there is a missing trade-off between
+              prediction accuracy and backfilling opportunities. To learn how to
+              achieve the best trade-off, we believe reinforcement learning (RL)
+              can be effectively leveraged. Reinforcement Learning relies on an
+              “agent” which makes decisions from observing the environment, and
+              gains rewards or punishments based on the quality of its
+              decision-making. Based on this idea, we designed RLBackfilling, a
+              reinforcement learning-based backfilling algorithm. We show how
+              RLBackfilling can learn effective backfilling strategies via
+              trial-and-error on existing job traces. Our evaluation results show
+              up to 17x better scheduling performance (based on average bounded
+              job slowdown) compared to EASY backfilling using user-provided job
+              runtime and 4.7x better performance compared with EASY using the
+              ideal predicted job runtime (the actual job runtime).},
+  booktitle = {Proceedings of the SC '23 Workshops of the International
+               Conference on High Performance Computing, Network, Storage, and
+               Analysis},
+  pages = {1316–1323},
+  numpages = {8},
+  location = {Denver, CO, USA},
+  series = {SC-W '23},
+}
+@comment { supports our is_backfill_worthy function }
+

@@ -1,12 +1,12 @@
 paths:
   workload: "Tugas_HandsOn/workload.json"
   platform: "Tugas_HandsOn/platform.json"
-  output: "results/generated_1500"
+  output: "results/generated_proactivekkk"
 
 run:
   algorithm: "easy_auto"
   overrun_policy: "terminate"
-  timeout: 1500 # in seconds
+  timeout: 600 # in seconds
   # start_time can be:
   # - integer epoch (e.g., 0), or
   # - string "YYYY-MM-DD HH:MM:SS" (local), or "now"
