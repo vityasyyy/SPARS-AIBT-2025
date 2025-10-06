@@ -6,7 +6,7 @@ paths:
 run:
   algorithm: "proactive"
   overrun_policy: "terminate"
-  timeout: 3600 # in seconds
+  timeout: 300 # in seconds
   # start_time can be:
   # - integer epoch (e.g., 0), or
   # - string "YYYY-MM-DD HH:MM:SS" (local), or "now"
